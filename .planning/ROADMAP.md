@@ -43,7 +43,15 @@ MusicSwipe is a mobile app (iOS + Android) where users connect their music platf
   6. Session opens on swipe start and closes on exit — SessionTracker records counts
   7. App survives a mid-session kill and resumes correctly
   8. No Spotify-specific handling in any swipe UI component
-**Plans**: TBD
+**Plans**: 7 plans across 3 waves
+Plans:
+- [ ] 02-PLAN-01-deps-gesture-root.md — Install react-native-gesture-handler/reanimated/expo-audio; wrap app root with GestureHandlerRootView
+- [ ] 02-PLAN-02-swipe-store-gesture.md — SwipeStore (Zustand persist) + useSwipeGesture hook + unit tests
+- [ ] 02-PLAN-03-backend-routes.md — POST /sessions, PATCH /sessions/:id, POST /swipes (batch upsert), GET /swipes?status=pending
+- [ ] 02-PLAN-04-playback.md — SpotifyAdapter playback methods + TrackPlayer service + usePreviewPlayer + SegmentNavigator
+- [ ] 02-PLAN-05-services.md — PlaylistWriter + SessionTracker + BackendSync services + unit tests
+- [ ] 02-PLAN-06-swipe-ui.md — SwipeEngine + SwipeCard + ButtonBar + DestinationEditor
+- [ ] 02-PLAN-07-swipe-screen.md — Swipe screen (session init, queue load, pending injection, kill/resume, AppState flush)
 
 ### Phase 3: Matches & Playlist Writing
 **Goal**: Liked tracks appear in a Matches screen. End-of-session screen shows stats. User can save session as a playlist, edit matches, and remove likes.
