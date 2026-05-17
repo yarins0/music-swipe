@@ -1,0 +1,47 @@
+node_modules/
+.expo/
+dist/
+build/
+*.js.map
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Native builds
+ios/
+android/
+
+# Expo
+.expo-shared/
+
+# Backend build
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# ESLint cache
+.eslintcache
+
+# Claude Code local config (personal, not shared)
+.claude/
+.agents/
+.mcp*
+
+# Session handoff (local only)
+HANDOFF.md
+
+# OS
+.DS_Store
+Thumbs.db
