@@ -20,6 +20,21 @@ interface SpotifyNewPlaylistResponse {
   name: string;
 }
 
+interface SpotifyDevice {
+  id: string;
+  is_active: boolean;
+  name: string;
+  type: string;
+}
+
+interface SpotifyDevicesResponse {
+  devices: SpotifyDevice[];
+}
+
+interface SpotifyPlayerState {
+  progress_ms: number | null;
+}
+
 export class SpotifyAdapter implements MusicPlatformAdapter {
   readonly capabilities: AdapterCapabilities = {
     requiresExplicitFollow: false,
@@ -31,9 +46,33 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   private readonly auth: SpotifyAuthContext;
   private cachedUserId: string | null = null;
+  private cachedDeviceId: string | null = null;
 
   constructor(auth: SpotifyAuthContext) {
     this.auth = auth;
+  }
+
+  /**
+   * Fetches the active Spotify device and caches its ID.
+   * Throws NO_ACTIVE_DEVICE if none are active, PREMIUM_REQUIRED if Spotify
+   * signals that playback requires a premium account.
+   */
+  private async getActiveDeviceId(): Promise<string> {
+    if (this.cachedDeviceId) return this.cachedDeviceId;
+
+    const data = await spotifyFetch<SpotifyDevicesResponse>(
+      '/me/player/devices',
+      {},
+      this.auth,
+    );
+
+    const activeDevice = data.devices.find((d) => d.is_active);
+    if (!activeDevice) {
+      throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'No active Spotify device found');
+    }
+
+    this.cachedDeviceId = activeDevice.id;
+    return activeDevice.id;
   }
 
   async isAuthenticated(): Promise<boolean> {
@@ -130,25 +169,72 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     };
   }
 
-  // Playback — stubs until Phase 2
-  async play(_trackUri: string): Promise<void> {
-    throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'Playback not implemented in Phase 1');
+  /**
+   * Starts playback of a track URI on the active Spotify device.
+   * Invalidates the device cache if the device is no longer active (Spotify
+   * returns 404 when no device is available, which we re-map to NO_ACTIVE_DEVICE).
+   */
+  async play(trackUri: string): Promise<void> {
+    const deviceId = await this.getActiveDeviceId();
+
+    try {
+      await spotifyFetch(
+        `/me/player/play?device_id=${deviceId}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ uris: [trackUri] }),
+        },
+        this.auth,
+      );
+    } catch (error) {
+      if (error instanceof PlatformError && error.code === PlatformErrorCode.NOT_FOUND) {
+        // Spotify returns 404 when the targeted device is no longer active
+        this.cachedDeviceId = null;
+        throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'Device became inactive');
+      }
+      throw error;
+    }
   }
 
+  /** Pauses playback on the current active device. */
   async pause(): Promise<void> {
-    throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'Playback not implemented in Phase 1');
+    try {
+      await spotifyFetch(
+        '/me/player/pause',
+        { method: 'PUT' },
+        this.auth,
+      );
+    } catch (error) {
+      if (error instanceof PlatformError && error.code === PlatformErrorCode.NOT_FOUND) {
+        this.cachedDeviceId = null;
+        throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'No active device to pause');
+      }
+      throw error;
+    }
   }
 
-  async seek(_positionMs: number): Promise<void> {
-    throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'Playback not implemented in Phase 1');
+  /** Seeks to the given position (ms) within the currently playing track. */
+  async seek(positionMs: number): Promise<void> {
+    await spotifyFetch(
+      `/me/player/seek?position_ms=${Math.round(positionMs)}`,
+      { method: 'PUT' },
+      this.auth,
+    );
   }
 
   async getCurrentTrack(): Promise<Track | null> {
+    // Deferred to a later phase — not blocking swipe UI
     return null;
   }
 
+  /** Returns the current playback position in milliseconds, or 0 if nothing is playing. */
   async getCurrentPositionMs(): Promise<number> {
-    return 0;
+    const data = await spotifyFetch<SpotifyPlayerState>(
+      '/me/player',
+      {},
+      this.auth,
+    );
+    return data.progress_ms ?? 0;
   }
 
   async addToPlaylist(playlistId: string, trackId: string): Promise<void> {
