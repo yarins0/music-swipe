@@ -1,7 +1,16 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { createHash } from 'crypto';
+import { hkdfSync } from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { supabase } from '../db/client';
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registration attempts, please try again later' },
+});
 
 const router = Router();
 
@@ -27,14 +36,17 @@ async function getSpotifyUser(accessToken: string): Promise<SpotifyUser> {
   return response.json() as Promise<SpotifyUser>;
 }
 
-// Derives a stable, server-side password for a given Spotify user ID.
+// Derives a stable, server-side password for a given Spotify user ID using HKDF-SHA256.
 // Never stored or transmitted — only used to create/retrieve a Supabase session.
-// The SUPABASE_SERVICE_ROLE_KEY acts as the HMAC secret so the password cannot
-// be brute-forced without access to the server environment.
+// HKDF provides proper key derivation with domain separation via info parameter.
+// Changing SUPABASE_SERVICE_ROLE_KEY will invalidate all derived passwords (existing
+// users would need to re-register); treat key rotation as a breaking migration.
 function deriveUserPassword(spotifyUserId: string): string {
-  return createHash('sha256')
-    .update(`music-swipe:${spotifyUserId}:${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`)
-    .digest('hex');
+  const ikm = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  const salt = Buffer.from('music-swipe-auth-salt-v1');
+  const info = Buffer.from(`music-swipe:${spotifyUserId}`);
+  const derived = hkdfSync('sha256', ikm, salt, info, 32);
+  return Buffer.from(derived).toString('hex');
 }
 
 // POST /auth/register
@@ -42,7 +54,7 @@ function deriveUserPassword(spotifyUserId: string): string {
 // token, verifies it with Spotify, creates or updates a user record, and
 // returns a Supabase JWT the client can use for all subsequent API calls.
 // The Spotify token is never stored.
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', registerLimiter, async (req: Request, res: Response): Promise<void> => {
   const { spotifyAccessToken } = req.body as { spotifyAccessToken?: string };
 
   if (!spotifyAccessToken) {

@@ -46,6 +46,7 @@ useSwipeStore().setActiveDestinations(ids): void
 
 // src/adapters/interface.ts — adapter methods used by the screen
 adapter.getPlaylistTracks(playlistId, offset, limit): Promise<{ tracks: Track[]; total: number }>
+adapter.removeFromPlaylist(playlistId: string, trackId: string): Promise<void>
 
 // src/services/SessionTracker.ts
 sessionTracker.openSession(sourcePlaylistId): Promise<string>
@@ -53,6 +54,7 @@ sessionTracker.closeSession(sessionId): void
 
 // src/services/BackendSync.ts
 backendSync.flushPending(pendingSwipes): Promise<void>
+backendSync.postSwipeDestinationUpdate(swipeIds: string[], destinationPlaylistId: string): Promise<void>
 
 // Expo Router params
 const { playlistId } = useLocalSearchParams<{ playlistId: string }>();
@@ -61,8 +63,8 @@ const { playlistId } = useLocalSearchParams<{ playlistId: string }>();
 useSessionStore().destinationPlaylistIds: string[]
 
 // Backend — GET /swipes?status=pending&source_playlist_id=X
-// Returns: { swipes: [{ spotify_track_id: string }] }
-// Used to inject pending tracks at front of queue on resume
+// Returns: { swipes: [{ spotify_track_id: string; title: string; artist: string; albumArtUrl: string; previewUrl: string | null }] }
+// The backend JOINs the tracks table so all metadata is included — no extra adapter call needed
 ```
 
 ## Tasks
@@ -96,7 +98,7 @@ Step 2 — Flush any pending swipes from previous session:
 Read pendingSyncSwipes from the store. If non-empty, call backendSync.flushPending(pendingSyncSwipes) then call markSynced for each flushed record.
 
 Step 3 — Fetch pending tracks for this playlist from backend:
-Call GET /swipes?status=pending&source_playlist_id={playlistId} with the supabaseToken. These are tracks the user marked "Decide Later" in previous sessions. Map the response spotify_track_ids to Track objects by fetching from adapter.getPlaylistTracks() — or simpler: fetch the pending track IDs and cross-reference with the full playlist fetch below.
+Call GET /swipes?status=pending&source_playlist_id={playlistId} with the supabaseToken. The backend response includes full track metadata (title, artist, albumArtUrl, previewUrl) via a JOIN with the tracks table — map each response item directly to a Track object without making any additional adapter calls. Do NOT use cross-referencing with the full playlist fetch below as a substitute — that approach silently drops pending tracks at positions beyond the first page of the playlist.
 
 Step 4 — Fetch playlist queue from adapter:
 Call adapter.getPlaylistTracks(playlistId). This is the full queue. Exclude tracks already swiped in the active session (use currentIndex offset). If a session is being resumed (store has sessionId and currentIndex > 0), slice the queue starting at currentIndex.
@@ -121,24 +123,44 @@ In the return function of the session init useEffect, call sessionTracker.closeS
 onSessionEnd callback (passed to SwipeEngine):
 When SwipeEngine calls onSessionEnd (queue exhausted), close the session and navigate back to the playlist picker.
 
-DestinationEditor integration in SwipeEngine:
-The screen passes availablePlaylists (fetched from adapter.getUserPlaylists() — filter isOwned) to SwipeEngine. SwipeEngine passes it through to DestinationEditor. The screen handles onEntireSession by firing PlaylistWriter calls for all session-liked tracks (read from swipeStore history by filtering pendingSyncSwipes where status === 'liked' or 'super_liked') and calling backendSync to update swipe records.
+DestinationEditor integration in SwipeEngine — onEntireSession handler:
+The screen passes availablePlaylists (fetched from adapter.getUserPlaylists() — filter isOwned) to SwipeEngine. SwipeEngine passes it through to DestinationEditor.
+
+The screen handles the onEntireSession callback from DestinationEditor with the following logic. Read swipeStore history to get all session-liked records: filter by status === 'liked' or status === 'super_liked'.
+
+Retroactive ADD path (new destination selected for entire session):
+- For each liked SwipeRecord, call playlistWriter.current.add(newDestinationPlaylistId, track) — fire-and-forget (do not await; PlaylistWriter queues and retries internally).
+- Call backendSync.current.postSwipeDestinationUpdate(likedSwipeIds, newDestinationPlaylistId) to update swipe_destinations records on the backend — also fire-and-forget.
+- Dismiss the modal immediately; PlaylistWriter handles retry on failure.
+
+Retroactive REMOVE path (previously active destination removed for entire session):
+- Show a loading indicator inside the DestinationEditor modal (set a local isRemoving state to true) before starting removal — do not dismiss the modal yet.
+- For each liked SwipeRecord, await adapter.removeFromPlaylist(removedPlaylistId, track.id). This is a destructive action; it must complete before the modal is dismissed. Process removals sequentially (for...of with await) to avoid overwhelming the Spotify rate limiter.
+- After all removals complete, call backendSync.current.postSwipeDestinationUpdate(likedSwipeIds, removedPlaylistId) with a flag or separate endpoint indicating removal — update as appropriate to the backend API contract established in Plan 03.
+- Set isRemoving to false and dismiss the modal.
+- If any removeFromPlaylist call throws (PlatformError.RATE_LIMITED or network error), catch the error, dismiss the modal, and display a non-blocking toast: "Some tracks could not be removed — try again". Do not leave the modal in a stuck loading state on error.
 
 Per-track override state:
 Managed in SwipeEngine as local component state (not in the store). The screen does not manage it.
 </action>
 
-<acceptance_criteria>
+<verify>
+  <automated>npx tsc --noEmit && npx expo lint</automated>
+</verify>
+
+<done>
 - app/(app)/swipe/[playlistId].tsx exists as a valid Expo Router screen (default export is a React component)
 - Screen shows ActivityIndicator until store is hydrated and queue is fetched
 - On fresh start: POST /sessions is called before SwipeEngine renders (confirmed by reading useEffect logic)
 - On crash resume: sessionId from persisted store is reused without calling POST /sessions again
 - AppState 'active' event triggers flushPending
 - Session is closed (PATCH /sessions/:id with endedAt) on screen unmount
+- Pending tracks from GET /swipes are mapped directly from backend response metadata — no cross-reference with playlist fetch
+- DestinationEditor's retroactive remove triggers adapter.removeFromPlaylist for each session-liked track; modal shows a loading indicator during removal and dismisses only on completion (or error); swipe_destinations records are updated on the backend via backendSync.postSwipeDestinationUpdate; errors surface as a non-blocking toast
 - No import from src/adapters/spotify/ in the screen file
 - `npx tsc --noEmit` exits 0
 - `npx expo lint` exits 0
-</acceptance_criteria>
+</done>
 </task>
 
 <task id="T02-07-2" type="checkpoint:human-verify" gate="blocking">

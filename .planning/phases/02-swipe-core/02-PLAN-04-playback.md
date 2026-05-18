@@ -6,6 +6,7 @@ depends_on:
   - 02-PLAN-01
 files_modified:
   - src/adapters/spotify/SpotifyAdapter.ts
+  - src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts
   - src/player/TrackPlayer.ts
   - src/player/usePreviewPlayer.ts
   - src/player/SegmentNavigator.tsx
@@ -22,7 +23,7 @@ Replace the Phase 1 playback stubs in `SpotifyAdapter` with real Spotify Connect
 
 Purpose: Phase 2 UI (Plans 06 and 07) must call `TrackPlayer` — never the adapter directly. This plan establishes that layer.
 
-Output: Fully implemented playback methods in `SpotifyAdapter.ts`, and three new files under `src/player/`.
+Output: Fully implemented playback methods in `SpotifyAdapter.ts`, a test file covering all four playback methods, and three new files under `src/player/`.
 
 ## Interfaces
 
@@ -176,6 +177,65 @@ The caller (SwipeEngine) will pass seekBack={() => trackPlayer.seekTo(Math.max(0
 </acceptance_criteria>
 </task>
 
+<task id="T02-04-3">
+<title>Task 3: SpotifyAdapter playback unit tests</title>
+
+<read_first>
+- src/adapters/spotify/SpotifyAdapter.ts (the implementation written in Task 1 — read to understand method signatures before writing tests)
+- src/adapters/spotify/spotifyFetch.ts (exported name to mock — jest.mock this module)
+- src/adapters/interface.ts (PlatformErrorCode values to assert against)
+</read_first>
+
+<action>
+Create src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts.
+
+Use jest.mock('../spotifyFetch') at the top of the file to mock the spotifyFetch module. Import the mocked version with `import { spotifyFetch } from '../spotifyFetch'` and cast to `jest.MockedFunction<typeof spotifyFetch>` for typed mock control.
+
+Construct a SpotifyAdapter instance using a minimal fake auth object (matching whatever shape spotifyFetch expects — read spotifyFetch.ts to confirm the auth param shape).
+
+Write the following test cases, grouped under describe('SpotifyAdapter — playback'):
+
+(a) play() calls GET /me/player/devices then PUT /me/player/play:
+- Mock spotifyFetch to return `{ devices: [{ id: 'device-1', is_active: true }] }` on the first call (devices fetch), then resolve void on the second call (play PUT).
+- Call adapter.play('spotify:track:abc').
+- Assert spotifyFetch was called twice.
+- Assert first call path includes '/me/player/devices'.
+- Assert second call path includes '/me/player/play' and method is 'PUT'.
+
+(b) play() throws PlatformError(NO_ACTIVE_DEVICE) when devices array is empty:
+- Mock spotifyFetch to return `{ devices: [] }` on the devices call.
+- Assert adapter.play('spotify:track:abc') rejects with a PlatformError whose code is PlatformErrorCode.NO_ACTIVE_DEVICE.
+
+(c) cachedDeviceId is cleared on NO_ACTIVE_DEVICE error:
+- Seed the adapter's cachedDeviceId to a non-null value by calling adapter.play() successfully first (use the two-call mock from test (a)).
+- Then mock spotifyFetch to return `{ devices: [] }` and call adapter.play() again.
+- Assert the second call throws NO_ACTIVE_DEVICE (confirming the cached id was not used to bypass device detection when the device is now gone).
+
+(d) pause() calls PUT /me/player/pause:
+- Mock spotifyFetch to resolve void.
+- Call adapter.pause().
+- Assert spotifyFetch was called once with a path containing '/me/player/pause' and method 'PUT'.
+
+(e) seek() calls PUT /me/player/seek?position_ms=N:
+- Mock spotifyFetch to resolve void.
+- Call adapter.seek(30000).
+- Assert spotifyFetch was called once with a path containing '/me/player/seek' and 'position_ms=30000', method 'PUT'.
+
+Use beforeEach to reset all mocks (jest.resetAllMocks()).
+</action>
+
+<verify>
+  <automated>npx jest --watchAll=false --testPathPattern="SpotifyAdapter.playback"</automated>
+</verify>
+
+<acceptance_criteria>
+- src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts exists
+- All five test cases (a)–(e) pass
+- spotifyFetch is mocked — no real HTTP calls are made
+- `npx jest --watchAll=false --testPathPattern="SpotifyAdapter.playback"` exits 0
+</acceptance_criteria>
+</task>
+
 <threat_model>
 ## Trust Boundaries
 
@@ -196,11 +256,13 @@ The caller (SwipeEngine) will pass seekBack={() => trackPlayer.seekTo(Math.max(0
 <verification>
 - `npx tsc --noEmit` exits 0
 - `npx expo lint` exits 0
+- `npx jest --watchAll=false --testPathPattern="SpotifyAdapter.playback"` exits 0
 - No file in src/player/ imports from src/adapters/spotify/
 </verification>
 
 <success_criteria>
 - SpotifyAdapter playback methods are real implementations (not stubs)
+- All five playback behaviours are verified by automated tests (no manual inspection required)
 - TrackPlayer abstracts both Spotify Connect and preview fallback behind a single play() call
 - SegmentNavigator tap zones are correctly separated for left (seek back) and right (seek forward) halves
 </success_criteria>
