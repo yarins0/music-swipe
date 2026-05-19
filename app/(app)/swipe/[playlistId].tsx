@@ -264,7 +264,7 @@ export default function SwipeScreen(): React.ReactElement {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Unmount: close session + clear store
+  // Unmount: close session + clear store (unless session-end screen took ownership)
   // -------------------------------------------------------------------------
   useEffect(() => {
     return () => {
@@ -272,21 +272,31 @@ export default function SwipeScreen(): React.ReactElement {
         sessionClosedRef.current = true;
         sessionTrackerRef.current.closeSession(sessionId);
       }
-      clearSession();
+      // Skip clearSession when navigating to session-end — that screen owns the deferred clear
+      if (!navigatedToSessionEndRef.current) {
+        clearSession();
+      }
     };
   }, [sessionId, clearSession]);
 
   // -------------------------------------------------------------------------
-  // Session end callback (queue exhausted)
+  // Session end callback (queue exhausted) — navigate to session-end screen.
+  // clearSession() is intentionally deferred: the session-end screen needs
+  // pendingSyncSwipes to be intact when it mounts. It calls clearSession on unmount.
   // -------------------------------------------------------------------------
+  const navigatedToSessionEndRef = useRef(false);
+
   const handleSessionEnd = useCallback((): void => {
     if (!sessionClosedRef.current && sessionId && sessionTrackerRef.current) {
       sessionClosedRef.current = true;
       sessionTrackerRef.current.closeSession(sessionId);
     }
-    clearSession();
-    router.back();
-  }, [sessionId, clearSession, router]);
+    navigatedToSessionEndRef.current = true;
+    router.replace({
+      pathname: '/(app)/session-end' as const,
+      params: sessionId ? { sessionId } : {},
+    });
+  }, [sessionId, router]);
 
   // -------------------------------------------------------------------------
   // onEntireSession: fire-and-forget add, awaitable sequential remove with loading
