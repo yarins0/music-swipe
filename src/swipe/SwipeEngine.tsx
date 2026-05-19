@@ -27,6 +27,8 @@ interface SwipeEngineProps {
   sessionId: string;
   availablePlaylists: Playlist[];
   onSessionEnd: () => void;
+  /** When provided, replaces the internal entire-session handler. */
+  onEntireSession?: (added: string[], removed: string[], confirmedRemove: boolean) => void;
 }
 
 export function SwipeEngine({
@@ -37,6 +39,7 @@ export function SwipeEngine({
   sessionId,
   availablePlaylists,
   onSessionEnd,
+  onEntireSession: onEntireSessionProp,
 }: SwipeEngineProps): React.ReactElement {
   const {
     queue,
@@ -222,8 +225,11 @@ export function SwipeEngine({
       ];
       setActiveDestinations(newDestinations);
       setShowDestEditor(false);
+
+      // Forward to screen-level handler for adapter-backed retroactive writes
+      onEntireSessionProp?.(added, removed, confirmedRemove);
     },
-    [activeDestinationIds, setActiveDestinations],
+    [activeDestinationIds, setActiveDestinations, onEntireSessionProp],
   );
 
   if (!currentTrack) {
