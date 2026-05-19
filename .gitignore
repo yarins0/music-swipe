@@ -53,7 +53,8 @@ expo-env.d.ts
 # @end expo-cli
 
 # ── GSD baseline (auto-generated) ──
-.gsd*
+.gsd
+.gsd.migrating
 .gsd-id
 .mcp.json
 .bg-shell/
@@ -72,3 +73,6 @@ vendor/
 coverage/
 .cache/
 tmp/
+
+# ── GSD baseline (auto-generated) ──
+.gsd

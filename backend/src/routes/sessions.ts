@@ -108,4 +108,38 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response): Promise<v
   res.json({ ok: true });
 });
 
+// GET /sessions/:id
+// Returns a session owned by the authenticated user including swipe stats.
+// Returns 404 if the session does not exist or belongs to a different user.
+router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const { data: session, error } = await supabase
+    .from('sessions')
+    .select('id, user_id, source_playlist_id, started_at, ended_at, swiped_count, liked_count, super_liked_count')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('GET /sessions/:id fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch session' });
+    return;
+  }
+
+  if (!session || session.user_id !== req.userId) {
+    res.status(404).json({ error: 'Session not found' });
+    return;
+  }
+
+  res.json({
+    id: session.id,
+    sourcePlaylistId: session.source_playlist_id,
+    startedAt: session.started_at,
+    endedAt: session.ended_at,
+    swipedCount: session.swiped_count,
+    likedCount: session.liked_count,
+    superLikedCount: session.super_liked_count,
+  });
+});
+
 export default router;

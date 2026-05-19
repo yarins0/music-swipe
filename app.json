@@ -28,6 +28,7 @@
       "expo-secure-store",
       "expo-audio"
     ],
+    "newArchEnabled": true,
     "experiments": {
       "typedRoutes": true
     },

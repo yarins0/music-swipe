@@ -36,7 +36,7 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
   const setTokens = useAuthStore((s) => s.setTokens);
 
   const redirectUri = AuthSession.makeRedirectUri({ scheme: 'music-swipe' });
-
+  console.log('REDIRECT URI:', redirectUri); 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId: SPOTIFY_CLIENT_ID,

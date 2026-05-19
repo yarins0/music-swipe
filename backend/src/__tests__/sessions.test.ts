@@ -142,6 +142,125 @@ describe('POST /sessions', () => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /sessions/:id
+// ---------------------------------------------------------------------------
+describe('GET /sessions/:id', () => {
+  it('returns 401 when no auth token is provided', async () => {
+    unauthenticated();
+
+    const app = buildApp();
+    const res = await request(app).get(`/sessions/${SESSION_ID}`);
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 200 with camelCase session stats for own session', async () => {
+    authenticateAs();
+
+    const mockSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          id: SESSION_ID,
+          user_id: VALID_USER_ID,
+          source_playlist_id: PLAYLIST_ID,
+          started_at: '2026-01-01T10:00:00Z',
+          ended_at: '2026-01-01T10:30:00Z',
+          swiped_count: 20,
+          liked_count: 12,
+          super_liked_count: 3,
+        },
+        error: null,
+      }),
+    };
+    mockFrom.mockReturnValue(mockSelectChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      id: SESSION_ID,
+      sourcePlaylistId: PLAYLIST_ID,
+      startedAt: '2026-01-01T10:00:00Z',
+      endedAt: '2026-01-01T10:30:00Z',
+      swipedCount: 20,
+      likedCount: 12,
+      superLikedCount: 3,
+    });
+  });
+
+  it('returns 404 when session belongs to a different user', async () => {
+    authenticateAs('attacker-user-id');
+
+    const mockSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { id: SESSION_ID, user_id: VALID_USER_ID }, // owned by someone else
+        error: null,
+      }),
+    };
+    mockFrom.mockReturnValue(mockSelectChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({ error: 'Session not found' });
+  });
+
+  it('returns 404 when session does not exist', async () => {
+    authenticateAs();
+
+    const mockSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      }),
+    };
+    mockFrom.mockReturnValue(mockSelectChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/nonexistent-id`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({ error: 'Session not found' });
+  });
+
+  it('returns 500 when the database fetch fails', async () => {
+    authenticateAs();
+
+    const mockSelectChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: null,
+        error: new Error('Connection error'),
+      }),
+    };
+    mockFrom.mockReturnValue(mockSelectChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toMatchObject({ error: 'Failed to fetch session' });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // PATCH /sessions/:id
 // ---------------------------------------------------------------------------
 describe('PATCH /sessions/:id', () => {

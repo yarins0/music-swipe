@@ -87,6 +87,30 @@ function makeInsertSelectMock(resolvedValue: { data: unknown; error: unknown }) 
   return { insert: insertMock, select: selectMock };
 }
 
+/**
+ * Creates a mock Supabase query builder where match() is chainable (returns self)
+ * and eq() is the terminal that resolves. Used for GET /swipes?session_id= path
+ * where .match(filters).eq('session_id', id) is the query chain.
+ */
+function makeMatchEqMock(resolvedValue: { data: unknown; error: unknown }) {
+  const mock: Record<string, jest.Mock> = {};
+
+  const returnSelf = jest.fn().mockReturnValue(mock);
+  const returnResolved = jest.fn().mockResolvedValue(resolvedValue);
+
+  for (const method of ['select', 'match', 'delete', 'update']) {
+    mock[method] = returnSelf;
+  }
+
+  mock['eq'] = returnResolved;
+  mock['in'] = returnResolved;
+  mock['maybeSingle'] = returnResolved;
+  mock['single'] = returnResolved;
+  mock['insert'] = returnResolved;
+
+  return mock;
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -553,5 +577,142 @@ describe('GET /swipes', () => {
       status: 'liked',
       'sessions.source_playlist_id': PLAYLIST_A,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /swipes?session_id=
+// ---------------------------------------------------------------------------
+describe('GET /swipes?session_id=', () => {
+  const SESSION_ID_2 = 'session-uuid-222';
+
+  it('returns only swipes for the given session when ownership is valid', async () => {
+    authenticateAs();
+
+    // 1: session ownership check
+    const sessionOwnershipMock = makeQueryMock({
+      data: { id: SESSION_ID, user_id: VALID_USER_ID },
+      error: null,
+    });
+
+    // 2: swipes query — match + eq(session_id) is terminal
+    const swipesMock = makeMatchEqMock({
+      data: [
+        {
+          id: SWIPE_ID_1,
+          session_id: SESSION_ID,
+          spotify_track_id: TRACK_ID_1,
+          status: 'liked',
+          swiped_at: '2026-01-01T00:00:00Z',
+          sessions: { source_playlist_id: PLAYLIST_A },
+        },
+      ],
+      error: null,
+    });
+
+    // 3: destinations fetch
+    const destMock = makeQueryMock({
+      data: [{ swipe_id: SWIPE_ID_1, spotify_playlist_id: PLAYLIST_B }],
+      error: null,
+    });
+
+    mockFrom
+      .mockReturnValueOnce(sessionOwnershipMock) // sessions ownership
+      .mockReturnValueOnce(swipesMock)           // swipes with session_id filter
+      .mockReturnValueOnce(destMock);            // swipe_destinations
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?session_id=${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body.swipes).toHaveLength(1);
+    expect(res.body.swipes[0]).toMatchObject({
+      id: SWIPE_ID_1,
+      sessionId: SESSION_ID,
+      spotifyTrackId: TRACK_ID_1,
+      status: 'liked',
+    });
+  });
+
+  it('returns 200 empty array for a session with no swipes', async () => {
+    authenticateAs();
+
+    const sessionOwnershipMock = makeQueryMock({
+      data: { id: SESSION_ID_2, user_id: VALID_USER_ID },
+      error: null,
+    });
+
+    const swipesMock = makeMatchEqMock({ data: [], error: null });
+
+    mockFrom
+      .mockReturnValueOnce(sessionOwnershipMock)
+      .mockReturnValueOnce(swipesMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?session_id=${SESSION_ID_2}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ swipes: [] });
+  });
+
+  it('returns 404 when session_id belongs to a different user', async () => {
+    authenticateAs('attacker-user-id');
+
+    const sessionOwnershipMock = makeQueryMock({
+      data: { id: SESSION_ID, user_id: VALID_USER_ID }, // owned by original user
+      error: null,
+    });
+
+    mockFrom.mockReturnValueOnce(sessionOwnershipMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?session_id=${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({ error: 'Session not found' });
+  });
+
+  it('returns 404 when session_id does not exist', async () => {
+    authenticateAs();
+
+    const sessionOwnershipMock = makeQueryMock({
+      data: null,
+      error: null,
+    });
+
+    mockFrom.mockReturnValueOnce(sessionOwnershipMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get('/swipes?session_id=nonexistent-session')
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({ error: 'Session not found' });
+  });
+
+  it('returns 500 when session ownership check fails with a database error', async () => {
+    authenticateAs();
+
+    const sessionOwnershipMock = makeQueryMock({
+      data: null,
+      error: new Error('DB error'),
+    });
+
+    mockFrom.mockReturnValueOnce(sessionOwnershipMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?session_id=${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toMatchObject({ error: 'Failed to verify session ownership' });
   });
 });

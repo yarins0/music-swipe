@@ -234,10 +234,10 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
 
 // GET /swipes
 // Returns swipes for the authenticated user, optionally filtered.
-// Query params: status (one of the valid statuses), source_playlist_id (string)
+// Query params: status (one of the valid statuses), source_playlist_id (string), session_id (string)
 // Returns: 200 { swipes: SwipeRecord[] }
 router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const { status, source_playlist_id } = req.query;
+  const { status, source_playlist_id, session_id } = req.query;
 
   if (status !== undefined && (typeof status !== 'string' || !VALID_STATUSES.has(status))) {
     res.status(400).json({
@@ -249,6 +249,31 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
   if (source_playlist_id !== undefined && typeof source_playlist_id !== 'string') {
     res.status(400).json({ error: 'source_playlist_id must be a string' });
     return;
+  }
+
+  if (session_id !== undefined && typeof session_id !== 'string') {
+    res.status(400).json({ error: 'session_id must be a string' });
+    return;
+  }
+
+  // When session_id is provided, verify the session belongs to the authenticated user
+  if (session_id) {
+    const { data: sessionCheck, error: sessionCheckError } = await supabase
+      .from('sessions')
+      .select('id, user_id')
+      .eq('id', session_id)
+      .maybeSingle();
+
+    if (sessionCheckError) {
+      console.error('GET /swipes session ownership check error:', sessionCheckError);
+      res.status(500).json({ error: 'Failed to verify session ownership' });
+      return;
+    }
+
+    if (!sessionCheck || sessionCheck.user_id !== req.userId) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
   }
 
   // Build filter params for the swipes query
@@ -263,12 +288,18 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
   }
 
   // Fetch swipes joined with session data for the authenticated user
-  const swipesResult = await supabase
+  let swipesQuery = supabase
     .from('swipes')
     .select(
       'id, session_id, spotify_track_id, status, swiped_at, sessions!inner(source_playlist_id)',
     )
     .match(filters);
+
+  if (session_id) {
+    swipesQuery = swipesQuery.eq('session_id', session_id);
+  }
+
+  const swipesResult = await swipesQuery;
 
   if (swipesResult.error) {
     console.error('GET /swipes fetch error:', swipesResult.error);
