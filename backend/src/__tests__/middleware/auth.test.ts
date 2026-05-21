@@ -1,17 +1,19 @@
 import type { Request, Response, NextFunction } from 'express';
-import { requireAuth } from '../../middleware/auth';
 
 jest.mock('../../db/client', () => ({
   supabase: {
     auth: {
       getUser: jest.fn(),
     },
+    from: jest.fn(),
   },
 }));
 
-const mockGetUser = (
-  jest.requireMock('../../db/client') as { supabase: { auth: { getUser: jest.Mock } } }
-).supabase.auth.getUser;
+import { supabase } from '../../db/client';
+import { requireAuth } from '../../middleware/auth';
+
+const mockGetUser = supabase.auth.getUser as jest.Mock;
+const mockFrom = supabase.from as jest.Mock;
 
 const makeReq = (authHeader?: string): Request =>
   ({
@@ -64,13 +66,19 @@ describe('requireAuth', () => {
       data: { user: { id: 'supabase-user-123' } },
       error: null,
     });
+    // requireAuth resolves supabase_id → custom users.id; req.userId is set to the app user id
+    mockFrom.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'app-user-uuid-456' }, error: null }),
+    });
     const req = makeReq('Bearer valid-token');
     const res = makeRes();
 
     await requireAuth(req, res, next);
 
     expect(next).toHaveBeenCalled();
-    expect((req as Request & { userId: string }).userId).toBe('supabase-user-123');
+    expect((req as Request & { userId: string }).userId).toBe('app-user-uuid-456');
     expect(res.status).not.toHaveBeenCalled();
   });
 
@@ -78,6 +86,11 @@ describe('requireAuth', () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'uid' } },
       error: null,
+    });
+    mockFrom.mockReturnValueOnce({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'app-uid' }, error: null }),
     });
     const req = makeReq('Bearer my-token-value');
     const res = makeRes();

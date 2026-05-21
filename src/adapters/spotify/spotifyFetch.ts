@@ -4,7 +4,7 @@ export interface SpotifyAuthContext {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
-  onTokenRefreshed: (newToken: string, newExpiresAt: number) => Promise<void>;
+  onTokenRefreshed: (newToken: string, newExpiresAt: number, newRefreshToken?: string) => Promise<void>;
   onAuthExpired: () => Promise<void>;
 }
 
@@ -35,10 +35,11 @@ async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
   const data = (await response.json()) as {
     access_token: string;
     expires_in: number;
+    refresh_token?: string; // Spotify rotates refresh tokens on PKCE flows
   };
 
   const newExpiresAt = Date.now() + data.expires_in * 1000;
-  await auth.onTokenRefreshed(data.access_token, newExpiresAt);
+  await auth.onTokenRefreshed(data.access_token, newExpiresAt, data.refresh_token);
   return data.access_token;
 }
 

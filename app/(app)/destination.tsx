@@ -95,19 +95,25 @@ export default function DestinationPickerScreen() {
       };
       setOwnedPlaylists((prev) => [newPlaylist, ...prev]);
       setSelectedIds((prev) => new Set([...prev, newId]));
-    } catch {
+    } catch (error) {
+      console.error('Playlist creation error:', error);
       Alert.alert('Error', 'Failed to create playlist. Please try again.');
+
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleConfirm = () => {
+    console.log('[destination] handleConfirm — playlistId:', playlistId, 'selectedIds:', Array.from(selectedIds));
     setDestinations(Array.from(selectedIds));
-    router.push({
-      pathname: '/(app)/swipe/[playlistId]',
+    const target = {
+      pathname: '/(app)/swipe/[playlistId]' as const,
       params: { playlistId: playlistId ?? '' },
-    });
+    };
+    console.log('[destination] router.push target:', JSON.stringify(target));
+    router.push(target);
+    console.log('[destination] router.push called');
   };
 
   const ListHeader = (

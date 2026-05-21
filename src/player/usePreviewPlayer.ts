@@ -1,5 +1,49 @@
 import { useEffect } from 'react';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+
+// expo-audio requires a native dev build and is not bundled in Expo Go.
+// Guarding with require() prevents the module from crashing at init time,
+// so the swipe screen loads regardless of build type. Preview audio is
+// silently disabled when the native module is unavailable.
+type AudioPlayer = {
+  play(): void;
+  pause(): void;
+  seekTo(seconds: number): Promise<void>;
+  replace(source: { uri: string }): void;
+};
+type AudioStatus = { currentTime?: number; duration?: number; playing?: boolean };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _nativeUseAudioPlayer: ((source: string) => AudioPlayer) | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _nativeUseAudioPlayerStatus: ((player: AudioPlayer) => AudioStatus) | null = null;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const expoAudio = require('expo-audio') as {
+    useAudioPlayer: (source: string) => AudioPlayer;
+    useAudioPlayerStatus: (player: AudioPlayer) => AudioStatus;
+  };
+  _nativeUseAudioPlayer = expoAudio.useAudioPlayer;
+  _nativeUseAudioPlayerStatus = expoAudio.useAudioPlayerStatus;
+} catch {
+  // Native module unavailable (Expo Go or unbuilt dev client)
+}
+
+function useNoopPlayer(_source: string): AudioPlayer {
+  return {
+    play() {},
+    pause() {},
+    async seekTo(_seconds: number): Promise<void> {},
+    replace(_source: { uri: string }) {},
+  };
+}
+
+function useNoopPlayerStatus(_player: AudioPlayer): AudioStatus {
+  return {};
+}
+
+const useAudioPlayerImpl = _nativeUseAudioPlayer ?? useNoopPlayer;
+const useAudioPlayerStatusImpl = _nativeUseAudioPlayerStatus ?? useNoopPlayerStatus;
 
 /**
  * Shape returned by usePreviewPlayer.
@@ -37,10 +81,8 @@ export interface PreviewPlayerControls {
 export function usePreviewPlayer(previewUrl: string | null): PreviewPlayerControls {
   const hasPreview = previewUrl !== null;
 
-  // useAudioPlayer with an empty string when there is no URL — the player
-  // will simply stay in an idle/unloaded state.
-  const player = useAudioPlayer(previewUrl ?? '');
-  const status = useAudioPlayerStatus(player);
+  const player = useAudioPlayerImpl(previewUrl ?? '');
+  const status = useAudioPlayerStatusImpl(player);
 
   // Replace the audio source whenever the URL changes. The player returned by
   // useAudioPlayer is stable; we call replace() to swap in the new source.

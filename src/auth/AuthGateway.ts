@@ -10,8 +10,8 @@ function createSpotifyAuthContext(): SpotifyAuthContext {
     accessToken: state.accessToken ?? '',
     refreshToken: state.refreshToken ?? '',
     expiresAt: state.expiresAt ?? 0,
-    onTokenRefreshed: async (newToken, newExpiresAt) => {
-      await useAuthStore.getState().updateAccessToken(newToken, newExpiresAt);
+    onTokenRefreshed: async (newToken, newExpiresAt, newRefreshToken) => {
+      await useAuthStore.getState().updateAccessToken(newToken, newExpiresAt, newRefreshToken);
     },
     onAuthExpired: async () => {
       await useAuthStore.getState().clearAuth();

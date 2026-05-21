@@ -13,6 +13,8 @@ import { BackendSync } from '@/services/BackendSync';
 import type { MusicPlatformAdapter, Playlist, Track } from '@/adapters/interface';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 
+console.log('[swipe/[playlistId]] MODULE EVALUATED — file loaded by Metro');
+
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
 
 type InitPhase =
@@ -25,7 +27,9 @@ type InitPhase =
   | 'error';
 
 export default function SwipeScreen(): React.ReactElement {
+  console.log('[swipe/[playlistId]] SwipeScreen COMPONENT RENDERING');
   const { playlistId } = useLocalSearchParams<{ playlistId: string }>();
+  console.log('[swipe/[playlistId]] useLocalSearchParams — playlistId:', playlistId);
   const router = useRouter();
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);

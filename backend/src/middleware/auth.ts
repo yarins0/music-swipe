@@ -20,6 +20,26 @@ export async function requireAuth(
     return;
   }
 
-  req.userId = user.id;
+  // Resolve the custom users.id (FK target for sessions/swipes) from the Supabase auth ID.
+  // supabase.auth.getUser returns the auth user whose id lives in users.supabase_id,
+  // not in users.id — these are different UUIDs.
+  const { data: appUser, error: userLookupError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('supabase_id', user.id)
+    .maybeSingle();
+
+  if (userLookupError) {
+    console.error('requireAuth user lookup error:', userLookupError);
+    res.status(500).json({ error: 'Failed to resolve user' });
+    return;
+  }
+
+  if (!appUser) {
+    res.status(401).json({ error: 'User not registered' });
+    return;
+  }
+
+  req.userId = appUser.id;
   next();
 }

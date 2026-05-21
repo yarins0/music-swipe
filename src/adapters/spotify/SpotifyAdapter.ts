@@ -282,10 +282,12 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
       `/users/${userId}/playlists`,
       {
         method: 'POST',
-        body: JSON.stringify({ name, public: false }),
+        body: JSON.stringify({ name, description: 'New playlist by MusicSwipe', public: false }),
       },
       this.auth,
     );
+    console.log(data);
+    
     return data.id;
   }
 

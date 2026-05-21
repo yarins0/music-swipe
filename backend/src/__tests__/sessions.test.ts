@@ -31,11 +31,18 @@ const VALID_TOKEN = 'Bearer valid-token';
 const SESSION_ID = 'session-uuid-123';
 const PLAYLIST_ID = 'spotify:playlist:xyz';
 
-// Helper: set up getUser to return a valid authenticated user
+// Helper: set up getUser to return a valid authenticated user.
+// Also queues a mockReturnValueOnce for the users-table lookup that requireAuth
+// now performs to resolve supabase_id → custom users.id.
 function authenticateAs(userId: string = VALID_USER_ID): void {
   mockGetUser.mockResolvedValue({
     data: { user: { id: userId } },
     error: null,
+  });
+  mockFrom.mockReturnValueOnce({
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockResolvedValue({ data: { id: userId }, error: null }),
   });
 }
 

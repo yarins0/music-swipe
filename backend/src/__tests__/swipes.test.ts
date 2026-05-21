@@ -35,11 +35,14 @@ const PLAYLIST_B = 'spotify:playlist:qqq';
 const SWIPE_ID_1 = 'swipe-uuid-001';
 const SWIPE_ID_2 = 'swipe-uuid-002';
 
+// Also queues a mockReturnValueOnce for the users-table lookup that requireAuth
+// now performs to resolve supabase_id → custom users.id.
 function authenticateAs(userId: string = VALID_USER_ID): void {
   mockGetUser.mockResolvedValue({
     data: { user: { id: userId } },
     error: null,
   });
+  mockFrom.mockReturnValueOnce(makeQueryMock({ data: { id: userId }, error: null }));
 }
 
 function unauthenticated(): void {

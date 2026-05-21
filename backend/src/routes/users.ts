@@ -11,7 +11,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
   const { data: user, error } = await supabase
     .from('users')
     .select('id, spotify_user_id, display_name, email, created_at')
-    .eq('supabase_id', req.userId)
+    .eq('id', req.userId)
     .maybeSingle();
 
   if (error) {

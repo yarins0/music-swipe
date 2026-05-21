@@ -28,7 +28,7 @@ interface AuthActions {
     supabaseToken: string;
     userId: string;
   }) => Promise<void>;
-  updateAccessToken: (accessToken: string, expiresAt: number) => Promise<void>;
+  updateAccessToken: (accessToken: string, expiresAt: number, refreshToken?: string) => Promise<void>;
   clearAuth: () => Promise<void>;
 }
 
@@ -83,12 +83,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     set({ isAuthenticated: true, accessToken, refreshToken, expiresAt, supabaseToken, userId });
   },
 
-  updateAccessToken: async (accessToken, expiresAt) => {
-    await Promise.all([
+  updateAccessToken: async (accessToken, expiresAt, refreshToken) => {
+    const writes: Promise<void>[] = [
       SecureStore.setItemAsync(KEYS.ACCESS_TOKEN, accessToken),
       SecureStore.setItemAsync(KEYS.EXPIRES_AT, String(expiresAt)),
-    ]);
-    set({ accessToken, expiresAt });
+    ];
+    if (refreshToken) {
+      writes.push(SecureStore.setItemAsync(KEYS.REFRESH_TOKEN, refreshToken));
+    }
+    await Promise.all(writes);
+    set(refreshToken ? { accessToken, expiresAt, refreshToken } : { accessToken, expiresAt });
   },
 
   clearAuth: async () => {
