@@ -162,12 +162,16 @@ export default function SessionEndScreen(): React.ReactElement {
     });
   }, [router, sessionId]);
 
+  const handleSwipeAnother = useCallback((): void => {
+    router.replace('/(app)');
+  }, [router]);
+
   const adapter = getAdapter();
   const supportsPlaylistCreation = adapter.capabilities.supportsPlaylistCreation;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Session Complete</Text>
+      <Text style={styles.heading}>{stats.likedCount + stats.superLikedCount} tracks discovered</Text>
 
       <SessionMosaicGrid albumArtUrls={albumArtUrls} />
 
@@ -198,6 +202,10 @@ export default function SessionEndScreen(): React.ReactElement {
 
       <Pressable style={styles.secondaryButton} onPress={handleViewMatches}>
         <Text style={styles.secondaryText}>View Matches</Text>
+      </Pressable>
+
+      <Pressable style={styles.tertiaryButton} onPress={handleSwipeAnother}>
+        <Text style={styles.tertiaryText}>Swipe another playlist</Text>
       </Pressable>
     </View>
   );
@@ -259,5 +267,15 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: 15,
     fontWeight: '600',
+  },
+  tertiaryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  tertiaryText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

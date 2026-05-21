@@ -39,7 +39,8 @@ export default function SourcePickerScreen() {
         built.push({ title: 'Following', data: followed });
       }
       setSections(built);
-    } catch {
+    } catch (err) {
+      console.error('[SourcePicker] loadPlaylists error:', err);
       setLoadError('Failed to load playlists. Pull to retry.');
     } finally {
       setIsLoading(false);

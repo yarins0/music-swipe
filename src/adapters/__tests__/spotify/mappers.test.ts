@@ -68,7 +68,7 @@ describe('mapSpotifyPlaylist', () => {
     name: 'My Playlist',
     images: [{ url: 'http://cover.test', height: 300, width: 300 }],
     owner: { id: 'user-1', display_name: 'User One' },
-    tracks: { total: 42 },
+    items: { total: 42 },
   };
 
   it('sets isOwned = true when owner.id matches currentUserId', () => {

@@ -27,8 +27,10 @@ interface SpotifyTrackObject {
 }
 
 export interface SpotifyTrackItem {
-  track: SpotifyTrackObject;
+  track?: SpotifyTrackObject | null;
+  item?: SpotifyTrackObject | null;
   added_at?: string;
+  is_local?: boolean;
 }
 
 interface SpotifyPlaylistOwner {
@@ -41,11 +43,12 @@ export interface SpotifyPlaylistItem {
   name: string;
   images: SpotifyImage[];
   owner: SpotifyPlaylistOwner;
-  tracks: { total: number };
+  items?: { total: number };   // current field (Spotify API)
 }
 
 export function mapSpotifyTrack(item: SpotifyTrackItem): Track {
-  const t = item.track;
+  const t = item.item ?? item.track;
+  if (!t) throw new Error('SpotifyTrackItem has no track or item field');
   return {
     id: t.id,
     uri: t.uri,
@@ -67,7 +70,7 @@ export function mapSpotifyPlaylist(
     id: item.id,
     name: item.name,
     coverArtUrl: item.images[0]?.url ?? null,
-    trackCount: item.tracks.total,
+    trackCount: item.items?.total ?? 0,
     isOwned: item.owner.id === currentUserId,
     isFollowed: item.owner.id !== currentUserId,
   };

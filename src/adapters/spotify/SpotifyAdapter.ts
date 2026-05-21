@@ -104,7 +104,7 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
           {},
           this.auth,
         );
-      allItems.push(...data.items);
+      allItems.push(...data.items.filter(Boolean));
       // next is a full URL; extract the path+query portion for spotifyFetch
       endpoint = data.next
         ? data.next.replace('https://api.spotify.com/v1', '')
@@ -113,18 +113,24 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
     const playlists = allItems.map((item) => mapSpotifyPlaylist(item, userId));
 
-    // Fetch Liked Songs track count
-    const likedData = await spotifyFetch<{ total: number }>(
-      '/me/tracks?limit=1',
-      {},
-      this.auth,
-    );
+    // Fetch Liked Songs track count — guard against null/empty response
+    let likedTrackCount = 0;
+    try {
+      const likedData = await spotifyFetch<{ total: number }>(
+        '/me/tracks?limit=1',
+        {},
+        this.auth,
+      );
+      likedTrackCount = likedData?.total ?? 0;
+    } catch {
+      // Non-fatal: Liked Songs still shows with count 0
+    }
 
     const likedSongs: Playlist = {
       id: LIKED_SONGS_PLAYLIST_ID,
       name: 'Liked Songs',
       coverArtUrl: null,
-      trackCount: likedData.total,
+      trackCount: likedTrackCount,
       isOwned: true,
       isFollowed: false,
     };
@@ -155,7 +161,7 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     const endpoint =
       playlistId === LIKED_SONGS_PLAYLIST_ID
         ? `/me/tracks?offset=${offset}&limit=${limit}`
-        : `/playlists/${playlistId}/tracks?offset=${offset}&limit=${limit}`;
+        : `/playlists/${playlistId}/items?offset=${offset}&limit=${limit}`;
 
     const data = await spotifyFetch<SpotifyPaginatedResponse<SpotifyTrackItem>>(
       endpoint,
@@ -164,8 +170,8 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     );
 
     return {
-      tracks: data.items.map(mapSpotifyTrack),
-      total: data.total,
+      tracks: (data?.items ?? []).filter((item) => item?.item?.id ?? item?.track?.id).map(mapSpotifyTrack),
+      total: data?.total ?? 0,
     };
   }
 
