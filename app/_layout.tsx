@@ -3,6 +3,7 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Slot } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '@/stores/authStore';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
@@ -15,13 +16,15 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : (
-        <Slot />
-      )}
+      <ErrorBoundary>
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" />
+          </View>
+        ) : (
+          <Slot />
+        )}
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

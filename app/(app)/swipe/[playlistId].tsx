@@ -102,7 +102,8 @@ export default function SwipeScreen(): React.ReactElement {
       return;
     }
 
-    // Phase 2: flush pending sync swipes from a prior crashed session
+    // Phase 2: flush pending sync swipes from a prior crashed session,
+    // then drain any playlist write operations that were interrupted mid-flight.
     const flush = async (): Promise<void> => {
       const pending = useSwipeStore.getState().pendingSyncSwipes;
       if (pending.length > 0) {
@@ -117,6 +118,15 @@ export default function SwipeScreen(): React.ReactElement {
           console.warn('[SwipeScreen] pendingSyncSwipes flush failed; will retry on reconnect');
         }
       }
+
+      // Drain any write-queue entries that survived a previous crash.
+      // Fire-and-forget from the perspective of the init sequence — failures are
+      // logged inside drainStoredQueue and the entries stay in storage for the
+      // next launch rather than blocking the current session from starting.
+      PlaylistWriter.drainStoredQueue(adapterRef.current!).catch((err: unknown) => {
+        console.warn('[SwipeScreen] drainStoredQueue failed:', err);
+      });
+
       setPhase('fetching_pending');
     };
 
