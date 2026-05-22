@@ -11,6 +11,8 @@ import { PlaylistWriter } from '@/services/PlaylistWriter';
 import { SessionTracker } from '@/services/SessionTracker';
 import { BackendSync } from '@/services/BackendSync';
 import type { MusicPlatformAdapter, Playlist, Track } from '@/adapters/interface';
+import { PlatformError, PlatformErrorCode } from '@/adapters/interface';
+import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 
 console.log('[swipe/[playlistId]] MODULE EVALUATED — file loaded by Metro');
@@ -215,6 +217,15 @@ export default function SwipeScreen(): React.ReactElement {
         setPhase('opening_session');
       } catch (err) {
         console.error('[SwipeScreen] fetchQueue failed:', err);
+        if (err instanceof PlatformError && err.code === PlatformErrorCode.NO_ACTIVE_DEVICE) {
+          console.log('[SwipeScreen] NO_ACTIVE_DEVICE — opening Spotify deep link');
+          void openPlatformDeepLink('spotify:');
+          Alert.alert(
+            'Open Spotify',
+            'Start playing something in Spotify, then come back to MusicSwipe.',
+            [{ text: 'OK' }],
+          );
+        }
         setErrorMessage('Could not load playlist. Please try again.');
         setPhase('error');
       }

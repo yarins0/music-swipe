@@ -2,6 +2,7 @@ import type { MusicPlatformAdapter, Playlist, Track, AdapterCapabilities } from 
 import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '../interface';
 import { spotifyFetch, type SpotifyAuthContext } from './spotifyFetch';
 import { mapSpotifyPlaylist, mapSpotifyTrack, type SpotifyPlaylistItem, type SpotifyTrackItem } from './mappers';
+import { openPlatformDeepLink } from '../../deeplink/PlatformDeepLink';
 
 interface SpotifyPaginatedResponse<T> {
   items: T[];
@@ -291,7 +292,8 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     return data.id;
   }
 
-  async openPlatformDeepLink(_uri: string): Promise<void> {
-    // Phase 5 stub — wired into architecture now, implemented later
+  async openPlatformDeepLink(uri: string): Promise<void> {
+    console.log('[SpotifyAdapter] NO_ACTIVE_DEVICE — triggering deep link:', uri);
+    await openPlatformDeepLink(uri);
   }
 }

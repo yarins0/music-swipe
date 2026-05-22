@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -16,7 +17,9 @@ import type { TrackPlayer } from '@/player/TrackPlayer';
 import type { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { SessionTracker } from '@/services/SessionTracker';
 import type { BackendSync } from '@/services/BackendSync';
+import { PlatformError, PlatformErrorCode } from '@/adapters/interface';
 import type { Playlist } from '@/adapters/interface';
+import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import type { SwipeDirection } from '@/swipe/useSwipeGesture';
 
 interface SwipeEngineProps {
@@ -94,8 +97,17 @@ export function SwipeEngine({
       try {
         const result = await trackPlayer.play(track);
         setIsSeekEnabled(result.strategy === 'adapter');
-      } catch {
+      } catch (err) {
         setIsSeekEnabled(false);
+        if (err instanceof PlatformError && err.code === PlatformErrorCode.NO_ACTIVE_DEVICE) {
+          console.log('[SwipeEngine] NO_ACTIVE_DEVICE during play — opening Spotify deep link');
+          void openPlatformDeepLink('spotify:');
+          Alert.alert(
+            'Open Spotify',
+            'Start playing something in Spotify, then come back to MusicSwipe.',
+            [{ text: 'OK' }],
+          );
+        }
       }
     },
     [queue, trackPlayer],
