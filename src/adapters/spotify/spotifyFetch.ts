@@ -11,6 +11,11 @@ export interface SpotifyAuthContext {
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_API_BASE = 'https://api.spotify.com/v1';
 const PROACTIVE_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+const MAX_RATE_LIMIT_RETRIES = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
   const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID ?? '';
@@ -73,34 +78,49 @@ export async function spotifyFetch<T = unknown>(
       },
     });
 
-  let response = await makeRequest(currentToken);
+  for (let attempt = 0; attempt < MAX_RATE_LIMIT_RETRIES; attempt++) {
+    let response = await makeRequest(currentToken);
 
-  // Reactive fallback: if the call returns 401, refresh once and retry
-  if (response.status === 401) {
-    let retryToken: string;
-    try {
-      retryToken = await refreshSpotifyToken(auth);
-    } catch {
-      // refreshSpotifyToken already called onAuthExpired
-      throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
-    }
-
-    response = await makeRequest(retryToken);
-
+    // Reactive fallback: if the call returns 401, refresh once and retry
     if (response.status === 401) {
-      await auth.onAuthExpired();
-      throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
+      try {
+        currentToken = await refreshSpotifyToken(auth);
+      } catch {
+        // refreshSpotifyToken already called onAuthExpired
+        throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
+      }
+
+      response = await makeRequest(currentToken);
+
+      if (response.status === 401) {
+        await auth.onAuthExpired();
+        throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
+      }
     }
+
+    // Rate limit: respect Retry-After, then retry. On the last attempt fall through to mapHttpError.
+    if (response.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES - 1) {
+      const retryAfter = response.headers.get('retry-after');
+      const parsed = retryAfter ? parseInt(retryAfter, 10) : 5;
+      // Floor at 1s (some APIs send 0 meaning "immediately", which lands in the same window).
+      // Cap at 120s so a single call can survive realistic Spotify rate-limit windows.
+      const waitSeconds = Math.max(1, Math.min(Number.isNaN(parsed) ? 5 : parsed, 120));
+      console.warn(`Spotify rate limit hit — waiting ${waitSeconds}s (retry ${attempt + 1}/${MAX_RATE_LIMIT_RETRIES})`);
+      await sleep(waitSeconds * 1000);
+      continue;
+    }
+
+    if (!response.ok) {
+      mapHttpError(response.status);
+    }
+
+    // 204 No Content — return empty object
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json() as Promise<T>;
   }
 
-  if (!response.ok) {
-    mapHttpError(response.status);
-  }
-
-  // 204 No Content — return empty object
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json() as Promise<T>;
+  throw new PlatformError(PlatformErrorCode.RATE_LIMITED, 'Spotify rate limit: max retries exceeded');
 }

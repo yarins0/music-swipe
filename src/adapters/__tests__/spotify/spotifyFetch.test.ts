@@ -16,12 +16,13 @@ const buildAuth = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const makeResponse = (status: number, body: unknown = {}) =>
+const makeResponse = (status: number, body: unknown = {}, headers: Record<string, string> = {}) =>
   Promise.resolve({
     ok: status >= 200 && status < 300,
     status,
     json: () => Promise.resolve(body),
-  } as Response);
+    headers: { get: (key: string) => headers[key] ?? null },
+  } as unknown as Response);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -43,7 +44,7 @@ describe('spotifyFetch', () => {
 
     await spotifyFetch('/me', { method: 'GET' }, auth);
 
-    expect(auth.onTokenRefreshed).toHaveBeenCalledWith('new-token', expect.any(Number));
+    expect(auth.onTokenRefreshed).toHaveBeenCalledWith('new-token', expect.any(Number), undefined);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
@@ -67,7 +68,7 @@ describe('spotifyFetch', () => {
     const result = await spotifyFetch('/me', { method: 'GET' }, auth);
 
     expect(result).toEqual({ id: 'user-1' });
-    expect(auth.onTokenRefreshed).toHaveBeenCalledWith('refreshed', expect.any(Number));
+    expect(auth.onTokenRefreshed).toHaveBeenCalledWith('refreshed', expect.any(Number), undefined);
   });
 
   it('calls onAuthExpired and throws AUTH_EXPIRED on double-401', async () => {
@@ -83,12 +84,38 @@ describe('spotifyFetch', () => {
     expect(auth.onAuthExpired).toHaveBeenCalled();
   });
 
-  it('throws RATE_LIMITED on a 429 response', async () => {
-    mockFetch.mockReturnValueOnce(makeResponse(429));
+  it('throws RATE_LIMITED after exhausting all retries on 429', async () => {
+    jest.useFakeTimers();
+    mockFetch
+      .mockReturnValueOnce(makeResponse(429, {}, { 'retry-after': '1' }))
+      .mockReturnValueOnce(makeResponse(429, {}, { 'retry-after': '1' }))
+      .mockReturnValueOnce(makeResponse(429, {}, { 'retry-after': '1' }));
 
-    await expect(spotifyFetch('/me', { method: 'GET' }, buildAuth())).rejects.toMatchObject({
-      code: PlatformErrorCode.RATE_LIMITED,
-    });
+    const promise = spotifyFetch('/me', { method: 'GET' }, buildAuth());
+    // Attach the rejection handler before advancing timers — otherwise the promise
+    // rejects during runAllTimersAsync before we attach .rejects, causing an
+    // unhandled rejection warning that Jest treats as a test failure.
+    const assertion = expect(promise).rejects.toMatchObject({ code: PlatformErrorCode.RATE_LIMITED });
+    await jest.runAllTimersAsync();
+    await assertion;
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    jest.useRealTimers();
+  });
+
+  it('retries after 429 and succeeds on the next attempt', async () => {
+    jest.useFakeTimers();
+    mockFetch
+      .mockReturnValueOnce(makeResponse(429, {}, { 'retry-after': '2' }))
+      .mockReturnValueOnce(makeResponse(200, { id: 'user-1' }));
+
+    const promise = spotifyFetch('/me', { method: 'GET' }, buildAuth());
+    await jest.runAllTimersAsync();
+
+    const result = await promise;
+    expect(result).toEqual({ id: 'user-1' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
   });
 
   it('throws PERMISSION_DENIED on a 403 response', async () => {
