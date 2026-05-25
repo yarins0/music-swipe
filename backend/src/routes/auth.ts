@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { hkdfSync } from 'crypto';
 import rateLimit from 'express-rate-limit';
-import { supabase } from '../db/client';
+import { supabase, supabaseAuth } from '../db/client';
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -79,43 +79,23 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
     const deterministicEmail = `${spotifyUser.id}@music-swipe.internal`;
     const password = deriveUserPassword(spotifyUser.id);
 
-    // Check if this Spotify user has registered before
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id, supabase_id')
-      .eq('spotify_user_id', spotifyUser.id)
-      .maybeSingle();
+    // Create Supabase auth user — safe to ignore "already registered" since we upsert below.
+    // Uses supabaseAuth (auth-only client) to avoid polluting supabase's REST headers.
+    const { error: createError } = await supabaseAuth.auth.admin.createUser({
+      email: deterministicEmail,
+      password,
+      email_confirm: true,
+    });
 
-    if (!existingUser) {
-      // First-time registration: create Supabase auth user
-      const { data: authUser, error: createError } = await supabase.auth.admin.createUser({
-        email: deterministicEmail,
-        password,
-        email_confirm: true,
-      });
-
-      if (createError || !authUser.user) {
-        // User may already exist in Supabase auth but not in our users table
-        if (createError?.message?.includes('already been registered')) {
-          // Fall through to sign-in below
-        } else {
-          console.error('Supabase createUser error:', createError);
-          res.status(500).json({ error: 'Failed to create user' });
-          return;
-        }
-      } else {
-        // Insert into our users table
-        await supabase.from('users').insert({
-          supabase_id: authUser.user.id,
-          spotify_user_id: spotifyUser.id,
-          display_name: spotifyUser.display_name,
-          email: spotifyUser.email,
-        });
-      }
+    if (createError && !createError.message?.includes('already been registered')) {
+      console.error('Supabase createUser error:', createError);
+      res.status(500).json({ error: 'Failed to create user' });
+      return;
     }
 
-    // Sign in to get a session token — works for both new and returning users
-    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+    // Sign in to get the session and the canonical Supabase user UUID.
+    // Uses supabaseAuth so signInWithPassword does not update the DB client's auth state.
+    const { data: sessionData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
       email: deterministicEmail,
       password,
     });
@@ -123,6 +103,26 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
     if (signInError || !sessionData.session) {
       console.error('Supabase signIn error:', signInError);
       res.status(500).json({ error: 'Failed to create session' });
+      return;
+    }
+
+    // Upsert public.users — idempotent, handles first-time and returning users,
+    // and recovers from any prior failed inserts.
+    const { error: upsertError } = await supabase
+      .from('users')
+      .upsert(
+        {
+          supabase_id: sessionData.session.user.id,
+          spotify_user_id: spotifyUser.id,
+          display_name: spotifyUser.display_name,
+          email: spotifyUser.email,
+        },
+        { onConflict: 'supabase_id' },
+      );
+
+    if (upsertError) {
+      console.error('Supabase upsert users error:', upsertError);
+      res.status(500).json({ error: 'Failed to create user record' });
       return;
     }
 

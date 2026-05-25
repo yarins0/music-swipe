@@ -2,17 +2,19 @@ import type { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../db/client', () => ({
   supabase: {
+    from: jest.fn(),
+  },
+  supabaseAuth: {
     auth: {
       getUser: jest.fn(),
     },
-    from: jest.fn(),
   },
 }));
 
-import { supabase } from '../../db/client';
+import { supabase, supabaseAuth } from '../../db/client';
 import { requireAuth } from '../../middleware/auth';
 
-const mockGetUser = supabase.auth.getUser as jest.Mock;
+const mockGetUser = (supabaseAuth as unknown as { auth: { getUser: jest.Mock } }).auth.getUser;
 const mockFrom = supabase.from as jest.Mock;
 
 const makeReq = (authHeader?: string): Request =>

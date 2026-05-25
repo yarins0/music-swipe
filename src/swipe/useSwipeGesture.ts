@@ -49,6 +49,7 @@ export function detectSwipeDirection(
   velocityX: number,
   velocityY: number,
 ): SwipeDirection | null {
+  'worklet';
   const isUpSwipe =
     translationY < -SWIPE_THRESHOLD_Y || velocityY < -VELOCITY_THRESHOLD;
   const isRightSwipe =
@@ -115,14 +116,15 @@ export function useSwipeGesture({ onSwipe }: UseSwipeGestureOptions): UseSwipeGe
   const isAnimating = useSharedValue(false);
 
   const gesture = Gesture.Pan()
-    // Block new gesture starts while a snap animation is in progress.
-    .enabled(!isAnimating.value)
     .onUpdate((event) => {
+      if (isAnimating.value) return;
       translateX.value = event.translationX;
       translateY.value = event.translationY;
       rotation.value = (event.translationX / SCREEN_WIDTH) * 15;
     })
     .onEnd((event) => {
+      if (isAnimating.value) return;
+
       const direction = detectSwipeDirection(
         event.translationX,
         event.translationY,

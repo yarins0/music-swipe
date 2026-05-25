@@ -34,6 +34,8 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setTokens = useAuthStore((s) => s.setTokens);
+  const startAuth = useAuthStore((s) => s.startAuth);
+  const stopAuth = useAuthStore((s) => s.stopAuth);
 
   const redirectUri = AuthSession.makeRedirectUri({ scheme: 'music-swipe' });
   //console.log('REDIRECT URI:', redirectUri); 
@@ -51,6 +53,7 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
     if (!request) return;
     setError(null);
     setIsLoading(true);
+    startAuth();
 
     try {
       const result = await promptAsync();
@@ -131,6 +134,7 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setIsLoading(false);
+      stopAuth();
     }
   };
 

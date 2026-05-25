@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists, resolvePlaylistFromUrl } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
@@ -19,6 +20,7 @@ type Section = { title: string; data: Playlist[] };
 
 export default function SourcePickerScreen() {
   const router = useRouter();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -80,6 +82,9 @@ export default function SourcePickerScreen() {
 
   const ListHeader = (
     <View style={styles.header}>
+      <TouchableOpacity style={styles.logoutButton} onPress={clearAuth}>
+        <Text style={styles.logoutText}>Log out</Text>
+      </TouchableOpacity>
       <View style={styles.urlRow}>
         <TextInput
           style={styles.urlInput}
@@ -189,4 +194,6 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 15, color: '#374151', textAlign: 'center', marginBottom: 16 },
   retryButton: { backgroundColor: '#1DB954', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
   retryText: { color: '#fff', fontWeight: '600' },
+  logoutButton: { alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8, marginBottom: 8 },
+  logoutText: { color: '#6b7280', fontSize: 13 },
 });

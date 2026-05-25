@@ -58,6 +58,9 @@ export default function SwipeScreen(): React.ReactElement {
 
   // Tracks whether unmount already closed the session (prevents double-close)
   const sessionClosedRef = useRef(false);
+  // Mirrors sessionId state in a ref so the unmount cleanup always sees the latest value
+  // without needing sessionId in the cleanup effect's dependency array.
+  const sessionIdRef = useRef<string | null>(null);
 
   // -------------------------------------------------------------------------
   // Service factory — runs once after auth tokens are available
@@ -199,14 +202,16 @@ export default function SwipeScreen(): React.ReactElement {
     const fetchQueue = async (): Promise<void> => {
       try {
         const adapter = adapterRef.current!;
-        const storedIndex = useSwipeStore.getState().currentIndex;
-        const isResuming = useSwipeStore.getState().sessionId !== null;
+        const store = useSwipeStore.getState();
+        const storedIndex = store.currentIndex;
+        const isResuming =
+          store.sessionId !== null && store.sourcePlaylistId === playlistId;
 
         // Fetch all tracks — paginate if needed (simple single-page fetch for now)
         const { tracks } = await adapter.getPlaylistTracks(playlistId, 0, 100);
 
-        // On resume, slice from currentIndex so already-decided tracks are skipped
-        const queueTracks = isResuming ? tracks.slice(storedIndex) : tracks;
+        const sliced = isResuming ? tracks.slice(storedIndex) : tracks;
+        const queueTracks = sliced.length > 0 ? sliced : tracks;
 
         // Also fetch available playlists for the destination editor
         const playlists = await adapter.getUserPlaylists();
@@ -243,7 +248,8 @@ export default function SwipeScreen(): React.ReactElement {
     const openOrResume = async (): Promise<void> => {
       try {
         const store = useSwipeStore.getState();
-        const isResuming = store.sessionId !== null;
+        const isResuming =
+          store.sessionId !== null && store.sourcePlaylistId === playlistId;
 
         let sid: string;
         if (isResuming) {
@@ -288,21 +294,30 @@ export default function SwipeScreen(): React.ReactElement {
     return () => sub.remove();
   }, []);
 
+  // Keep the ref in sync so the unmount cleanup always has the latest sessionId.
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
   // -------------------------------------------------------------------------
   // Unmount: close session + clear store (unless session-end screen took ownership)
   // -------------------------------------------------------------------------
+  // Empty deps — intentionally runs only on unmount. sessionIdRef gives the cleanup
+  // access to the latest sessionId without putting sessionId in the deps array,
+  // which would fire this cleanup on every sessionId transition (including the
+  // null → realId transition after initSession, which would wipe the queue).
   useEffect(() => {
     return () => {
-      if (!sessionClosedRef.current && sessionId && sessionTrackerRef.current) {
+      if (!sessionClosedRef.current && sessionIdRef.current && sessionTrackerRef.current) {
         sessionClosedRef.current = true;
-        sessionTrackerRef.current.closeSession(sessionId);
+        sessionTrackerRef.current.closeSession(sessionIdRef.current);
       }
-      // Skip clearSession when navigating to session-end — that screen owns the deferred clear
       if (!navigatedToSessionEndRef.current) {
         clearSession();
       }
     };
-  }, [sessionId, clearSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // -------------------------------------------------------------------------
   // Session end callback (queue exhausted) — navigate to session-end screen.

@@ -12,6 +12,7 @@ const KEYS = {
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticating: boolean;
   accessToken: string | null;
   refreshToken: string | null;
   expiresAt: number | null;
@@ -21,6 +22,8 @@ interface AuthState {
 
 interface AuthActions {
   initialize: () => Promise<void>;
+  startAuth: () => void;
+  stopAuth: () => void;
   setTokens: (tokens: {
     accessToken: string;
     refreshToken: string;
@@ -35,11 +38,15 @@ interface AuthActions {
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   isAuthenticated: false,
   isLoading: true,
+  isAuthenticating: false,
   accessToken: null,
   refreshToken: null,
   expiresAt: null,
   supabaseToken: null,
   userId: null,
+
+  startAuth: () => set({ isAuthenticating: true }),
+  stopAuth: () => set({ isAuthenticating: false }),
 
   initialize: async () => {
     try {

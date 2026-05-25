@@ -4,17 +4,19 @@ import request from 'supertest';
 // Mock the db client before any module that imports it is loaded
 jest.mock('../db/client', () => ({
   supabase: {
+    from: jest.fn(),
+  },
+  supabaseAuth: {
     auth: {
       getUser: jest.fn(),
     },
-    from: jest.fn(),
   },
 }));
 
 import swipesRouter from '../routes/swipes';
-import { supabase } from '../db/client';
+import { supabase, supabaseAuth } from '../db/client';
 
-const mockGetUser = supabase.auth.getUser as jest.Mock;
+const mockGetUser = (supabaseAuth as unknown as { auth: { getUser: jest.Mock } }).auth.getUser;
 const mockFrom = supabase.from as jest.Mock;
 
 function buildApp(): express.Application {
