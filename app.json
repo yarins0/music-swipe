@@ -13,15 +13,29 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.yourcompany.musicswipe",
-      "supportsTablet": false
+      "bundleIdentifier": "com.musicswipe.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["spotify"]
+      }
     },
     "android": {
-      "package": "com.yourcompany.musicswipe",
+      "package": "com.musicswipe.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "android.intent.action.VIEW",
+          "data": [
+            {
+              "scheme": "music-swipe"
+            }
+          ],
+          "category": ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
@@ -34,7 +48,7 @@
     },
     "extra": {
       "spotifyClientId": "",
-      "backendUrl": "http://localhost:3000"
+      "backendUrl": "https://api.musicswipe.app"
     }
   }
 }
