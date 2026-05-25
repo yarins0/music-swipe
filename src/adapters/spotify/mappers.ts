@@ -20,6 +20,7 @@ interface SpotifyTrackObject {
   id: string;
   uri: string;
   name: string;
+  type: string;
   artists: SpotifyArtist[];
   album: SpotifyAlbum;
   duration_ms: number;

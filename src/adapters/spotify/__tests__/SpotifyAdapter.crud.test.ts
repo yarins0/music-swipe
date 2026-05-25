@@ -29,6 +29,7 @@ const makeTrackItem = (id: string) => ({
     id,
     uri: `spotify:track:${id}`,
     name: `Track ${id}`,
+    type: 'track',
     artists: [{ id: 'a1', name: 'Artist One' }],
     album: { name: 'Album', images: [{ url: 'http://art.test', height: 300, width: 300 }] },
     duration_ms: 180000,
@@ -218,7 +219,7 @@ describe('SpotifyAdapter — CRUD', () => {
     const [endpoint, options] = mockSpotifyFetch.mock.calls[1];
     expect(endpoint).toBe('/users/user-123/playlists');
     expect(options.method).toBe('POST');
-    expect(JSON.parse(options.body as string)).toEqual({ name: 'My New Playlist', public: false });
+    expect(JSON.parse(options.body as string)).toEqual({ name: 'My New Playlist', description: 'New playlist by MusicSwipe', public: false });
   });
 
   // --- getCurrentPositionMs ---

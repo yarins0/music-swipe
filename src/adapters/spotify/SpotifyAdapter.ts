@@ -171,7 +171,12 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     );
 
     return {
-      tracks: (data?.items ?? []).filter((item) => item?.item?.id ?? item?.track?.id).map(mapSpotifyTrack),
+      tracks: (data?.items ?? [])
+        .filter((item) => {
+          const t = item.item ?? item.track;
+          return t !== null && t !== undefined && t.type === 'track' && t.id !== null;
+        })
+        .map(mapSpotifyTrack),
       total: data?.total ?? 0,
     };
   }
@@ -222,11 +227,19 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   /** Seeks to the given position (ms) within the currently playing track. */
   async seek(positionMs: number): Promise<void> {
-    await spotifyFetch(
-      `/me/player/seek?position_ms=${Math.round(positionMs)}`,
-      { method: 'PUT' },
-      this.auth,
-    );
+    try {
+      await spotifyFetch(
+        `/me/player/seek?position_ms=${Math.round(positionMs)}`,
+        { method: 'PUT' },
+        this.auth,
+      );
+    } catch (error) {
+      if (error instanceof PlatformError && error.code === PlatformErrorCode.NOT_FOUND) {
+        this.cachedDeviceId = null;
+        throw new PlatformError(PlatformErrorCode.NO_ACTIVE_DEVICE, 'No active device to seek');
+      }
+      throw error;
+    }
   }
 
   async getCurrentTrack(): Promise<Track | null> {
@@ -287,8 +300,19 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
       },
       this.auth,
     );
-    console.log(data);
-    
+
+    // Follow the newly created playlist so it appears in the user's Spotify library sidebar.
+    // Without this call the playlist exists but is invisible until the user manually finds it.
+    try {
+      await spotifyFetch(
+        `/playlists/${data.id}/followers`,
+        { method: 'PUT', body: JSON.stringify({ public: false }) },
+        this.auth,
+      );
+    } catch {
+      // Non-fatal: playlist was created; user can follow it manually from Spotify.
+    }
+
     return data.id;
   }
 

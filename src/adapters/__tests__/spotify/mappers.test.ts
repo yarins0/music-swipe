@@ -6,6 +6,7 @@ describe('mapSpotifyTrack', () => {
       id: 'track-1',
       uri: 'spotify:track:track-1',
       name: 'Test Song',
+      type: 'track',
       artists: [
         { id: 'a1', name: 'Artist One' },
         { id: 'a2', name: 'Artist Two' },
