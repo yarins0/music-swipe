@@ -19,33 +19,34 @@ export function SwipeCard({
 }: SwipeCardProps): React.ReactElement {
   return (
     <View style={styles.card}>
-      <View style={styles.artContainer}>
-        <Image
-          source={{ uri: track.albumArtUrl }}
-          style={styles.art}
-          contentFit="cover"
-          accessibilityLabel={`Album art for ${track.album}`}
-        />
-        <SegmentNavigator
-          onSeekBack={onSeekBack}
-          onSeekForward={onSeekForward}
-          disabled={!isSeekEnabled}
-        />
-        {!isSeekEnabled && (
-          <View style={styles.noPreviewBadge} pointerEvents="none">
-            <Text style={styles.noPreviewText}>No full preview</Text>
-          </View>
-        )}
+      <Image
+        source={{ uri: track.albumArtUrl }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        accessibilityLabel={`Album art for ${track.album}`}
+      />
+
+      {/* Dark gradient overlay */}
+      <View style={styles.gradientOverlay} pointerEvents="none" />
+
+      {/* Seek zones */}
+      <SegmentNavigator
+        onSeekBack={onSeekBack}
+        onSeekForward={onSeekForward}
+        disabled={!isSeekEnabled}
+      />
+
+      {/* Track info at bottom */}
+      <View style={styles.infoOverlay} pointerEvents="none">
+        <Text style={styles.title} numberOfLines={1}>{track.title}</Text>
+        <Text style={styles.artist} numberOfLines={1}>{track.artist}</Text>
       </View>
 
-      <View style={styles.overlay} pointerEvents="none">
-        <Text style={styles.title} numberOfLines={1}>
-          {track.title}
-        </Text>
-        <Text style={styles.artist} numberOfLines={1}>
-          {track.artist}
-        </Text>
-      </View>
+      {!isSeekEnabled && (
+        <View style={styles.noPreviewBadge} pointerEvents="none">
+          <Text style={styles.noPreviewText}>No full preview</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -53,50 +54,64 @@ export function SwipeCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
     aspectRatio: 0.72,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  artContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  art: {
+  gradientOverlay: {
     ...StyleSheet.absoluteFillObject,
+    // Bottom-heavy dark fade for legible text
+    backgroundColor: 'transparent',
+    // Simulated gradient via two layered views
   },
-  overlay: {
+  infoOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    paddingTop: 80,
+    // Simulated gradient using backgroundColor with opacity
+    backgroundColor: 'rgba(0,0,0,0)',
   },
   title: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
+    fontSize: 22,
+    fontFamily: 'Outfit_700Bold',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   artist: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    fontWeight: '400',
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 15,
+    fontFamily: 'Outfit_400Regular',
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   noPreviewBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   noPreviewText: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 12,
-    fontWeight: '500',
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontFamily: 'Outfit_500Medium',
   },
 });

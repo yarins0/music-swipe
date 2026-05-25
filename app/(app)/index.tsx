@@ -7,23 +7,29 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists, resolvePlaylistFromUrl } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
 import type { Playlist } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
+import { colors, spacing, radius } from '@/theme';
 
 type Section = { title: string; data: Playlist[] };
 
 export default function SourcePickerScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
 
   const [urlInput, setUrlInput] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -35,28 +41,24 @@ export default function SourcePickerScreen() {
     try {
       const adapter = createSpotifyAdapter();
       const { owned, followed } = await getUserPlaylists(adapter);
-
       const built: Section[] = [{ title: 'My Playlists', data: owned }];
-      if (followed.length > 0) {
-        built.push({ title: 'Following', data: followed });
-      }
+      if (followed.length > 0) built.push({ title: 'Following', data: followed });
       setSections(built);
     } catch (err) {
       console.error('[SourcePicker] loadPlaylists error:', err);
-      setLoadError('Failed to load playlists. Pull to retry.');
+      setLoadError('Failed to load playlists. Tap to retry.');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadPlaylists();
-  }, [loadPlaylists]);
+  useEffect(() => { loadPlaylists(); }, [loadPlaylists]);
 
-  const handleSelectPlaylist = (playlist: Playlist) => {
+  const handleNext = () => {
+    if (!selectedPlaylist) return;
     router.push({
       pathname: '/(app)/destination',
-      params: { playlistId: playlist.id, playlistName: playlist.name },
+      params: { playlistId: selectedPlaylist.id, playlistName: selectedPlaylist.name },
     });
   };
 
@@ -64,11 +66,10 @@ export default function SourcePickerScreen() {
     if (!urlInput.trim()) return;
     setUrlError(null);
     setIsResolvingUrl(true);
-
     try {
       const adapter = createSpotifyAdapter();
       const playlist = await resolvePlaylistFromUrl(urlInput, adapter);
-      handleSelectPlaylist(playlist);
+      router.push({ pathname: '/(app)/destination', params: { playlistId: playlist.id, playlistName: playlist.name } });
     } catch (err) {
       setUrlError(err instanceof Error ? err.message : 'Could not resolve playlist');
     } finally {
@@ -77,19 +78,18 @@ export default function SourcePickerScreen() {
   };
 
   const ownedPlaylists = sections.find((s) => s.title === 'My Playlists')?.data ?? [];
-  const onlyLikedSongs =
-    ownedPlaylists.length === 1 && ownedPlaylists[0]?.id === LIKED_SONGS_PLAYLIST_ID;
+  const onlyLikedSongs = ownedPlaylists.length === 1 && ownedPlaylists[0]?.id === LIKED_SONGS_PLAYLIST_ID;
 
   const ListHeader = (
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.logoutButton} onPress={clearAuth}>
-        <Text style={styles.logoutText}>Log out</Text>
-      </TouchableOpacity>
+    <View style={styles.listHeader}>
+      <Text style={styles.sectionTag}>YOUR LIBRARY</Text>
+      <Text style={styles.sectionSubtitle}>Choose a playlist to sync with BeatFlow.</Text>
+      {/* URL paste input */}
       <View style={styles.urlRow}>
         <TextInput
           style={styles.urlInput}
-          placeholder="Paste Spotify playlist URL or ID"
-          placeholderTextColor="#9ca3af"
+          placeholder="Paste Spotify playlist URL or ID…"
+          placeholderTextColor={colors.outline}
           value={urlInput}
           onChangeText={setUrlInput}
           onSubmitEditing={handleUrlSubmit}
@@ -98,7 +98,7 @@ export default function SourcePickerScreen() {
           autoCorrect={false}
         />
         {isResolvingUrl ? (
-          <ActivityIndicator style={styles.urlLoader} />
+          <ActivityIndicator style={styles.urlLoader} color={colors.primary} />
         ) : (
           <TouchableOpacity style={styles.urlButton} onPress={handleUrlSubmit}>
             <Text style={styles.urlButtonText}>Go</Text>
@@ -111,15 +111,15 @@ export default function SourcePickerScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.center, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (loadError) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { paddingTop: insets.top }]}>
         <Text style={styles.errorText}>{loadError}</Text>
         <TouchableOpacity onPress={loadPlaylists} style={styles.retryButton}>
           <Text style={styles.retryText}>Retry</Text>
@@ -129,71 +129,173 @@ export default function SourcePickerScreen() {
   }
 
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <PlaylistRow playlist={item} onPress={handleSelectPlaylist} />
-      )}
-      renderSectionHeader={({ section }) => (
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-        </View>
-      )}
-      renderSectionFooter={({ section }) =>
-        section.title === 'My Playlists' && onlyLikedSongs ? (
-          <View style={styles.nudge}>
-            <Text style={styles.nudgeText}>
-              Browse Spotify to discover playlists to follow
-            </Text>
-          </View>
-        ) : null
-      }
-      ListHeaderComponent={ListHeader}
-      stickySectionHeadersEnabled
-      style={styles.list}
-    />
+    <View style={styles.screen}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={clearAuth} accessibilityLabel="Log out">
+          <Text style={styles.headerIconText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Select Source</Text>
+        <View style={styles.headerIconBtn} />
+      </View>
+
+      {/* List */}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <PlaylistRow
+            playlist={item}
+            onPress={setSelectedPlaylist}
+            isSelected={selectedPlaylist?.id === item.id}
+          />
+        )}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionTitle}>{section.title === 'My Playlists' ? '' : section.title}</Text>
+        )}
+        renderSectionFooter={({ section }) =>
+          section.title === 'My Playlists' && onlyLikedSongs ? (
+            <Text style={styles.nudgeText}>Browse Spotify to discover playlists to follow</Text>
+          ) : null
+        }
+        ListHeaderComponent={ListHeader}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={styles.listContent}
+        style={styles.list}
+      />
+
+      {/* Footer: Next button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[styles.nextBtn, !selectedPlaylist && styles.nextBtnDisabled]}
+          onPress={handleNext}
+          disabled={!selectedPlaylist}
+        >
+          <Text style={[styles.nextBtnText, !selectedPlaylist && styles.nextBtnTextDisabled]}>
+            Next →
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: '#f9fafb' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  header: { backgroundColor: '#fff', padding: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
-  urlRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  screen: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceContainerHigh,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'Outfit_700Bold',
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  headerIconBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconText: { fontSize: 20, color: colors.primary },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: spacing.md, paddingBottom: 16 },
+  listHeader: { paddingTop: spacing.lg, paddingBottom: spacing.sm },
+  sectionTag: {
+    fontSize: 11,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.onSurfaceVariant,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Outfit_400Regular',
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+  },
+  urlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: 4,
+  },
   urlInput: {
     flex: 1,
+    height: 44,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: colors.outlineVariant,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
     fontSize: 14,
-    color: '#111',
-    backgroundColor: '#f9fafb',
+    fontFamily: 'Outfit_400Regular',
+    color: colors.onSurface,
+    backgroundColor: colors.surface,
   },
   urlButton: {
-    backgroundColor: '#1DB954',
-    paddingHorizontal: 16,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radius.lg,
   },
-  urlButtonText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  urlLoader: { marginHorizontal: 8 },
-  urlError: { color: '#e53e3e', fontSize: 13, marginTop: 6 },
-  sectionHeader: {
-    backgroundColor: '#f9fafb',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+  urlButtonText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 14 },
+  urlLoader: { marginHorizontal: spacing.sm },
+  urlError: {
+    fontSize: 12,
+    color: colors.nope,
+    fontFamily: 'Outfit_400Regular',
+    marginTop: 4,
   },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 },
-  nudge: { paddingHorizontal: 16, paddingVertical: 12 },
-  nudgeText: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
-  errorText: { fontSize: 15, color: '#374151', textAlign: 'center', marginBottom: 16 },
-  retryButton: { backgroundColor: '#1DB954', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
-  retryText: { color: '#fff', fontWeight: '600' },
-  logoutButton: { alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8, marginBottom: 8 },
-  logoutText: { color: '#6b7280', fontSize: 13 },
+  sectionTitle: {
+    fontSize: 12,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  nudgeText: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    fontFamily: 'Outfit_400Regular',
+    textAlign: 'center',
+    paddingVertical: spacing.md,
+  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: colors.background },
+  errorText: { fontSize: 15, color: colors.onSurface, textAlign: 'center', marginBottom: spacing.md, fontFamily: 'Outfit_400Regular' },
+  retryButton: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radius.full },
+  retryText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
+  footer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceContainerHigh,
+  },
+  nextBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: radius.full,
+    alignItems: 'center',
+  },
+  nextBtnDisabled: {
+    backgroundColor: colors.surfaceContainerHigh,
+  },
+  nextBtnText: {
+    color: '#fff',
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 16,
+  },
+  nextBtnTextDisabled: {
+    color: colors.onSurfaceVariant,
+  },
 });

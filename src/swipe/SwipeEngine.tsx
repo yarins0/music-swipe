@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { colors } from '@/theme';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useSwipeStore } from '@/stores/swipeStore';
@@ -198,12 +199,13 @@ export function SwipeEngine({
   const handleUndo = useCallback((): void => {
     const record = undo();
     if (!record) return;
-    // v1: playlist removal on undo is not yet implemented — state is already reverted by undo()
-    if (record.status === 'liked' || record.status === 'super_liked') {
-      console.warn('[SwipeEngine] Undo playlist removal not yet implemented for v1');
+    if (record.status === 'liked') {
+      playlistWriter.undoWrite(record.track.id, record.destinationPlaylistIds);
+    } else if (record.status === 'super_liked') {
+      playlistWriter.undoSuperLike(record.track.id, record.destinationPlaylistIds);
     }
     resetCardRef.current();
-  }, [undo]);
+  }, [undo, playlistWriter]);
 
   const { gesture, animatedStyle, resetCard } = useSwipeGesture({
     onSwipe: handleSwipe,
@@ -252,8 +254,22 @@ export function SwipeEngine({
     );
   }
 
+  const songsLeft = queue.length - currentIndex;
+  const progressFraction = queue.length > 0 ? currentIndex / queue.length : 0;
+
   return (
     <View style={styles.container}>
+      {/* Progress section */}
+      <View style={styles.progressSection}>
+        <View style={styles.progressLabels}>
+          <Text style={styles.queueLabel}>DISCOVERY QUEUE</Text>
+          <Text style={styles.songsLeft}>{songsLeft} songs left</Text>
+        </View>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.round(progressFraction * 100)}%` }]} />
+        </View>
+      </View>
+
       {/* Card stack: next card renders behind, current card on top with gesture */}
       <View style={styles.cardStack}>
         {nextTrack && (
@@ -321,8 +337,39 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 24,
-    gap: 16,
+    gap: 12,
+    backgroundColor: colors.background,
+  },
+  progressSection: { width: '100%' },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  queueLabel: {
+    fontSize: 11,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  songsLeft: {
+    fontSize: 11,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.primary,
+  },
+  progressTrack: {
+    height: 6,
+    backgroundColor: colors.surfaceContainerHighest,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 3,
   },
   cardStack: {
     flex: 1,
@@ -341,7 +388,7 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 1,
     transform: [{ scale: 0.97 }],
-    opacity: 0.85,
+    opacity: 0.6,
   },
   destEditButton: {
     alignSelf: 'flex-end',
@@ -349,22 +396,23 @@ const styles = StyleSheet.create({
     minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 18,
     paddingHorizontal: 10,
   },
   destEditIcon: {
-    color: '#ffffff',
-    fontSize: 18,
+    color: colors.onSurfaceVariant,
+    fontSize: 16,
   },
   empty: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: colors.background,
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.onSurfaceVariant,
     fontSize: 18,
+    fontFamily: 'Outfit_400Regular',
   },
 });

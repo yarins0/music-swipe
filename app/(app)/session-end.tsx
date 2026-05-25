@@ -3,18 +3,21 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 import { useSwipeStore } from '@/stores/swipeStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
-import { SessionMosaicGrid } from '@/matches/SessionMosaicGrid';
-import type { MusicPlatformAdapter } from '@/adapters/interface';
+import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
+import { colors, spacing, radius } from '@/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
 
@@ -28,254 +31,316 @@ interface SessionStats {
 function computeOptimisticStats(
   pendingSyncSwipes: ReturnType<typeof useSwipeStore.getState>['pendingSyncSwipes'],
 ): SessionStats {
-  const likedRecords = pendingSyncSwipes.filter(
-    (r) => r.status === 'liked' || r.status === 'super_liked',
-  );
-
-  const likedCount = pendingSyncSwipes.filter((r) => r.status === 'liked').length;
-  const superLikedCount = pendingSyncSwipes.filter((r) => r.status === 'super_liked').length;
-
-  // Frequency count over first artist per track
+  const likedRecords = pendingSyncSwipes.filter((r) => r.status === 'liked' || r.status === 'super_liked');
   const artistFreq: Record<string, number> = {};
   for (const r of likedRecords) {
     const artist = r.track.artists[0] ?? r.track.artist ?? '';
-    if (artist) {
-      artistFreq[artist] = (artistFreq[artist] ?? 0) + 1;
-    }
+    if (artist) artistFreq[artist] = (artistFreq[artist] ?? 0) + 1;
   }
-
   let topArtist = '';
   let topCount = 0;
   for (const [artist, count] of Object.entries(artistFreq)) {
-    if (count > topCount) {
-      topArtist = artist;
-      topCount = count;
-    }
+    if (count > topCount) { topArtist = artist; topCount = count; }
   }
-
   return {
     swipedCount: pendingSyncSwipes.length,
-    likedCount,
-    superLikedCount,
+    likedCount: pendingSyncSwipes.filter((r) => r.status === 'liked').length,
+    superLikedCount: pendingSyncSwipes.filter((r) => r.status === 'super_liked').length,
     topArtist,
   };
 }
 
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function StatCard({ label, value, progress }: { label: string; value: number; progress: number }) {
+  return (
+    <View style={statStyles.card}>
+      <Text style={statStyles.value}>{value}</Text>
+      <Text style={statStyles.label}>{label}</Text>
+      <View style={statStyles.track}>
+        <View style={[statStyles.fill, { width: `${Math.max(4, Math.round(progress * 100))}%` }]} />
+      </View>
+    </View>
+  );
+}
+
+interface LikedTrackRowProps {
+  track: Track;
+  status: string;
+  isRemoving: boolean;
+  isRemoved: boolean;
+  onRemove: () => void;
+}
+
+function LikedTrackRow({ track, status, isRemoving, isRemoved, onRemove }: LikedTrackRowProps) {
+  if (isRemoved) return null;
+  return (
+    <View style={trackStyles.row}>
+      {track.albumArtUrl ? (
+        <Image source={{ uri: track.albumArtUrl }} style={trackStyles.art} contentFit="cover" />
+      ) : (
+        <View style={[trackStyles.art, trackStyles.artPlaceholder]} />
+      )}
+      <View style={trackStyles.info}>
+        <Text style={trackStyles.title} numberOfLines={1}>{track.title}</Text>
+        <Text style={trackStyles.artist} numberOfLines={1}>{track.artist}</Text>
+      </View>
+      <Text style={trackStyles.statusIcon}>{status === 'super_liked' ? '⭐' : '♥'}</Text>
+      <Pressable style={trackStyles.removeBtn} onPress={onRemove} disabled={isRemoving} accessibilityLabel="Remove track">
+        {isRemoving
+          ? <ActivityIndicator size="small" color={colors.primary} />
+          : <Text style={trackStyles.removeIcon}>✕</Text>}
+      </Pressable>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
+
 export default function SessionEndScreen(): React.ReactElement {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
+  const { destinationPlaylistIds } = useSessionStore();
 
   const pendingSyncSwipes = useSwipeStore((s) => s.pendingSyncSwipes);
   const clearSession = useSwipeStore((s) => s.clearSession);
 
-  const [stats, setStats] = useState<SessionStats>(() =>
-    computeOptimisticStats(pendingSyncSwipes),
-  );
-
-  const likedTracks = pendingSyncSwipes.filter(
-    (r) => r.status === 'liked' || r.status === 'super_liked',
-  );
-  const albumArtUrls = likedTracks.map((r) => r.track.albumArtUrl).filter(Boolean);
-
-  const adapterRef = useRef<MusicPlatformAdapter | null>(null);
-  const getAdapter = (): MusicPlatformAdapter => {
-    if (!adapterRef.current) {
-      adapterRef.current = createSpotifyAdapter();
-    }
-    return adapterRef.current;
-  };
-
+  const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(pendingSyncSwipes));
+  const [removedTrackIds, setRemovedTrackIds] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);
 
-  // Fetch authoritative stats from backend, update when resolved
+  const likedTracks = pendingSyncSwipes.filter((r) => r.status === 'liked' || r.status === 'super_liked');
+
+  const adapterRef = useRef<MusicPlatformAdapter | null>(null);
+  const getAdapter = (): MusicPlatformAdapter => {
+    if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
+    return adapterRef.current;
+  };
+
   useEffect(() => {
     if (!sessionId || !supabaseToken) return;
-
-    const fetchStats = async (): Promise<void> => {
+    const fetchStats = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+        const res = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${supabaseToken}` },
         });
-        if (!response.ok) return;
-
-        const data = (await response.json()) as {
-          swipe_count?: number;
-          liked_count?: number;
-          super_liked_count?: number;
-        };
-
+        if (!res.ok) return;
+        const data = (await res.json()) as { swipe_count?: number; liked_count?: number; super_liked_count?: number };
         setStats((prev) => ({
           ...prev,
           swipedCount: data.swipe_count ?? prev.swipedCount,
           likedCount: data.liked_count ?? prev.likedCount,
           superLikedCount: data.super_liked_count ?? prev.superLikedCount,
         }));
-      } catch {
-        // Keep optimistic counts on failure
-      }
+      } catch { /* keep optimistic counts */ }
     };
-
     void fetchStats();
   }, [sessionId, supabaseToken]);
 
-  // Deferred clearSession — fires on unmount as per architecture decision MEM001
-  useEffect(() => {
-    return () => {
-      clearSession();
-    };
-  }, [clearSession]);
+  useEffect(() => { return () => { clearSession(); }; }, [clearSession]);
+
+  const handleRemoveTrack = useCallback(async (trackId: string): Promise<void> => {
+    setRemovingIds((prev) => new Set([...prev, trackId]));
+    try {
+      const adapter = getAdapter();
+      for (const pid of destinationPlaylistIds) {
+        await adapter.removeFromPlaylist(pid, trackId);
+      }
+      setRemovedTrackIds((prev) => new Set([...prev, trackId]));
+    } catch {
+      Alert.alert('Error', 'Could not remove track. Please try manually.');
+    } finally {
+      setRemovingIds((prev) => { const next = new Set(prev); next.delete(trackId); return next; });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destinationPlaylistIds]);
 
   const handleSaveAsPlaylist = useCallback(async (): Promise<void> => {
     if (isSaving || savedPlaylistId) return;
     setIsSaving(true);
-
     try {
       const adapter = getAdapter();
-      const playlistName = sourcePlaylistName
-        ? `MusicSwipe – ${sourcePlaylistName}`
-        : 'MusicSwipe Session';
-
+      const playlistName = sourcePlaylistName ? `MusicSwipe – ${sourcePlaylistName}` : 'MusicSwipe Session';
       const newPlaylistId = await adapter.createPlaylist(playlistName);
       setSavedPlaylistId(newPlaylistId);
-
-      // Fire-and-forget writes — must not block UI
       const writer = new PlaylistWriter(adapter);
-      for (const record of likedTracks) {
-        writer.write(record.track.id, [newPlaylistId]);
-      }
+      for (const record of likedTracks) writer.write(record.track.id, [newPlaylistId]);
     } catch (err) {
       console.warn('[SessionEnd] createPlaylist failed:', err);
       Alert.alert('Error', 'Could not create playlist. Please try again.');
     } finally {
       setIsSaving(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSaving, savedPlaylistId, sourcePlaylistName, likedTracks]);
 
-  const handleViewMatches = useCallback((): void => {
-    router.push({
-      pathname: '/(app)/matches' as const,
-      params: sessionId ? { sessionId } : {},
-    });
-  }, [router, sessionId]);
+  const handleSwipeAnother = useCallback(() => { router.replace('/(app)'); }, [router]);
 
-  const handleSwipeAnother = useCallback((): void => {
-    router.replace('/(app)');
-  }, [router]);
-
+  const addedCount = stats.likedCount + stats.superLikedCount;
+  const discardedCount = Math.max(0, stats.swipedCount - addedCount);
   const adapter = getAdapter();
-  const supportsPlaylistCreation = adapter.capabilities.supportsPlaylistCreation;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>{stats.likedCount + stats.superLikedCount} tracks discovered</Text>
-
-      <SessionMosaicGrid albumArtUrls={albumArtUrls} />
-
-      <View style={styles.statsRow}>
-        <Text style={styles.statsText}>
-          {stats.swipedCount} swiped · {stats.likedCount} liked · {stats.superLikedCount} super-liked
-        </Text>
-        {stats.topArtist ? (
-          <Text style={styles.topArtistText}>Top artist: {stats.topArtist}</Text>
-        ) : null}
+    <View style={styles.screen}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Pressable style={styles.headerIconBtn} onPress={() => router.back()} accessibilityLabel="Back">
+          <Text style={styles.headerIconText}>←</Text>
+        </Pressable>
+        <Text style={styles.headerBrand}>BeatFlow</Text>
+        <View style={styles.headerIconBtn} />
       </View>
 
-      {supportsPlaylistCreation && (
-        <Pressable
-          style={[styles.ctaButton, (isSaving || !!savedPlaylistId) && styles.ctaButtonDisabled]}
-          onPress={() => void handleSaveAsPlaylist()}
-          disabled={isSaving || !!savedPlaylistId}
-        >
-          {isSaving ? (
-            <ActivityIndicator color="#000" size="small" />
-          ) : savedPlaylistId ? (
-            <Text style={styles.ctaText}>Saved!</Text>
-          ) : (
-            <Text style={styles.ctaText}>Save as playlist</Text>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
+        {/* Celebration hero */}
+        <View style={styles.hero}>
+          <View style={styles.celebrationCircle}>
+            <Text style={styles.celebrationEmoji}>🎉</Text>
+          </View>
+          <Text style={styles.heroTitle}>Session{'\n'}Complete</Text>
+          <Text style={styles.heroSubtitle}>
+            You've successfully curated your sound. Here is the breakdown of your latest discovery flow.
+          </Text>
+        </View>
+
+        {/* Stat cards */}
+        <View style={styles.statsRow}>
+          <StatCard label="SONGS SORTED" value={stats.swipedCount} progress={1} />
+          <StatCard label="ADDED TO PLAYLISTS" value={addedCount} progress={stats.swipedCount > 0 ? addedCount / stats.swipedCount : 0} />
+          <StatCard label="DISCARDED" value={discardedCount} progress={stats.swipedCount > 0 ? discardedCount / stats.swipedCount : 0} />
+        </View>
+
+        {/* Liked tracks */}
+        {likedTracks.length > 0 && (
+          <View style={styles.tracksSection}>
+            <Text style={styles.tracksSectionTitle}>Your Liked Tracks</Text>
+            {likedTracks.map((r) => (
+              <LikedTrackRow
+                key={r.track.id}
+                track={r.track}
+                status={r.status}
+                isRemoving={removingIds.has(r.track.id)}
+                isRemoved={removedTrackIds.has(r.track.id)}
+                onRemove={() => void handleRemoveTrack(r.track.id)}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* CTAs */}
+        <View style={styles.ctas}>
+          {adapter.capabilities.supportsPlaylistCreation && (
+            <Pressable
+              style={[styles.ctaSecondary, (isSaving || !!savedPlaylistId) && styles.ctaDisabled]}
+              onPress={() => void handleSaveAsPlaylist()}
+              disabled={isSaving || !!savedPlaylistId}
+            >
+              {isSaving
+                ? <ActivityIndicator color={colors.primary} size="small" />
+                : <Text style={styles.ctaSecondaryText}>{savedPlaylistId ? 'Saved ✓' : 'Save as Playlist'}</Text>}
+            </Pressable>
           )}
-        </Pressable>
-      )}
-
-      <Pressable style={styles.secondaryButton} onPress={handleViewMatches}>
-        <Text style={styles.secondaryText}>View Matches</Text>
-      </Pressable>
-
-      <Pressable style={styles.tertiaryButton} onPress={handleSwipeAnother}>
-        <Text style={styles.tertiaryText}>Swipe another playlist</Text>
-      </Pressable>
+          <Pressable style={styles.ctaPrimary} onPress={handleSwipeAnother}>
+            <Text style={styles.ctaPrimaryText}>↺  Start New Session</Text>
+          </Pressable>
+          <Pressable style={styles.ctaGhost} onPress={handleSwipeAnother}>
+            <Text style={styles.ctaGhostText}>Done</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
+  screen: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 64,
-    paddingHorizontal: 24,
-    gap: 24,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceContainerHigh,
   },
-  heading: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.5,
+  headerBrand: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: colors.primary },
+  headerIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerIconText: { fontSize: 20, color: colors.primary },
+  scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.lg },
+  hero: { alignItems: 'center', marginBottom: spacing.xl },
+  celebrationCircle: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: spacing.lg,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  statsRow: {
-    alignItems: 'center',
-    gap: 6,
+  celebrationEmoji: { fontSize: 36 },
+  heroTitle: { fontSize: 36, fontFamily: 'Outfit_700Bold', color: colors.onSurface, textAlign: 'center', lineHeight: 42, marginBottom: spacing.md },
+  heroSubtitle: { fontSize: 14, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, textAlign: 'center', lineHeight: 22, paddingHorizontal: spacing.lg },
+  statsRow: { gap: spacing.sm, marginBottom: spacing.xl },
+  tracksSection: { marginBottom: spacing.xl },
+  tracksSectionTitle: { fontSize: 16, fontFamily: 'Outfit_700Bold', color: colors.onSurface, marginBottom: spacing.md },
+  ctas: { gap: spacing.sm },
+  ctaPrimary: {
+    backgroundColor: colors.primary, paddingVertical: 16,
+    borderRadius: radius.full, alignItems: 'center',
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
   },
-  statsText: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 15,
+  ctaPrimaryText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 16 },
+  ctaSecondary: {
+    paddingVertical: 14, borderRadius: radius.full, alignItems: 'center',
+    borderWidth: 1.5, borderColor: colors.outlineVariant,
   },
-  topArtistText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
+  ctaSecondaryText: { color: colors.onSurface, fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
+  ctaDisabled: { opacity: 0.6 },
+  ctaGhost: { paddingVertical: 12, alignItems: 'center' },
+  ctaGhostText: { color: colors.onSurfaceVariant, fontFamily: 'Outfit_500Medium', fontSize: 14 },
+});
+
+const statStyles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.surfaceContainerHigh,
   },
-  ctaButton: {
-    backgroundColor: '#1DB954',
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 50,
-    minWidth: 200,
-    alignItems: 'center',
+  value: { fontSize: 40, fontFamily: 'Outfit_700Bold', color: colors.primary, lineHeight: 48 },
+  label: { fontSize: 11, fontFamily: 'Outfit_600SemiBold', color: colors.onSurfaceVariant, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4, marginBottom: spacing.sm },
+  track: { width: '100%', height: 6, backgroundColor: colors.surfaceContainerHighest, borderRadius: 3, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
+});
+
+const trackStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: 12,
+    borderWidth: 1, borderColor: colors.surfaceContainerHigh, marginBottom: spacing.sm,
   },
-  ctaButtonDisabled: {
-    opacity: 0.6,
-  },
-  ctaText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  tertiaryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  tertiaryText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+  art: { width: 48, height: 48, borderRadius: radius.md, flexShrink: 0 },
+  artPlaceholder: { backgroundColor: colors.surfaceContainerHigh },
+  info: { flex: 1 },
+  title: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurface },
+  artist: { fontSize: 12, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, marginTop: 2 },
+  statusIcon: { fontSize: 16, marginHorizontal: 4 },
+  removeBtn: { width: 32, height: 32, borderRadius: radius.full, backgroundColor: colors.surfaceContainerHigh, justifyContent: 'center', alignItems: 'center' },
+  removeIcon: { fontSize: 12, color: colors.onSurfaceVariant, fontFamily: 'Outfit_600SemiBold' },
 });

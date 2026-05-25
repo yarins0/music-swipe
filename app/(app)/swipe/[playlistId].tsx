@@ -14,6 +14,7 @@ import type { MusicPlatformAdapter, Playlist, Track } from '@/adapters/interface
 import { PlatformError, PlatformErrorCode } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
+import { colors } from '@/theme';
 
 console.log('[swipe/[playlistId]] MODULE EVALUATED — file loaded by Metro');
 
@@ -30,8 +31,11 @@ type InitPhase =
 
 export default function SwipeScreen(): React.ReactElement {
   console.log('[swipe/[playlistId]] SwipeScreen COMPONENT RENDERING');
-  const { playlistId } = useLocalSearchParams<{ playlistId: string }>();
-  console.log('[swipe/[playlistId]] useLocalSearchParams — playlistId:', playlistId);
+  const { playlistId: rawPlaylistId } = useLocalSearchParams<{ playlistId: string }>();
+  // Expo Router may or may not URL-encode path segments containing colons.
+  // Defensive decode ensures 'spotify:collection:tracks' always matches LIKED_SONGS_PLAYLIST_ID.
+  const playlistId = rawPlaylistId ? decodeURIComponent(rawPlaylistId) : rawPlaylistId;
+  console.log('[swipe/[playlistId]] useLocalSearchParams — rawPlaylistId:', rawPlaylistId, '| decoded:', playlistId);
   const router = useRouter();
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
@@ -230,6 +234,10 @@ export default function SwipeScreen(): React.ReactElement {
             'Start playing something in Spotify, then come back to MusicSwipe.',
             [{ text: 'OK' }],
           );
+        } else if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
+          setErrorMessage('Spotify permissions need updating. Please log out and log back in to continue.');
+          setPhase('error');
+          return;
         }
         setErrorMessage('Could not load playlist. Please try again.');
         setPhase('error');
@@ -387,6 +395,7 @@ export default function SwipeScreen(): React.ReactElement {
   if (phase === 'error') {
     return (
       <View style={styles.center}>
+        <Text style={styles.brand}>BeatFlow</Text>
         <Text style={styles.errorText}>{errorMessage ?? 'An error occurred.'}</Text>
       </View>
     );
@@ -395,7 +404,8 @@ export default function SwipeScreen(): React.ReactElement {
   if (phase !== 'ready' || !sessionId) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1DB954" />
+        <Text style={styles.brand}>BeatFlow</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>{phaseLabel(phase)}</Text>
       </View>
     );
@@ -404,7 +414,8 @@ export default function SwipeScreen(): React.ReactElement {
   if (isBulkRemoving) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1DB954" />
+        <Text style={styles.brand}>BeatFlow</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Removing tracks…</Text>
       </View>
     );
@@ -440,17 +451,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: colors.background,
     gap: 16,
   },
+  brand: {
+    fontSize: 28,
+    fontFamily: 'Outfit_700Bold',
+    color: colors.primary,
+    marginBottom: 8,
+  },
   loadingText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.onSurfaceVariant,
     fontSize: 15,
+    fontFamily: 'Outfit_400Regular',
   },
   errorText: {
-    color: '#ff5c5c',
+    color: colors.nope,
     fontSize: 15,
     textAlign: 'center',
     paddingHorizontal: 32,
+    fontFamily: 'Outfit_400Regular',
   },
 });
