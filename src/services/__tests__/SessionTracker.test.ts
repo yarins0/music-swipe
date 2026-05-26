@@ -21,7 +21,7 @@ describe('SessionTracker', () => {
   let tracker: SessionTracker;
 
   beforeEach(() => {
-    tracker = new SessionTracker(BASE_URL, TOKEN);
+    tracker = new SessionTracker(BASE_URL, () => TOKEN);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 

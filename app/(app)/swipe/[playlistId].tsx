@@ -81,10 +81,12 @@ export default function SwipeScreen(): React.ReactElement {
     const adapter = createSpotifyAdapter();
     adapterRef.current = adapter;
 
+    const getToken = (): string => useAuthStore.getState().supabaseToken ?? '';
+
     trackPlayerRef.current = new TrackPlayer(adapter, setPreviewUrl);
     playlistWriterRef.current = new PlaylistWriter(adapter);
-    sessionTrackerRef.current = new SessionTracker(BACKEND_URL, supabaseToken);
-    backendSyncRef.current = new BackendSync(BACKEND_URL, supabaseToken);
+    sessionTrackerRef.current = new SessionTracker(BACKEND_URL, getToken);
+    backendSyncRef.current = new BackendSync(BACKEND_URL, getToken);
 
     return true;
   }, [supabaseToken]);
@@ -258,6 +260,28 @@ export default function SwipeScreen(): React.ReactElement {
   // Full unsliced playlist — used to enrich pending tracks with complete metadata
   const fullTracksRef = useRef<Track[]>([]);
 
+  // ---------------------------------------------------------------------------
+  // Token refresh helper — re-registers with backend using current Spotify token
+  // to obtain a fresh Supabase JWT. Called on 401 before retrying openSession.
+  // ---------------------------------------------------------------------------
+  const refreshSupabaseToken = useCallback(async (): Promise<void> => {
+    const { accessToken: spotifyToken } = useAuthStore.getState();
+    if (!spotifyToken) throw new Error('No Spotify access token available for re-authentication');
+
+    const response = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spotifyAccessToken: spotifyToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Token refresh failed: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { supabaseToken: string };
+    await useAuthStore.getState().updateSupabaseToken(data.supabaseToken);
+  }, []);
+
   useEffect(() => {
     if (phase !== 'opening_session') return;
 
@@ -272,7 +296,17 @@ export default function SwipeScreen(): React.ReactElement {
         if (isResuming) {
           sid = store.sessionId!;
         } else {
-          sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
+          try {
+            sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
+          } catch (err) {
+            // Supabase JWT expired — refresh it once and retry
+            if (err instanceof Error && err.message.includes('401')) {
+              await refreshSupabaseToken();
+              sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
+            } else {
+              throw err;
+            }
+          }
         }
 
         // Replace any incomplete pending-track stubs (title = track ID, no art) with
@@ -299,7 +333,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void openOrResume();
-  }, [phase, playlistId, destinationPlaylistIds, initSession]);
+  }, [phase, playlistId, destinationPlaylistIds, initSession, refreshSupabaseToken]);
 
   // -------------------------------------------------------------------------
   // AppState listener — flush pending swipes on foreground reconnect

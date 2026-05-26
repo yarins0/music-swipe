@@ -6,7 +6,7 @@
 export class SessionTracker {
   constructor(
     private readonly backendUrl: string,
-    private readonly token: string,
+    private readonly getToken: () => string,
   ) {}
 
   /**
@@ -20,7 +20,7 @@ export class SessionTracker {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.getToken()}`,
       },
       body: JSON.stringify({ sourcePlaylistId: playlistId }),
     });
@@ -41,7 +41,7 @@ export class SessionTracker {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.getToken()}`,
       },
       body: JSON.stringify({ endedAt: new Date().toISOString() }),
     }).catch((err: unknown) => {
@@ -78,7 +78,7 @@ export class SessionTracker {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.getToken()}`,
       },
       body: JSON.stringify(body),
     }).catch((err: unknown) => {

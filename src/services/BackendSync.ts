@@ -18,7 +18,7 @@ export class BackendSync {
 
   constructor(
     private readonly backendUrl: string,
-    private readonly token: string,
+    private readonly getToken: () => string,
   ) {}
 
   /**
@@ -67,7 +67,7 @@ export class BackendSync {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${this.getToken()}`,
       },
       body: JSON.stringify({ swipes }),
     });

@@ -30,7 +30,7 @@ describe('BackendSync', () => {
   let sync: BackendSync;
 
   beforeEach(() => {
-    sync = new BackendSync(BASE_URL, TOKEN);
+    sync = new BackendSync(BASE_URL, () => TOKEN);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 

@@ -32,6 +32,7 @@ interface AuthActions {
     userId: string;
   }) => Promise<void>;
   updateAccessToken: (accessToken: string, expiresAt: number, refreshToken?: string) => Promise<void>;
+  updateSupabaseToken: (token: string) => Promise<void>;
   clearAuth: () => Promise<void>;
 }
 
@@ -100,6 +101,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     }
     await Promise.all(writes);
     set(refreshToken ? { accessToken, expiresAt, refreshToken } : { accessToken, expiresAt });
+  },
+
+  updateSupabaseToken: async (token: string) => {
+    await SecureStore.setItemAsync(KEYS.SUPABASE_TOKEN, token);
+    set({ supabaseToken: token });
   },
 
   clearAuth: async () => {
