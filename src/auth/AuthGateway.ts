@@ -4,12 +4,14 @@ import type { SpotifyAuthContext } from '../adapters/spotify/spotifyFetch';
 import type { MusicPlatformAdapter } from '../adapters/interface';
 
 function createSpotifyAuthContext(): SpotifyAuthContext {
-  const state = useAuthStore.getState();
-
   return {
-    accessToken: state.accessToken ?? '',
-    refreshToken: state.refreshToken ?? '',
-    expiresAt: state.expiresAt ?? 0,
+    // Getter properties so spotifyFetch always reads the latest token state from the
+    // store rather than a stale snapshot. Spotify PKCE flows rotate the refresh token
+    // on every refresh; without getters, the second proactive refresh within the same
+    // session would use the old (now-revoked) refresh token and force a logout.
+    get accessToken() { return useAuthStore.getState().accessToken ?? ''; },
+    get refreshToken() { return useAuthStore.getState().refreshToken ?? ''; },
+    get expiresAt() { return useAuthStore.getState().expiresAt ?? 0; },
     onTokenRefreshed: async (newToken, newExpiresAt, newRefreshToken) => {
       await useAuthStore.getState().updateAccessToken(newToken, newExpiresAt, newRefreshToken);
     },

@@ -8,7 +8,9 @@
     "ios": "expo run:ios",
     "lint": "expo lint",
     "test": "jest --watchAll=false",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "graph": "graphify update .",
+    "graph:watch": "graphify watch ."
   },
   "dependencies": {
     "@expo-google-fonts/outfit": "0.4.3",
