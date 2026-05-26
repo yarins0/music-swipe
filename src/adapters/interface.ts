@@ -74,6 +74,8 @@ export interface MusicPlatformAdapter {
   addToPlaylist(playlistId: string, trackId: string): Promise<void>;
   removeFromPlaylist(playlistId: string, trackId: string): Promise<void>;
   saveToLibrary(trackId: string): Promise<void>;
+  removeFromLibrary(trackId: string): Promise<void>;
+  isInLibrary(trackId: string): Promise<boolean>;
   createPlaylist(name: string): Promise<string>;
 
   openPlatformDeepLink(uri: string): Promise<void>;

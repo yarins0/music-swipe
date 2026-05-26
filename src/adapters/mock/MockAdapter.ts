@@ -14,6 +14,7 @@ interface MockFixtures {
   authenticated?: boolean;
   supportsLibrarySave?: boolean;
   supportsPlaylistCreation?: boolean;
+  likedTrackIds?: Set<string>;
 }
 
 const DEFAULT_TRACKS: Track[] = [
@@ -77,6 +78,8 @@ export interface MockCalls {
   addToPlaylist: Array<{ playlistId: string; trackId: string }>;
   removeFromPlaylist: Array<{ playlistId: string; trackId: string }>;
   saveToLibrary: string[];
+  removeFromLibrary: string[];
+  isInLibrary: string[];
   createPlaylist: string[];
   openPlatformDeepLink: string[];
 }
@@ -90,12 +93,14 @@ export class MockAdapter implements MusicPlatformAdapter {
     addToPlaylist: [],
     removeFromPlaylist: [],
     saveToLibrary: [],
+    removeFromLibrary: [],
+    isInLibrary: [],
     createPlaylist: [],
     openPlatformDeepLink: [],
   };
 
   /** Directly inspectable fixture state for tests. */
-  readonly fixtures: Required<MockFixtures> & { tracks: Track[]; playlists: Playlist[] };
+  readonly fixtures: Required<MockFixtures> & { tracks: Track[]; playlists: Playlist[]; likedTrackIds: Set<string> };
 
   private lastPlayedUri: string | null = null;
   private lastSeekPositionMs: number = 0;
@@ -113,6 +118,7 @@ export class MockAdapter implements MusicPlatformAdapter {
       authenticated: overrides.authenticated ?? true,
       supportsLibrarySave,
       supportsPlaylistCreation,
+      likedTrackIds: overrides.likedTrackIds ?? new Set<string>(),
     };
 
     this.capabilities = {
@@ -200,6 +206,15 @@ export class MockAdapter implements MusicPlatformAdapter {
       );
     }
     this.calls.saveToLibrary.push(trackId);
+  }
+
+  async removeFromLibrary(trackId: string): Promise<void> {
+    this.calls.removeFromLibrary.push(trackId);
+  }
+
+  async isInLibrary(trackId: string): Promise<boolean> {
+    this.calls.isInLibrary.push(trackId);
+    return this.fixtures.likedTrackIds.has(trackId);
   }
 
   async createPlaylist(name: string): Promise<string> {

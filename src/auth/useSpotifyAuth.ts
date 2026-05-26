@@ -45,6 +45,7 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       scopes: SCOPES,
       usePKCE: true,
       redirectUri,
+      extraParams: { show_dialog: 'true' },
     },
     discovery,
   );
@@ -97,7 +98,11 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
         access_token: string;
         refresh_token: string;
         expires_in: number;
+        scope?: string;
       };
+
+      // Log granted scopes so we can confirm whether user-library-modify / user-library-read are included.
+      console.log('[useSpotifyAuth] Granted scopes:', tokenData.scope ?? '(not returned)');
 
       const expiresAt = Date.now() + tokenData.expires_in * 1000;
 

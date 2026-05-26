@@ -168,56 +168,78 @@ describe('SpotifyAdapter — CRUD', () => {
 
   // --- addToPlaylist ---
 
-  it('addToPlaylist() calls POST /playlists/:id/tracks with the correct URI', async () => {
+  it('addToPlaylist() calls POST /playlists/:id/items with the correct URI', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({});
 
     await adapter.addToPlaylist('pl-1', 'track-abc');
 
     const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
-    expect(endpoint).toBe('/playlists/pl-1/tracks');
+    expect(endpoint).toBe('/playlists/pl-1/items');
     expect(options.method).toBe('POST');
     expect(JSON.parse(options.body as string)).toEqual({ uris: ['spotify:track:track-abc'] });
   });
 
   // --- removeFromPlaylist ---
 
-  it('removeFromPlaylist() calls DELETE /playlists/:id/tracks with the correct body', async () => {
+  it('removeFromPlaylist() calls DELETE /playlists/:id/items with the correct body', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({});
 
     await adapter.removeFromPlaylist('pl-1', 'track-xyz');
 
     const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
-    expect(endpoint).toBe('/playlists/pl-1/tracks');
+    expect(endpoint).toBe('/playlists/pl-1/items');
     expect(options.method).toBe('DELETE');
     expect(JSON.parse(options.body as string)).toEqual({
-      tracks: [{ uri: 'spotify:track:track-xyz' }],
+      items: [{ uri: 'spotify:track:track-xyz' }],
     });
   });
 
   // --- saveToLibrary ---
 
-  it('saveToLibrary() calls PUT /me/tracks with the track id', async () => {
+  it('saveToLibrary() calls PUT /me/library with encoded track URI', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({});
 
     await adapter.saveToLibrary('track-save');
 
     const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
-    expect(endpoint).toBe('/me/tracks');
+    expect(endpoint).toBe('/me/library?uris=spotify%3Atrack%3Atrack-save');
     expect(options.method).toBe('PUT');
-    expect(JSON.parse(options.body as string)).toEqual({ ids: ['track-save'] });
+    expect(options.body).toBeUndefined();
+  });
+
+  it('isInLibrary() calls GET /me/library/contains with encoded track URI and returns boolean', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce([true]);
+
+    const result = await adapter.isInLibrary('track-check');
+
+    const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/library/contains?uris=spotify%3Atrack%3Atrack-check');
+    expect(options.method).toBe('GET');
+    expect(result).toBe(true);
+  });
+
+  it('removeFromLibrary() calls DELETE /me/library with encoded track URI', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({});
+
+    await adapter.removeFromLibrary('track-del');
+
+    const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/library?uris=spotify%3Atrack%3Atrack-del');
+    expect(options.method).toBe('DELETE');
+    expect(options.body).toBeUndefined();
   });
 
   // --- createPlaylist ---
 
-  it('createPlaylist() calls POST /users/:userId/playlists and returns new playlist id', async () => {
-    mockSpotifyFetch.mockResolvedValueOnce(makeMeResponse()); // getUserId
+  it('createPlaylist() calls POST /me/playlists and returns new playlist id', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({ id: 'new-pl-id', name: 'My New Playlist' });
+    mockSpotifyFetch.mockResolvedValueOnce({}); // follow call
 
     const newId = await adapter.createPlaylist('My New Playlist');
 
     expect(newId).toBe('new-pl-id');
-    const [endpoint, options] = mockSpotifyFetch.mock.calls[1];
-    expect(endpoint).toBe('/users/user-123/playlists');
+    const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/playlists');
     expect(options.method).toBe('POST');
     expect(JSON.parse(options.body as string)).toEqual({ name: 'My New Playlist', description: 'New playlist by MusicSwipe', public: false });
   });

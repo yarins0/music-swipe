@@ -48,12 +48,12 @@ async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
   return data.access_token;
 }
 
-function mapHttpError(status: number): never {
-  if (status === 401) throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
-  if (status === 403) throw new PlatformError(PlatformErrorCode.PERMISSION_DENIED);
-  if (status === 404) throw new PlatformError(PlatformErrorCode.NOT_FOUND);
-  if (status === 429) throw new PlatformError(PlatformErrorCode.RATE_LIMITED);
-  throw new PlatformError(PlatformErrorCode.UNKNOWN, `Spotify API error: ${status}`);
+function mapHttpError(status: number, body: string): never {
+  if (status === 401) throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED, body || undefined);
+  if (status === 403) throw new PlatformError(PlatformErrorCode.PERMISSION_DENIED, `Spotify 403: ${body}`);
+  if (status === 404) throw new PlatformError(PlatformErrorCode.NOT_FOUND, body || undefined);
+  if (status === 429) throw new PlatformError(PlatformErrorCode.RATE_LIMITED, body || undefined);
+  throw new PlatformError(PlatformErrorCode.UNKNOWN, `Spotify API error ${status}: ${body}`);
 }
 
 export async function spotifyFetch<T = unknown>(
@@ -111,15 +111,18 @@ export async function spotifyFetch<T = unknown>(
     }
 
     if (!response.ok) {
-      mapHttpError(response.status);
+      const body = await response.text().catch(() => '');
+      mapHttpError(response.status, body);
     }
 
-    // 204 No Content — return empty object
+    // 204 No Content or 200 with no body (e.g. PUT /me/tracks) — return empty object
     if (response.status === 204) {
       return {} as T;
     }
 
-    return response.json() as Promise<T>;
+    const text = await response.text().catch(() => '');
+    if (!text) return {} as T;
+    return JSON.parse(text) as T;
   }
 
   throw new PlatformError(PlatformErrorCode.RATE_LIMITED, 'Spotify rate limit: max retries exceeded');

@@ -21,6 +21,7 @@ const makeResponse = (status: number, body: unknown = {}, headers: Record<string
     ok: status >= 200 && status < 300,
     status,
     json: () => Promise.resolve(body),
+    text: () => Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)),
     headers: { get: (key: string) => headers[key] ?? null },
   } as unknown as Response);
 

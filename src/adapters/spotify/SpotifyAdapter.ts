@@ -159,10 +159,13 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     offset = 0,
     limit = 50,
   ): Promise<{ tracks: Track[]; total: number }> {
-    const endpoint =
-      playlistId === LIKED_SONGS_PLAYLIST_ID
-        ? `/me/tracks?offset=${offset}&limit=${limit}`
-        : `/playlists/${playlistId}/items?offset=${offset}&limit=${limit}`;
+    const isLikedSongs = playlistId === LIKED_SONGS_PLAYLIST_ID;
+    console.log(`[SpotifyAdapter] getPlaylistTracks — playlistId="${playlistId}" isLikedSongs=${isLikedSongs} LIKED_SONGS_PLAYLIST_ID="${LIKED_SONGS_PLAYLIST_ID}"`);
+    // /me/tracks accepts max 50; /playlists/{id}/items accepts up to 100
+    const effectiveLimit = isLikedSongs ? Math.min(limit, 50) : limit;
+    const endpoint = isLikedSongs
+      ? `/me/tracks?offset=${offset}&limit=${effectiveLimit}`
+      : `/playlists/${playlistId}/items?offset=${offset}&limit=${effectiveLimit}`;
 
     const data = await spotifyFetch<SpotifyPaginatedResponse<SpotifyTrackItem>>(
       endpoint,
@@ -172,7 +175,8 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
     return {
       tracks: (data?.items ?? [])
-        .filter((item) => {
+        .filter((item): item is SpotifyTrackItem => {
+          if (!item) return false;
           const t = item.item ?? item.track;
           return t !== null && t !== undefined && t.type === 'track' && t.id !== null;
         })
@@ -259,7 +263,7 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async addToPlaylist(playlistId: string, trackId: string): Promise<void> {
     await spotifyFetch(
-      `/playlists/${playlistId}/tracks`,
+      `/playlists/${playlistId}/items`,
       {
         method: 'POST',
         body: JSON.stringify({ uris: [`spotify:track:${trackId}`] }),
@@ -270,30 +274,46 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async removeFromPlaylist(playlistId: string, trackId: string): Promise<void> {
     await spotifyFetch(
-      `/playlists/${playlistId}/tracks`,
+      `/playlists/${playlistId}/items`,
       {
         method: 'DELETE',
-        body: JSON.stringify({ tracks: [{ uri: `spotify:track:${trackId}` }] }),
+        body: JSON.stringify({ items: [{ uri: `spotify:track:${trackId}` }] }),
       },
       this.auth,
     );
   }
 
   async saveToLibrary(trackId: string): Promise<void> {
+    const uri = encodeURIComponent(`spotify:track:${trackId}`);
     await spotifyFetch(
-      '/me/tracks',
-      {
-        method: 'PUT',
-        body: JSON.stringify({ ids: [trackId] }),
-      },
+      `/me/library?uris=${uri}`,
+      { method: 'PUT' },
       this.auth,
     );
   }
 
+  async removeFromLibrary(trackId: string): Promise<void> {
+    const uri = encodeURIComponent(`spotify:track:${trackId}`);
+    await spotifyFetch(
+      `/me/library?uris=${uri}`,
+      { method: 'DELETE' },
+      this.auth,
+    );
+  }
+
+  async isInLibrary(trackId: string): Promise<boolean> {
+    const uri = encodeURIComponent(`spotify:track:${trackId}`);
+    const result = await spotifyFetch<boolean[]>(
+      `/me/library/contains?uris=${uri}`,
+      { method: 'GET' },
+      this.auth,
+    );
+    return result[0] ?? false;
+  }
+
   async createPlaylist(name: string): Promise<string> {
-    const userId = await this.getUserId();
     const data = await spotifyFetch<SpotifyNewPlaylistResponse>(
-      `/users/${userId}/playlists`,
+      '/me/playlists',
       {
         method: 'POST',
         body: JSON.stringify({ name, description: 'New playlist by MusicSwipe', public: false }),

@@ -19,14 +19,68 @@ export interface PendingWrite {
 }
 
 const QUEUE_KEY = '@music-swipe/playlist-write-queue';
+const WRITTEN_PAIRS_KEY = '@music-swipe/written-pairs';
+const LIBRARY_WRITTEN_IDS_KEY = '@music-swipe/library-written-ids';
 
 export class PlaylistWriter {
   private readonly adapter: MusicPlatformAdapter;
   private readonly storage: StorageInterface;
+  private readonly writtenPairs = new Set<string>();
+  private writtenPairsLoaded = false;
+  private readonly libraryWrittenIds = new Set<string>();
+  private libraryWrittenIdsLoaded = false;
 
   constructor(adapter: MusicPlatformAdapter, storage: StorageInterface = AsyncStorageDefault) {
     this.adapter = adapter;
     this.storage = storage;
+  }
+
+  private pairKey(trackId: string, playlistId: string): string {
+    return `${trackId}::${playlistId}`;
+  }
+
+  private async ensureWrittenPairsLoaded(): Promise<void> {
+    if (this.writtenPairsLoaded) return;
+    try {
+      const raw = await this.storage.getItem(WRITTEN_PAIRS_KEY);
+      if (raw) {
+        const pairs = JSON.parse(raw) as string[];
+        for (const pair of pairs) this.writtenPairs.add(pair);
+      }
+    } catch {
+      // start fresh on parse error
+    }
+    this.writtenPairsLoaded = true;
+  }
+
+  private async persistWrittenPairs(): Promise<void> {
+    try {
+      await this.storage.setItem(WRITTEN_PAIRS_KEY, JSON.stringify([...this.writtenPairs]));
+    } catch (err) {
+      console.warn('[PlaylistWriter] persistWrittenPairs failed:', err);
+    }
+  }
+
+  private async ensureLibraryWrittenIdsLoaded(): Promise<void> {
+    if (this.libraryWrittenIdsLoaded) return;
+    try {
+      const raw = await this.storage.getItem(LIBRARY_WRITTEN_IDS_KEY);
+      if (raw) {
+        const ids = JSON.parse(raw) as string[];
+        for (const id of ids) this.libraryWrittenIds.add(id);
+      }
+    } catch {
+      // start fresh on parse error
+    }
+    this.libraryWrittenIdsLoaded = true;
+  }
+
+  private async persistLibraryWrittenIds(): Promise<void> {
+    try {
+      await this.storage.setItem(LIBRARY_WRITTEN_IDS_KEY, JSON.stringify([...this.libraryWrittenIds]));
+    } catch (err) {
+      console.warn('[PlaylistWriter] persistLibraryWrittenIds failed:', err);
+    }
   }
 
   // Reads the persisted queue; returns an empty array on parse error or absence.
@@ -93,8 +147,15 @@ export class PlaylistWriter {
   // Fires addToPlaylist for each destination in parallel — fire-and-forget (no await at call site).
   // Persists each entry to AsyncStorage before the network call so that a crash
   // between write() and the API response can be recovered via drainStoredQueue.
+  // Skips destinations where the track was already successfully written (cross-session deduplication).
   write(trackId: string, destinationIds: string[]): void {
     const writes = destinationIds.map(async (playlistId) => {
+      await this.ensureWrittenPairsLoaded();
+
+      if (this.writtenPairs.has(this.pairKey(trackId, playlistId))) {
+        return;
+      }
+
       // 1. Add to durable queue before attempting the network call.
       const queue = await this.readQueue();
       const alreadyQueued = queue.some(
@@ -111,8 +172,10 @@ export class PlaylistWriter {
       });
 
       if (succeeded) {
-        // 3a. Success — remove from durable queue so it is not re-attempted on next launch.
+        // 3a. Success — remove from durable queue and record so future swipes skip this pair.
         await this.removeFromQueue(trackId, playlistId);
+        this.writtenPairs.add(this.pairKey(trackId, playlistId));
+        void this.persistWrittenPairs();
       } else {
         // 3b. All retries exhausted or non-retryable error — leave entry in queue for
         //     next-launch recovery via drainStoredQueue.
@@ -126,12 +189,73 @@ export class PlaylistWriter {
     void Promise.all(writes);
   }
 
+  // Fire-and-forget removal for undo. Clears the written-pairs record so a future
+  // swipe can re-add the track if the user changes their mind.
+  undoWrite(trackId: string, destinationIds: string[]): void {
+    for (const playlistId of destinationIds) {
+      this.adapter.removeFromPlaylist(playlistId, trackId).then(() => {
+        this.writtenPairs.delete(this.pairKey(trackId, playlistId));
+        void this.persistWrittenPairs();
+      }).catch((err: unknown) => {
+        console.warn(`[PlaylistWriter] undoWrite failed for trackId=${trackId} playlistId=${playlistId}:`, err);
+      });
+    }
+  }
+
+  // Undo a super-like: removes from playlists we added to, and from library only if WE
+  // added it (i.e. it was not already liked before the super-like).
+  undoSuperLike(trackId: string, destinationIds: string[]): void {
+    this.undoWrite(trackId, destinationIds);
+    void (async () => {
+      await this.ensureLibraryWrittenIdsLoaded();
+      if (!this.libraryWrittenIds.has(trackId)) {
+        return; // Pre-existing liked song — leave it in the library
+      }
+      try {
+        await this.adapter.removeFromLibrary(trackId);
+        this.libraryWrittenIds.delete(trackId);
+        void this.persistLibraryWrittenIds();
+      } catch (err: unknown) {
+        if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
+          console.warn('[PlaylistWriter] removeFromLibrary 403 — Spotify body:', err.message);
+          return;
+        }
+        console.warn('[PlaylistWriter] removeFromLibrary failed:', err);
+      }
+    })();
+  }
+
   // Super-like: writes to all destinations AND saves to library, both fire-and-forget.
+  // Checks if the track is already liked before adding — if pre-existing, the library save
+  // still fires (Spotify reorders it to the top) but the track is not recorded as "ours to
+  // remove", so undoSuperLike will leave it in the library.
   superLike(trackId: string, destinationIds: string[]): void {
     this.write(trackId, destinationIds);
-    this.adapter.saveToLibrary(trackId).catch((error: unknown) => {
-      console.warn('[PlaylistWriter] saveToLibrary failed:', error);
-    });
+    void (async () => {
+      await this.ensureLibraryWrittenIdsLoaded();
+      if (this.libraryWrittenIds.has(trackId)) {
+        return; // Already added by us — skip (deduplication, same as writtenPairs for playlists)
+      }
+      let preExisting = false;
+      try {
+        preExisting = await this.adapter.isInLibrary(trackId);
+      } catch {
+        // If the check fails, treat as new — better to add than silently skip
+      }
+      try {
+        await this.adapter.saveToLibrary(trackId);
+        if (!preExisting) {
+          this.libraryWrittenIds.add(trackId);
+          void this.persistLibraryWrittenIds();
+        }
+      } catch (error: unknown) {
+        if (error instanceof PlatformError && error.code === PlatformErrorCode.PERMISSION_DENIED) {
+          console.warn('[PlaylistWriter] saveToLibrary 403 — Spotify body:', error.message);
+          return;
+        }
+        console.warn('[PlaylistWriter] saveToLibrary failed:', error);
+      }
+    })();
   }
 
   // Reads the persisted queue from AsyncStorage and retries each entry.

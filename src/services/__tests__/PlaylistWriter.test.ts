@@ -34,6 +34,8 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     addToPlaylist: jest.fn().mockResolvedValue(undefined),
     removeFromPlaylist: jest.fn().mockResolvedValue(undefined),
     saveToLibrary: jest.fn().mockResolvedValue(undefined),
+    removeFromLibrary: jest.fn().mockResolvedValue(undefined),
+    isInLibrary: jest.fn().mockResolvedValue(false),
     createPlaylist: jest.fn().mockResolvedValue('new-playlist-id'),
     openPlatformDeepLink: jest.fn().mockResolvedValue(undefined),
   };
@@ -134,6 +136,44 @@ describe('PlaylistWriter', () => {
       const queue: PendingWrite[] = raw ? (JSON.parse(raw) as PendingWrite[]) : [];
       const entry = queue.find((e) => e.trackId === 'track-1' && e.playlistId === 'playlist-a');
       expect(entry).toBeUndefined();
+    });
+
+    it('skips addToPlaylist for a (trackId, playlistId) pair already in written-pairs', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // First write — should go through
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
+
+      adapter.addToPlaylist.mockClear();
+
+      // Second write of the same pair — should be skipped
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('re-adds after undoWrite clears the pair from written-pairs', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      adapter.addToPlaylist.mockClear();
+
+      // After undo the pair is cleared — write should go through again
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
     });
 
     it('keeps entry in storage after exhausting all RATE_LIMITED retries', async () => {
@@ -245,7 +285,45 @@ describe('PlaylistWriter', () => {
       expect(adapter.addToPlaylist).toHaveBeenCalledTimes(2);
       expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
       expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-b', 'track-1');
+      expect(adapter.isInLibrary).toHaveBeenCalledWith('track-1');
       expect(adapter.saveToLibrary).toHaveBeenCalledWith('track-1');
+    });
+
+    it('skips saveToLibrary when track was already super-liked by us', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.saveToLibrary).toHaveBeenCalledTimes(1);
+
+      adapter.saveToLibrary.mockClear();
+      adapter.isInLibrary.mockClear();
+
+      // Second super-like — deduplication should skip saveToLibrary
+      writer.superLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.saveToLibrary).not.toHaveBeenCalled();
+      expect(adapter.isInLibrary).not.toHaveBeenCalled();
+    });
+
+    it('calls saveToLibrary but does not record pre-existing liked tracks', async () => {
+      const adapter = buildMockAdapter({
+        isInLibrary: jest.fn().mockResolvedValue(true),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.saveToLibrary).toHaveBeenCalledWith('track-1');
+
+      // Undo — should not remove from library because track was pre-existing
+      adapter.saveToLibrary.mockClear();
+      writer.undoSuperLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.removeFromLibrary).not.toHaveBeenCalled();
     });
 
     it('returns void synchronously (fire-and-forget)', () => {
@@ -272,6 +350,113 @@ describe('PlaylistWriter', () => {
       expect(console.warn).toHaveBeenCalledWith(
         expect.stringContaining('[PlaylistWriter]'),
         expect.anything(),
+      );
+    });
+  });
+
+  describe('undoWrite()', () => {
+    it('calls removeFromPlaylist for each destination', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.undoWrite('track-1', ['playlist-a', 'playlist-b']);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledTimes(2);
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-b', 'track-1');
+    });
+
+    it('is fire-and-forget — returns void synchronously', () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      expect(writer.undoWrite('track-1', ['playlist-a'])).toBeUndefined();
+    });
+
+    it('warns but does not throw when removeFromPlaylist fails', async () => {
+      const adapter = buildMockAdapter({
+        removeFromPlaylist: jest.fn().mockRejectedValue(new Error('remove failed')),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[PlaylistWriter]'),
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('undoSuperLike()', () => {
+    it('removes from playlists and from library when track was added by superLike', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // Super-like records the track in libraryWrittenIds
+      writer.superLike('track-1', ['playlist-a', 'playlist-b']);
+      await jest.runAllTimersAsync();
+
+      writer.undoSuperLike('track-1', ['playlist-a', 'playlist-b']);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledTimes(2);
+      expect(adapter.removeFromLibrary).toHaveBeenCalledWith('track-1');
+    });
+
+    it('removes from playlists but NOT from library when track was pre-existing in library', async () => {
+      const adapter = buildMockAdapter({
+        isInLibrary: jest.fn().mockResolvedValue(true), // already liked before super-like
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      writer.undoSuperLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+      expect(adapter.removeFromLibrary).not.toHaveBeenCalled();
+    });
+
+    it('does not call removeFromLibrary when track was never super-liked by us', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // undoSuperLike without a prior superLike — libraryWrittenIds is empty
+      writer.undoSuperLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromLibrary).not.toHaveBeenCalled();
+    });
+
+    it('warns but does not throw when removeFromLibrary returns PERMISSION_DENIED', async () => {
+      const adapter = buildMockAdapter({
+        removeFromLibrary: jest.fn().mockRejectedValue(
+          new PlatformError(PlatformErrorCode.PERMISSION_DENIED, 'Spotify 403: Forbidden'),
+        ),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      writer.undoSuperLike('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[PlaylistWriter] removeFromLibrary 403'),
+        expect.stringContaining('Spotify 403'),
       );
     });
   });
