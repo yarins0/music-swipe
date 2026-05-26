@@ -197,7 +197,7 @@ export default function SessionEndScreen(): React.ReactElement {
         <Pressable style={styles.headerIconBtn} onPress={() => router.back()} accessibilityLabel="Back">
           <Text style={styles.headerIconText}>←</Text>
         </Pressable>
-        <Text style={styles.headerBrand}>BeatFlow</Text>
+        <Text style={styles.headerBrand}>MusicSwipe</Text>
         <View style={styles.headerIconBtn} />
       </View>
 

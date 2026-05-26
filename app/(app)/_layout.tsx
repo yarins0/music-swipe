@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNavBar } from '@/components/BottomNavBar';
 
-const HIDDEN_NAV_PREFIXES = ['/swipe', '/destination', '/session-end'];
+const HIDDEN_NAV_PREFIXES = ['/destination', '/session-end'];
 
 function shouldShowNavBar(pathname: string): boolean {
   return !HIDDEN_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));

@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { colors, spacing, radius } from '@/theme';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { useMatchesStore, fetchFromBackend, type MatchRecord } from '@/matches/useMatchesStore';
 import type { MusicPlatformAdapter } from '@/adapters/interface';
+import { TabHeader } from '@/components/TabHeader';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
 
@@ -67,7 +68,6 @@ function TrackRow({ item, isRemoving, onRemove }: TrackRowProps): React.ReactEle
 
 export default function MatchesScreen(): React.ReactElement {
   const { sessionId } = useLocalSearchParams<{ sessionId?: string }>();
-  const router = useRouter();
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const { matches: zustandMatches } = useMatchesStore();
@@ -131,14 +131,6 @@ export default function MatchesScreen(): React.ReactElement {
     [],
   );
 
-  const handleBack = useCallback((): void => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(app)');
-    }
-  }, [router]);
-
   const renderItem = useCallback(
     ({ item }: { item: MatchRecord }) => (
       <TrackRow
@@ -163,13 +155,7 @@ export default function MatchesScreen(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={handleBack} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </Pressable>
-        <Text style={styles.heading}>Matches</Text>
-        <View style={styles.backButton} />
-      </View>
+      <TabHeader title="History" />
 
       <FlatList
         data={matches}
@@ -204,31 +190,6 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: 15,
     fontFamily: 'Outfit_400Regular',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  heading: {
-    color: colors.onSurface,
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    letterSpacing: -0.3,
-  },
-  backButton: {
-    width: 70,
-  },
-  backText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontFamily: 'Outfit_600SemiBold',
   },
   listContent: {
     paddingVertical: spacing.sm,

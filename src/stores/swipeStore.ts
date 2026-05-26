@@ -32,6 +32,9 @@ interface SwipeState {
 
   // Swipes not yet confirmed by the backend (flushed on reconnect)
   pendingSyncSwipes: SwipeRecord[];
+
+  // True while the user has tabbed away mid-session; prevents unmount cleanup from wiping state
+  isSuspended: boolean;
 }
 
 interface SwipeActions {
@@ -70,6 +73,12 @@ interface SwipeActions {
 
   /** Wipe all session state (called when the user exits the swipe screen). */
   clearSession: () => void;
+
+  /** Mark session as suspended so unmount cleanup skips teardown. */
+  suspendSession: () => void;
+
+  /** Clear the suspended flag when re-entering the swipe screen. */
+  resumeSession: () => void;
 }
 
 const INITIAL_STATE: SwipeState = {
@@ -81,6 +90,7 @@ const INITIAL_STATE: SwipeState = {
   undoStack: [],
   activeDestinationIds: [],
   pendingSyncSwipes: [],
+  isSuspended: false,
 };
 
 export const useSwipeStore = create<SwipeState & SwipeActions>()(
@@ -148,6 +158,10 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         })),
 
       clearSession: () => set(INITIAL_STATE),
+
+      suspendSession: () => set({ isSuspended: true }),
+
+      resumeSession: () => set({ isSuspended: false }),
     }),
     {
       name: 'swipe-store',

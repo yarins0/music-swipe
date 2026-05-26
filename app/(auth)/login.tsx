@@ -13,7 +13,7 @@ export default function LoginScreen() {
         <View style={styles.logoCircle}>
           <Text style={styles.logoIcon}>♫</Text>
         </View>
-        <Text style={styles.title}>BeatFlow</Text>
+        <Text style={styles.title}>MusicSwipe</Text>
         <Text style={styles.subtitle}>Swipe through music.{'\n'}Keep what you love.</Text>
       </View>
 

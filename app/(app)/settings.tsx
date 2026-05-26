@@ -8,10 +8,9 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { TabHeader } from '@/components/TabHeader';
 import { colors, spacing, radius } from '@/theme';
 
 const APP_VERSION = '1.0.0 (1)';
@@ -76,8 +75,6 @@ function Section({ title, children }: SectionProps): React.ReactElement {
 }
 
 export default function SettingsScreen(): React.ReactElement {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.userId);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
@@ -99,19 +96,8 @@ export default function SettingsScreen(): React.ReactElement {
   };
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.canGoBack() ? router.back() : router.replace('/(app)')}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={22} color={colors.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.backButton} />
-      </View>
+    <View style={styles.screen}>
+      <TabHeader title="Settings" />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -206,28 +192,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.primary,
-    letterSpacing: -0.3,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
   },
   scrollContent: {
     paddingHorizontal: spacing.md,

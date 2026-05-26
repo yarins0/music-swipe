@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists, resolvePlaylistFromUrl } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
+import { TabHeader } from '@/components/TabHeader';
 import type { Playlist } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
@@ -83,7 +84,7 @@ export default function SourcePickerScreen() {
   const ListHeader = (
     <View style={styles.listHeader}>
       <Text style={styles.sectionTag}>YOUR LIBRARY</Text>
-      <Text style={styles.sectionSubtitle}>Choose a playlist to sync with BeatFlow.</Text>
+      <Text style={styles.sectionSubtitle}>Choose a playlist to sync with MusicSwipe.</Text>
       {/* URL paste input */}
       <View style={styles.urlRow}>
         <TextInput
@@ -131,13 +132,7 @@ export default function SourcePickerScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={clearAuth} accessibilityLabel="Log out">
-          <Text style={styles.headerIconText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Source</Text>
-        <View style={styles.headerIconBtn} />
-      </View>
+      <TabHeader title="Playlists" />
 
       {/* List */}
       <SectionList
@@ -182,29 +177,6 @@ export default function SourcePickerScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.onSurface,
-    letterSpacing: -0.3,
-  },
-  headerIconBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerIconText: { fontSize: 20, color: colors.primary },
   list: { flex: 1 },
   listContent: { paddingHorizontal: spacing.md, paddingBottom: 16 },
   listHeader: { paddingTop: spacing.lg, paddingBottom: spacing.sm },

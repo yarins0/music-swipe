@@ -44,6 +44,11 @@ export default function SwipeScreen(): React.ReactElement {
   const swipeStore = useSwipeStore();
   const { initSession, clearSession } = swipeStore;
 
+  // Clear the suspended flag so future unmounts correctly trigger teardown
+  useEffect(() => {
+    useSwipeStore.getState().resumeSession();
+  }, []);
+
   // Service refs — stable across re-renders, never re-instantiated after mount
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
   const trackPlayerRef = useRef<TrackPlayer | null>(null);
@@ -221,7 +226,9 @@ export default function SwipeScreen(): React.ReactElement {
         const playlists = await adapter.getUserPlaylists();
         setAvailablePlaylists(playlists);
 
-        // Stash for phase 5
+        // Stash full track list (unsliced) so phase 5 can enrich pending tracks
+        // whose position may be before currentIndex and therefore not in queueTracks.
+        fullTracksRef.current = tracks;
         queueTracksRef.current = queueTracks;
         setPhase('opening_session');
       } catch (err) {
@@ -248,6 +255,8 @@ export default function SwipeScreen(): React.ReactElement {
   }, [phase, playlistId]);
 
   const queueTracksRef = useRef<Track[]>([]);
+  // Full unsliced playlist — used to enrich pending tracks with complete metadata
+  const fullTracksRef = useRef<Track[]>([]);
 
   useEffect(() => {
     if (phase !== 'opening_session') return;
@@ -266,11 +275,17 @@ export default function SwipeScreen(): React.ReactElement {
           sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
         }
 
+        // Replace any incomplete pending-track stubs (title = track ID, no art) with
+        // full metadata from the playlist fetch. Covers tracks whose position is
+        // before currentIndex and therefore absent from queueTracksRef.
+        const trackById = new Map(fullTracksRef.current.map((t) => [t.id, t]));
+        const enrichedPending = pendingTracksRef.current.map((t) => trackById.get(t.id) ?? t);
+
         initSession(
           sid,
           playlistId,
           queueTracksRef.current,
-          pendingTracksRef.current,
+          enrichedPending,
           destinationPlaylistIds,
         );
 
@@ -316,6 +331,10 @@ export default function SwipeScreen(): React.ReactElement {
   // null → realId transition after initSession, which would wipe the queue).
   useEffect(() => {
     return () => {
+      // When the user tabs away mid-session, the store's isSuspended flag is set by BottomNavBar.
+      // In that case, leave all session state intact so the resume flow picks up where it left off.
+      if (useSwipeStore.getState().isSuspended) return;
+
       if (!sessionClosedRef.current && sessionIdRef.current && sessionTrackerRef.current) {
         sessionClosedRef.current = true;
         sessionTrackerRef.current.closeSession(sessionIdRef.current);
@@ -395,7 +414,7 @@ export default function SwipeScreen(): React.ReactElement {
   if (phase === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.brand}>BeatFlow</Text>
+        <Text style={styles.brand}>MusicSwipe</Text>
         <Text style={styles.errorText}>{errorMessage ?? 'An error occurred.'}</Text>
       </View>
     );
@@ -404,7 +423,7 @@ export default function SwipeScreen(): React.ReactElement {
   if (phase !== 'ready' || !sessionId) {
     return (
       <View style={styles.center}>
-        <Text style={styles.brand}>BeatFlow</Text>
+        <Text style={styles.brand}>MusicSwipe</Text>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>{phaseLabel(phase)}</Text>
       </View>
@@ -414,7 +433,7 @@ export default function SwipeScreen(): React.ReactElement {
   if (isBulkRemoving) {
     return (
       <View style={styles.center}>
-        <Text style={styles.brand}>BeatFlow</Text>
+        <Text style={styles.brand}>MusicSwipe</Text>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Removing tracks…</Text>
       </View>

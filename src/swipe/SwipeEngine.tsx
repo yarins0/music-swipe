@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { colors } from '@/theme';
+import { TabHeader } from '@/components/TabHeader';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useSwipeStore } from '@/stores/swipeStore';
@@ -248,8 +249,11 @@ export function SwipeEngine({
 
   if (!currentTrack) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyText}>No more tracks</Text>
+      <View style={styles.screen}>
+        <TabHeader title="Discover" />
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>No more tracks</Text>
+        </View>
       </View>
     );
   }
@@ -258,7 +262,9 @@ export function SwipeEngine({
   const progressFraction = queue.length > 0 ? currentIndex / queue.length : 0;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.screen}>
+      <TabHeader title="Discover" />
+      <View style={styles.container}>
       {/* Progress section */}
       <View style={styles.progressSection}>
         <View style={styles.progressLabels}>
@@ -328,11 +334,16 @@ export function SwipeEngine({
           onEntireSession={handleEntireSession}
         />
       )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     alignItems: 'center',
@@ -340,7 +351,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
     gap: 12,
-    backgroundColor: colors.background,
   },
   progressSection: { width: '100%' },
   progressLabels: {
