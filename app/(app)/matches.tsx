@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { colors, spacing, radius } from '@/theme';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -190,44 +191,47 @@ export default function MatchesScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: colors.background,
   },
   center: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   loadingText: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.onSurfaceVariant,
     fontSize: 15,
+    fontFamily: 'Outfit_400Regular',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceContainerHigh,
   },
   heading: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
+    color: colors.onSurface,
+    fontSize: 18,
+    fontFamily: 'Outfit_700Bold',
+    letterSpacing: -0.3,
   },
   backButton: {
     width: 70,
   },
   backText: {
-    color: '#1DB954',
+    color: colors.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Outfit_600SemiBold',
   },
   listContent: {
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   emptyContainer: {
     flex: 1,
@@ -239,58 +243,61 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.onSurfaceVariant,
     fontSize: 16,
+    fontFamily: 'Outfit_400Regular',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    gap: 12,
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: colors.surfaceContainerHigh,
   },
   thumbnail: {
     width: 60,
     height: 60,
-    borderRadius: 6,
-    backgroundColor: '#2a2a2a',
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerHigh,
   },
   trackInfo: {
     flex: 1,
     gap: 4,
   },
   trackTitle: {
-    color: '#fff',
+    color: colors.onSurface,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Outfit_600SemiBold',
   },
   trackArtist: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.onSurfaceVariant,
     fontSize: 13,
+    fontFamily: 'Outfit_400Regular',
   },
   badge: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeLiked: {
-    backgroundColor: 'rgba(255,60,60,0.2)',
+    backgroundColor: 'rgba(253,41,123,0.12)',
   },
   badgeSuperLiked: {
-    backgroundColor: 'rgba(255,200,0,0.2)',
+    backgroundColor: 'rgba(245,211,0,0.15)',
   },
   badgeIcon: {
     fontSize: 16,
   },
   removeButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: radius.full,
     minWidth: 72,
     alignItems: 'center',
   },
@@ -298,8 +305,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   removeText: {
-    color: '#fff',
+    color: colors.onSurfaceVariant,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit_600SemiBold',
   },
 });
