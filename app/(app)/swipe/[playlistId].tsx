@@ -16,8 +16,6 @@ import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 import { colors } from '@/theme';
 
-console.log('[swipe/[playlistId]] MODULE EVALUATED — file loaded by Metro');
-
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
 
 type InitPhase =
@@ -30,12 +28,10 @@ type InitPhase =
   | 'error';
 
 export default function SwipeScreen(): React.ReactElement {
-  console.log('[swipe/[playlistId]] SwipeScreen COMPONENT RENDERING');
   const { playlistId: rawPlaylistId } = useLocalSearchParams<{ playlistId: string }>();
   // Expo Router may or may not URL-encode path segments containing colons.
   // Defensive decode ensures 'spotify:collection:tracks' always matches LIKED_SONGS_PLAYLIST_ID.
   const playlistId = rawPlaylistId ? decodeURIComponent(rawPlaylistId) : rawPlaylistId;
-  console.log('[swipe/[playlistId]] useLocalSearchParams — rawPlaylistId:', rawPlaylistId, '| decoded:', playlistId);
   const router = useRouter();
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
@@ -156,9 +152,18 @@ export default function SwipeScreen(): React.ReactElement {
     const fetchPending = async (): Promise<Track[]> => {
       try {
         const url = `${BACKEND_URL}/swipes?status=pending&source_playlist_id=${encodeURIComponent(playlistId)}`;
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${supabaseToken}` },
-        });
+
+        const doFetch = (token: string) =>
+          fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+        let token = useAuthStore.getState().supabaseToken ?? '';
+        let response = await doFetch(token);
+
+        if (response.status === 401) {
+          await refreshSupabaseToken();
+          token = useAuthStore.getState().supabaseToken ?? '';
+          response = await doFetch(token);
+        }
 
         if (!response.ok) {
           console.warn('[SwipeScreen] GET /swipes?status=pending failed:', response.status);
@@ -202,26 +207,28 @@ export default function SwipeScreen(): React.ReactElement {
       pendingTracksRef.current = pendingTracks;
       setPhase('fetching_queue');
     });
-  }, [phase, playlistId, supabaseToken]);
+  }, [phase, playlistId, refreshSupabaseToken]);
 
   const pendingTracksRef = useRef<Track[]>([]);
 
   useEffect(() => {
     if (phase !== 'fetching_queue') return;
 
-    // Phase 4: fetch playlist tracks from adapter; resume from currentIndex if session exists
+    // Phase 4: fetch playlist tracks from adapter; resume from absoluteIndex if session exists
     const fetchQueue = async (): Promise<void> => {
       try {
         const adapter = adapterRef.current!;
         const store = useSwipeStore.getState();
-        const storedIndex = store.currentIndex;
+        // absoluteIndex is the true playlist offset — never reset on resume, unlike currentIndex
+        const storedAbsoluteIndex = store.absoluteIndex ?? 0;
         const isResuming =
           store.sessionId !== null && store.sourcePlaylistId === playlistId;
 
         // Fetch all tracks — paginate if needed (simple single-page fetch for now)
-        const { tracks } = await adapter.getPlaylistTracks(playlistId, 0, 100);
+        const { tracks, total } = await adapter.getPlaylistTracks(playlistId, 0, 100);
+        totalTracksRef.current = total;
 
-        const sliced = isResuming ? tracks.slice(storedIndex) : tracks;
+        const sliced = isResuming ? tracks.slice(storedAbsoluteIndex) : tracks;
         const queueTracks = sliced.length > 0 ? sliced : tracks;
 
         // Also fetch available playlists for the destination editor
@@ -259,6 +266,8 @@ export default function SwipeScreen(): React.ReactElement {
   const queueTracksRef = useRef<Track[]>([]);
   // Full unsliced playlist — used to enrich pending tracks with complete metadata
   const fullTracksRef = useRef<Track[]>([]);
+  // True total track count from the API (not the loaded slice size)
+  const totalTracksRef = useRef<number>(0);
 
   // ---------------------------------------------------------------------------
   // Token refresh helper — re-registers with backend using current Spotify token
@@ -321,6 +330,7 @@ export default function SwipeScreen(): React.ReactElement {
           queueTracksRef.current,
           enrichedPending,
           destinationPlaylistIds,
+          isResuming,
         );
 
         setSessionId(sid);
@@ -482,6 +492,7 @@ export default function SwipeScreen(): React.ReactElement {
       backendSync={backendSyncRef.current!}
       sessionId={sessionId}
       availablePlaylists={availablePlaylists}
+      totalTracks={totalTracksRef.current}
       onSessionEnd={handleSessionEnd}
       onEntireSession={handleEntireSession}
     />

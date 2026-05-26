@@ -42,6 +42,8 @@ beforeEach(() => {
     sourcePlaylistId: null,
     queue: [],
     currentIndex: 0,
+    absoluteIndex: 0,
+    pendingTracksCount: 0,
     decideQueue: [],
     undoStack: [],
     activeDestinationIds: [],
@@ -83,6 +85,7 @@ describe('initSession', () => {
     useSwipeStore.setState({
       sessionId: 'old-sess',
       currentIndex: 5,
+      absoluteIndex: 5,
       undoStack: [{ track: TRACK_A, status: 'liked', destinationPlaylistIds: [], swipedAt: '' }],
       pendingSyncSwipes: [
         { track: TRACK_A, status: 'liked', destinationPlaylistIds: [], swipedAt: '' },
@@ -94,8 +97,33 @@ describe('initSession', () => {
     const state = useSwipeStore.getState();
     expect(state.sessionId).toBe('new-sess');
     expect(state.currentIndex).toBe(0);
+    expect(state.absoluteIndex).toBe(0);
     expect(state.undoStack).toHaveLength(0);
     expect(state.pendingSyncSwipes).toHaveLength(0);
+  });
+
+  it('preserves pendingSyncSwipes and absoluteIndex when isResuming=true', () => {
+    const existingSwipe: SwipeRecord = {
+      track: TRACK_A,
+      status: 'liked',
+      destinationPlaylistIds: DEST_IDS,
+      swipedAt: 'ts-1',
+    };
+    useSwipeStore.setState({
+      sessionId: 'sess-1',
+      absoluteIndex: 7,
+      pendingSyncSwipes: [existingSwipe],
+    });
+
+    useSwipeStore
+      .getState()
+      .initSession('sess-1', 'src', [TRACK_B, TRACK_C], [], DEST_IDS, true);
+
+    const state = useSwipeStore.getState();
+    expect(state.absoluteIndex).toBe(7);
+    expect(state.pendingSyncSwipes).toHaveLength(1);
+    expect(state.pendingSyncSwipes[0].swipedAt).toBe('ts-1');
+    expect(state.currentIndex).toBe(0);
   });
 });
 
@@ -159,6 +187,25 @@ describe('recordSwipe', () => {
     useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
     useSwipeStore.getState().recordSwipe(TRACK_B, 'skipped', []);
     expect(useSwipeStore.getState().pendingSyncSwipes).toHaveLength(2);
+  });
+
+  it('increments absoluteIndex for regular (non-pending) tracks', () => {
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(1);
+    useSwipeStore.getState().recordSwipe(TRACK_B, 'skipped', []);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(2);
+  });
+
+  it('does NOT increment absoluteIndex when swiping pending (decide-later) tracks', () => {
+    // Simulate 2 pending tracks prepended to the queue
+    useSwipeStore.getState().initSession('sess-1', 'src', [TRACK_C], [TRACK_A, TRACK_B], DEST_IDS);
+
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS); // pending track
+    expect(useSwipeStore.getState().absoluteIndex).toBe(0);
+    useSwipeStore.getState().recordSwipe(TRACK_B, 'liked', DEST_IDS); // pending track
+    expect(useSwipeStore.getState().absoluteIndex).toBe(0);
+    useSwipeStore.getState().recordSwipe(TRACK_C, 'liked', DEST_IDS); // regular track
+    expect(useSwipeStore.getState().absoluteIndex).toBe(1);
   });
 
   it('sets a non-empty ISO swipedAt timestamp', () => {
@@ -236,6 +283,22 @@ describe('undo', () => {
 
     useSwipeStore.getState().undo();
     expect(useSwipeStore.getState().decideQueue).toHaveLength(0);
+  });
+
+  it('decrements absoluteIndex when undoing a regular track swipe', () => {
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(1);
+    useSwipeStore.getState().undo();
+    expect(useSwipeStore.getState().absoluteIndex).toBe(0);
+  });
+
+  it('does NOT decrement absoluteIndex when undoing a pending track swipe', () => {
+    useSwipeStore.getState().initSession('sess-1', 'src', [TRACK_B], [TRACK_A], DEST_IDS);
+
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS); // pending track
+    expect(useSwipeStore.getState().absoluteIndex).toBe(0);
+    useSwipeStore.getState().undo();
+    expect(useSwipeStore.getState().absoluteIndex).toBe(0);
   });
 
   it('does not mutate decideQueue when undoing a non-pending swipe', () => {
@@ -335,6 +398,8 @@ describe('clearSession', () => {
       sourcePlaylistId: 'src',
       queue: [TRACK_A],
       currentIndex: 3,
+      absoluteIndex: 3,
+      pendingTracksCount: 1,
       decideQueue: [TRACK_B],
       undoStack: [
         { track: TRACK_A, status: 'liked', destinationPlaylistIds: [], swipedAt: 'ts' },
@@ -352,6 +417,8 @@ describe('clearSession', () => {
     expect(state.sourcePlaylistId).toBeNull();
     expect(state.queue).toHaveLength(0);
     expect(state.currentIndex).toBe(0);
+    expect(state.absoluteIndex).toBe(0);
+    expect(state.pendingTracksCount).toBe(0);
     expect(state.decideQueue).toHaveLength(0);
     expect(state.undoStack).toHaveLength(0);
     expect(state.activeDestinationIds).toHaveLength(0);
@@ -380,6 +447,8 @@ describe('persist partialize', () => {
       sourcePlaylistId: 'src',
       queue: [TRACK_A],
       currentIndex: 2,
+      absoluteIndex: 2,
+      pendingTracksCount: 0,
       decideQueue: [TRACK_B],
       undoStack: [] as SwipeRecord[],
       activeDestinationIds: ['p1'],
@@ -399,8 +468,9 @@ describe('persist partialize', () => {
 
     expect(persisted).not.toHaveProperty('queue');
     expect(persisted).not.toHaveProperty('decideQueue');
+    expect(persisted).not.toHaveProperty('currentIndex'); // currentIndex is NOT persisted
     expect(persisted).toHaveProperty('sessionId');
-    expect(persisted).toHaveProperty('currentIndex');
+    expect(persisted).toHaveProperty('absoluteIndex');    // absoluteIndex IS persisted
     expect(persisted).toHaveProperty('pendingSyncSwipes');
     expect(persisted).toHaveProperty('activeDestinationIds');
     expect(persisted).toHaveProperty('sourcePlaylistId');

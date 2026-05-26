@@ -31,6 +31,8 @@ interface SwipeEngineProps {
   backendSync: BackendSync;
   sessionId: string;
   availablePlaylists: Playlist[];
+  /** Total tracks in the source playlist (from the API, not the loaded slice). */
+  totalTracks: number;
   onSessionEnd: () => void;
   /** When provided, replaces the internal entire-session handler. */
   onEntireSession?: (added: string[], removed: string[], confirmedRemove: boolean) => void;
@@ -43,12 +45,14 @@ export function SwipeEngine({
   backendSync,
   sessionId,
   availablePlaylists,
+  totalTracks,
   onSessionEnd,
   onEntireSession: onEntireSessionProp,
 }: SwipeEngineProps): React.ReactElement {
   const {
     queue,
     currentIndex,
+    absoluteIndex,
     activeDestinationIds,
     undoStack,
     recordSwipe,
@@ -258,8 +262,10 @@ export function SwipeEngine({
     );
   }
 
-  const songsLeft = queue.length - currentIndex;
-  const progressFraction = queue.length > 0 ? currentIndex / queue.length : 0;
+  // Use absoluteIndex (total playlist tracks consumed) over the full trackCount
+  // so the bar reflects true playlist progress, not just the loaded slice.
+  const songsLeft = Math.max(0, totalTracks - absoluteIndex);
+  const progressFraction = totalTracks > 0 ? absoluteIndex / totalTracks : 0;
 
   return (
     <View style={styles.screen}>

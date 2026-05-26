@@ -21,6 +21,16 @@ interface SwipeState {
   queue: Track[];
   currentIndex: number;
 
+  // Absolute number of full-playlist tracks consumed in this session.
+  // Persisted as the resume offset so tracks.slice(absoluteIndex) always starts
+  // at the right position regardless of how many times the session is suspended.
+  // Pending (decide-later) track swipes do NOT advance this counter.
+  absoluteIndex: number;
+
+  // Number of pending (decide-later) tracks prepended to the queue at session start.
+  // Not persisted — re-set on each initSession call.
+  pendingTracksCount: number;
+
   // Decide later — tracks re-queued for a second pass within this session
   decideQueue: Track[];
 
@@ -41,6 +51,8 @@ interface SwipeActions {
   /**
    * Start or resume a session. pendingTracks (decide-later from a previous session)
    * are prepended to the queue so they are seen first.
+   * Pass isResuming=true when continuing an existing session (e.g. after tabbing away)
+   * to preserve pendingSyncSwipes (history) and absoluteIndex (playlist progress).
    */
   initSession: (
     sessionId: string,
@@ -48,11 +60,12 @@ interface SwipeActions {
     queue: Track[],
     pendingTracks: Track[],
     destinationIds: string[],
+    isResuming?: boolean,
   ) => void;
 
   /**
-   * Record a committed swipe. Updates currentIndex, undoStack, pendingSyncSwipes,
-   * and decideQueue (when status is 'pending').
+   * Record a committed swipe. Updates currentIndex, absoluteIndex, undoStack,
+   * pendingSyncSwipes, and decideQueue (when status is 'pending').
    */
   recordSwipe: (track: Track, status: SwipeStatus, destinationIds: string[]) => void;
 
@@ -86,6 +99,8 @@ const INITIAL_STATE: SwipeState = {
   sourcePlaylistId: null,
   queue: [],
   currentIndex: 0,
+  absoluteIndex: 0,
+  pendingTracksCount: 0,
   decideQueue: [],
   undoStack: [],
   activeDestinationIds: [],
@@ -98,18 +113,24 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      initSession: (sessionId, sourcePlaylistId, queue, pendingTracks, destinationIds) =>
-        set({
+      initSession: (sessionId, sourcePlaylistId, queue, pendingTracks, destinationIds, isResuming = false) =>
+        set((state) => ({
           sessionId,
           sourcePlaylistId,
           // Decide-later tracks go to the front so the user sees them first
           queue: [...pendingTracks, ...queue],
           currentIndex: 0,
+          // On resume: keep absoluteIndex so the next suspend/resume slices correctly.
+          // On new session: reset to 0.
+          absoluteIndex: isResuming ? state.absoluteIndex : 0,
+          pendingTracksCount: pendingTracks.length,
           decideQueue: [],
           undoStack: [],
           activeDestinationIds: destinationIds,
-          pendingSyncSwipes: [],
-        }),
+          // On resume: preserve history so the History tab stays populated.
+          // On new session: start fresh.
+          pendingSyncSwipes: isResuming ? state.pendingSyncSwipes : [],
+        })),
 
       recordSwipe: (track, status, destinationIds) => {
         const record: SwipeRecord = {
@@ -120,6 +141,12 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         };
         set((state) => ({
           currentIndex: state.currentIndex + 1,
+          // Only advance the playlist offset when consuming a regular (non-pending) track.
+          // Queue positions 0..(pendingTracksCount-1) are pending tracks.
+          absoluteIndex:
+            state.currentIndex < state.pendingTracksCount
+              ? state.absoluteIndex
+              : state.absoluteIndex + 1,
           undoStack: [record], // keep only the last 1 swipe for undo
           pendingSyncSwipes: [...state.pendingSyncSwipes, record],
           decideQueue:
@@ -135,6 +162,12 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         const [last] = undoStack;
         set((state) => ({
           currentIndex: Math.max(0, state.currentIndex - 1),
+          // The undone swipe was at queue position (currentIndex - 1).
+          // Only reverse absoluteIndex when that position was a regular track.
+          absoluteIndex:
+            state.currentIndex > state.pendingTracksCount
+              ? state.absoluteIndex - 1
+              : state.absoluteIndex,
           undoStack: [],
           pendingSyncSwipes: state.pendingSyncSwipes.filter(
             (s) => s.swipedAt !== last.swipedAt,
@@ -166,12 +199,13 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
     {
       name: 'swipe-store',
       storage: createJSONStorage(() => AsyncStorage),
-      // Queue and decideQueue are excluded: tracks are large and re-fetched on resume.
-      // The currentIndex lets the queue re-fetch start at the right position.
+      // queue, decideQueue, and pendingTracksCount are excluded: tracks are large and
+      // re-fetched on resume. absoluteIndex replaces currentIndex as the resume offset —
+      // it is an absolute playlist position, never reset on resume.
       partialize: (state) => ({
         sessionId: state.sessionId,
         sourcePlaylistId: state.sourcePlaylistId,
-        currentIndex: state.currentIndex,
+        absoluteIndex: state.absoluteIndex,
         activeDestinationIds: state.activeDestinationIds,
         pendingSyncSwipes: state.pendingSyncSwipes,
       }),
