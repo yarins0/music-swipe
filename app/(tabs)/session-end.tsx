@@ -72,9 +72,11 @@ interface LikedTrackRowProps {
   status: string;
   isRemoving: boolean;
   onRemove: () => void;
+  /** When true, the remove/cancel button is hidden (used in filter mode). */
+  hideRemove?: boolean;
 }
 
-function LikedTrackRow({ track, status, isRemoving, onRemove }: LikedTrackRowProps) {
+function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false }: LikedTrackRowProps) {
   return (
     <View style={trackStyles.row}>
       {track.albumArtUrl ? (
@@ -87,14 +89,16 @@ function LikedTrackRow({ track, status, isRemoving, onRemove }: LikedTrackRowPro
         <Text style={trackStyles.artist} numberOfLines={1}>{track.artist}</Text>
       </View>
       <Text style={trackStyles.statusIcon}>{status === 'super_liked' ? '⭐' : '♥'}</Text>
-      {isRemoving ? (
-        <View style={trackStyles.removeBtn}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      ) : (
-        <Pressable style={trackStyles.removeBtn} onPress={onRemove} accessibilityLabel="Remove track">
-          <Text style={trackStyles.removeBtnText}>Cancel</Text>
-        </Pressable>
+      {!hideRemove && (
+        isRemoving ? (
+          <View style={trackStyles.removeBtn}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : (
+          <Pressable style={trackStyles.removeBtn} onPress={onRemove} accessibilityLabel="Remove track">
+            <Text style={trackStyles.removeBtnText}>Cancel</Text>
+          </Pressable>
+        )
       )}
     </View>
   );
@@ -111,6 +115,7 @@ export default function SessionEndScreen(): React.ReactElement {
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
+  const isFilterMode = useSessionStore((s) => s.isFilterMode);
   const { destinationPlaylistIds } = useSessionStore();
 
   const pendingSyncSwipes = useSwipeStore((s) => s.pendingSyncSwipes);
@@ -199,7 +204,7 @@ export default function SessionEndScreen(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSaving, savedPlaylistId, sourcePlaylistName, likedTracks]);
 
-  const handleSwipeAnother = useCallback(() => { router.replace('/(app)'); }, [router]);
+  const handleSwipeAnother = useCallback(() => { router.replace('/(tabs)'); }, [router]);
 
   const addedCount = stats.likedCount + stats.superLikedCount;
   const discardedCount = Math.max(0, stats.swipedCount - addedCount);
@@ -224,21 +229,33 @@ export default function SessionEndScreen(): React.ReactElement {
           </View>
           <Text style={styles.heroTitle}>Session{'\n'}Complete</Text>
           <Text style={styles.heroSubtitle}>
-            You've successfully curated your sound. Here is the breakdown of your latest discovery flow.
+            {isFilterMode
+              ? "You've finished filtering. Here's what you decided to keep and delete."
+              : "You've successfully curated your sound. Here is the breakdown of your latest discovery flow."}
           </Text>
         </View>
 
         {/* Stat cards */}
         <View style={styles.statsRow}>
           <StatCard label="SONGS SORTED" value={stats.swipedCount} progress={1} />
-          <StatCard label="ADDED TO PLAYLISTS" value={addedCount} progress={stats.swipedCount > 0 ? addedCount / stats.swipedCount : 0} />
-          <StatCard label="DISCARDED" value={discardedCount} progress={stats.swipedCount > 0 ? discardedCount / stats.swipedCount : 0} />
+          <StatCard
+            label={isFilterMode ? 'TRACKS KEPT' : 'ADDED TO PLAYLISTS'}
+            value={addedCount}
+            progress={stats.swipedCount > 0 ? addedCount / stats.swipedCount : 0}
+          />
+          <StatCard
+            label={isFilterMode ? 'TRACKS DELETED' : 'DISCARDED'}
+            value={discardedCount}
+            progress={stats.swipedCount > 0 ? discardedCount / stats.swipedCount : 0}
+          />
         </View>
 
-        {/* Liked tracks */}
+        {/* Liked tracks (or "Tracks You Kept" in filter mode) */}
         {likedTracks.length > 0 && (
           <View style={styles.tracksSection}>
-            <Text style={styles.tracksSectionTitle}>Your Liked Tracks</Text>
+            <Text style={styles.tracksSectionTitle}>
+              {isFilterMode ? 'Tracks You Kept' : 'Your Liked Tracks'}
+            </Text>
             {likedTracks.map((r) => (
               <LikedTrackRow
                 key={r.track.id}
@@ -246,6 +263,9 @@ export default function SessionEndScreen(): React.ReactElement {
                 status={r.status}
                 isRemoving={removingIds.has(r.track.id)}
                 onRemove={() => void handleRemoveTrack(r.track.id)}
+                // In filter mode, hide the remove button — re-deleting a kept track
+                // from the session-end screen is too confusing given the inverted semantics.
+                hideRemove={isFilterMode}
               />
             ))}
           </View>
@@ -253,7 +273,8 @@ export default function SessionEndScreen(): React.ReactElement {
 
         {/* CTAs */}
         <View style={styles.ctas}>
-          {adapter.capabilities.supportsPlaylistCreation && (
+          {/* Save as Playlist is only meaningful in normal mode — in filter mode the source IS the playlist. */}
+          {!isFilterMode && adapter.capabilities.supportsPlaylistCreation && (
             <Pressable
               style={[styles.ctaSecondary, (isSaving || !!savedPlaylistId) && styles.ctaDisabled]}
               onPress={() => void handleSaveAsPlaylist()}

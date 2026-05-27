@@ -14,6 +14,7 @@ import type { MusicPlatformAdapter, Playlist, Track } from '@/adapters/interface
 import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
+import { usePrefsStore } from '@/stores/prefsStore';
 import { colors } from '@/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
@@ -39,6 +40,8 @@ export default function SwipeScreen(): React.ReactElement {
 
   const swipeStore = useSwipeStore();
   const { initSession, clearSession } = swipeStore;
+  // Reactive currentIndex — used to detect when a swipe advances the queue
+  const currentIndex = useSwipeStore((s) => s.currentIndex);
 
   // Clear the suspended flag whenever this screen gains focus — covers both initial
   // mount and returning from another tab via navigate (which doesn't remount the screen).
@@ -55,9 +58,39 @@ export default function SwipeScreen(): React.ReactElement {
   const sessionTrackerRef = useRef<SessionTracker | null>(null);
   const backendSyncRef = useRef<BackendSync | null>(null);
 
+  // Auto-play previews preference — read reactively so the UI responds to settings changes
+  const autoPlayPreviews = usePrefsStore((s) => s.autoPlayPreviews);
+
   // Preview player hook (wired once TrackPlayer is constructed)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  usePreviewPlayer(previewUrl);
+  const previewPlayer = usePreviewPlayer(previewUrl);
+
+  // Auto-play: start the preview as soon as a previewUrl arrives and the pref is on.
+  // Runs whenever previewUrl is set by the TrackPlayer onPreviewRequired callback.
+  useEffect(() => {
+    if (previewUrl !== null && autoPlayPreviews) {
+      previewPlayer.play();
+    }
+  // previewPlayer is a new object each render but its .play() identity is stable;
+  // including previewUrl as the trigger is intentional — only fire when the URL changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewUrl]);
+
+  // Pause and clear the preview whenever the current track changes (i.e. on every swipe).
+  // This ensures the next card always starts with a clean slate — no leftover audio.
+  // The skip ref prevents running on the very first render (index starts at 0 before
+  // any swipe has occurred, so there is nothing to pause yet).
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    previewPlayer.pause();
+    setPreviewUrl(null);
+  // previewPlayer object identity changes each render; pause() is always safe to call.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
 
   const [phase, setPhase] = useState<InitPhase>('hydrating');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -82,7 +115,10 @@ export default function SwipeScreen(): React.ReactElement {
 
     const getToken = (): string => useAuthStore.getState().supabaseToken ?? '';
 
-    trackPlayerRef.current = new TrackPlayer(adapter, setPreviewUrl);
+    // Pass the preview callback only when auto-play previews is enabled.
+    // When the pref is off, passing null skips the entire adapter-failure preview path.
+    const previewCallback = usePrefsStore.getState().autoPlayPreviews ? setPreviewUrl : null;
+    trackPlayerRef.current = new TrackPlayer(adapter, previewCallback);
     playlistWriterRef.current = new PlaylistWriter(adapter, undefined, (trackId) => {
       useSwipeStore.getState().markLikedSongsWritten(trackId);
     });
@@ -466,7 +502,7 @@ export default function SwipeScreen(): React.ReactElement {
     }
     navigatedToSessionEndRef.current = true;
     router.replace({
-      pathname: '/(app)/session-end' as const,
+      pathname: '/(tabs)/session-end' as const,
       params: sessionId ? { sessionId } : {},
     });
   }, [sessionId, router]);
@@ -552,6 +588,7 @@ export default function SwipeScreen(): React.ReactElement {
       playlistWriter={playlistWriterRef.current!}
       sessionTracker={sessionTrackerRef.current!}
       backendSync={backendSyncRef.current!}
+      adapter={adapterRef.current!}
       sessionId={sessionId}
       availablePlaylists={availablePlaylists}
       totalTracks={totalTracksRef.current}

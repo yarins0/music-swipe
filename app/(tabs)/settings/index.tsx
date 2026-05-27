@@ -161,14 +161,6 @@ export default function SettingsScreen(): React.ReactElement {
           </TouchableOpacity>
         </Section>
 
-        {/* Music Integration */}
-        <Section title="MUSIC INTEGRATION">
-          <TouchableOpacity style={styles.reconnectButton} onPress={handleReconnect}>
-            <Ionicons name="sync" size={14} color={colors.primary} />
-            <Text style={styles.reconnectText}>Reconnect Service</Text>
-          </TouchableOpacity>
-        </Section>
-
         {/* Curation Preferences */}
         <Section title="CURATION PREFERENCES">
           <ToggleRow
@@ -204,7 +196,7 @@ export default function SettingsScreen(): React.ReactElement {
         <Section title="ABOUT">
           <LinkRow
             label="Contact"
-            onPress={() => router.push('/(app)/settings/contact')}
+            onPress={() => router.push('/(tabs)/settings/contact')}
           />
           <View style={styles.divider} />
           <LinkRow
@@ -213,9 +205,9 @@ export default function SettingsScreen(): React.ReactElement {
             onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}
           />
           <View style={styles.divider} />
-          <LinkRow label="Privacy Policy" onPress={() => router.push('/(app)/settings/privacy-policy')} />
+          <LinkRow label="Privacy Policy" onPress={() => router.push('/(tabs)/settings/privacy-policy')} />
           <View style={styles.divider} />
-          <LinkRow label="Terms of Service" onPress={() => router.push('/(app)/settings/terms-of-service')} />
+          <LinkRow label="Terms of Service" onPress={() => router.push('/(tabs)/settings/terms-of-service')} />
         </Section>
 
         {/* Branding footer */}

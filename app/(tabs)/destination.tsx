@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
+import { AppModal } from '@/components/AppModal';
 import { useSessionStore } from '@/stores/sessionStore';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
@@ -27,6 +28,7 @@ export default function DestinationPickerScreen() {
 
   const setSource = useSessionStore((s) => s.setSource);
   const setDestinations = useSessionStore((s) => s.setDestinations);
+  const setFilterMode = useSessionStore((s) => s.setFilterMode);
 
   const [ownedPlaylists, setOwnedPlaylists] = useState<Playlist[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -37,6 +39,7 @@ export default function DestinationPickerScreen() {
   const [showNewPlaylistModal, setShowNewPlaylistModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [showFilterModeModal, setShowFilterModeModal] = useState(false);
 
   useEffect(() => {
     if (playlistId && playlistName) setSource(playlistId, playlistName);
@@ -62,8 +65,19 @@ export default function DestinationPickerScreen() {
   const handleToggle = (playlist: Playlist) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(playlist.id)) next.delete(playlist.id);
-      else next.add(playlist.id);
+      if (next.has(playlist.id)) {
+        next.delete(playlist.id);
+      } else if (playlist.id === playlistId) {
+        // Selecting the source playlist enters filter mode — clear all others and lock
+        // the selection to the source only so semantics are unambiguous.
+        next.clear();
+        next.add(playlist.id);
+      } else {
+        // Selecting any other playlist while filter mode is active (source selected):
+        // deselect the source first so normal destination mode is restored.
+        next.delete(playlistId ?? '');
+        next.add(playlist.id);
+      }
       return next;
     });
   };
@@ -88,9 +102,30 @@ export default function DestinationPickerScreen() {
 
   const handleConfirm = () => {
     console.log('[destination] handleConfirm — playlistId:', playlistId, 'selectedIds:', Array.from(selectedIds));
+    if (playlistId && selectedIds.has(playlistId) && selectedIds.size === 1) {
+      // Source selected as the sole destination — require explicit confirmation before
+      // entering filter mode because left swipes are permanently destructive.
+      setShowFilterModeModal(true);
+      return;
+    }
+    setFilterMode(false);
     setDestinations(Array.from(selectedIds));
-    router.push({ pathname: '/(app)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
+    router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
   };
+
+  const handleFilterModeConfirm = () => {
+    setShowFilterModeModal(false);
+    setFilterMode(true);
+    setDestinations(Array.from(selectedIds));
+    router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
+  };
+
+  const handleFilterModeCancel = () => {
+    setShowFilterModeModal(false);
+  };
+
+  // True when the source playlist is the only selected destination — indicates filter mode intent.
+  const isFilterModeSelected = !!playlistId && selectedIds.has(playlistId) && selectedIds.size === 1;
 
   const filteredPlaylists = ownedPlaylists.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -128,6 +163,15 @@ export default function DestinationPickerScreen() {
         />
       </View>
 
+      {/* Filter Mode banner — shown when the source playlist is selected as the sole destination */}
+      {isFilterModeSelected && (
+        <View style={styles.filterModeBanner}>
+          <Text style={styles.filterModeBannerText}>
+            Filter Mode — left swipe will delete from this playlist
+          </Text>
+        </View>
+      )}
+
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -162,6 +206,19 @@ export default function DestinationPickerScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Filter Mode confirmation modal */}
+      <AppModal
+        visible={showFilterModeModal}
+        title="Enter Filter Mode?"
+        message="You've selected the source playlist as the destination. In Filter Mode, swipe LEFT to permanently delete tracks and swipe RIGHT to keep them."
+        warning="This is permanent. Deleted tracks cannot be recovered from this screen."
+        confirmLabel="Enter Filter Mode"
+        confirmDestructive
+        cancelLabel="Cancel"
+        onConfirm={handleFilterModeConfirm}
+        onCancel={handleFilterModeCancel}
+      />
 
       {/* New Playlist Modal */}
       <Modal visible={showNewPlaylistModal} transparent animationType="fade" onRequestClose={() => setShowNewPlaylistModal(false)}>
@@ -225,6 +282,21 @@ const styles = StyleSheet.create({
   },
   searchIcon: { fontSize: 18, color: colors.outline },
   searchInput: { flex: 1, fontSize: 14, fontFamily: 'Outfit_400Regular', color: colors.onSurface },
+  filterModeBanner: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: 'rgba(253,41,123,0.08)',
+    borderRadius: radius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.nope,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  filterModeBannerText: {
+    fontSize: 13,
+    fontFamily: 'Outfit_500Medium',
+    color: colors.nope,
+  },
   list: { flex: 1 },
   listContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

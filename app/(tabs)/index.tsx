@@ -68,7 +68,7 @@ export default function SourcePickerScreen() {
       return;
     }
     router.push({
-      pathname: '/(app)/destination',
+      pathname: '/(tabs)/destination',
       params: { playlistId: selectedPlaylist.id, playlistName: selectedPlaylist.name },
     });
   };
@@ -85,7 +85,7 @@ export default function SourcePickerScreen() {
         setUnownedPlaylist(playlist);
         return;
       }
-      router.push({ pathname: '/(app)/destination', params: { playlistId: playlist.id, playlistName: playlist.name } });
+      router.push({ pathname: '/(tabs)/destination', params: { playlistId: playlist.id, playlistName: playlist.name } });
     } catch (err) {
       setUrlError(err instanceof Error ? err.message : 'Could not resolve playlist');
     } finally {
