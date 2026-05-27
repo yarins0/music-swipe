@@ -123,6 +123,9 @@ interface SwipeActions {
   /** Wipe all session state (called when the user exits the swipe screen). */
   clearSession: () => void;
 
+  /** Wipe all state including likedHistory — called on logout for user isolation. */
+  resetAll: () => void;
+
   /** Mark session as suspended so unmount cleanup skips teardown. */
   suspendSession: () => void;
 
@@ -262,6 +265,8 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
       // Preserve likedHistory across session boundaries — only session-specific state is reset.
       clearSession: () =>
         set((state) => ({ ...INITIAL_STATE, likedHistory: state.likedHistory })),
+
+      resetAll: () => set({ ...INITIAL_STATE }),
 
       suspendSession: () => set({ isSuspended: true }),
 
