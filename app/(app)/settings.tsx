@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { AppModal } from '@/components/AppModal';
 import { Image } from 'expo-image';
 import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
@@ -15,8 +16,8 @@ import type { MusicPlatformAdapter, UserProfile } from '@/adapters/interface';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TabHeader } from '@/components/TabHeader';
 import { colors, spacing, radius } from '@/theme';
-
-const APP_VERSION = '1.0.0 (1)';
+import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
 
 interface SettingRowProps {
   label: string;
@@ -83,8 +84,9 @@ export default function SettingsScreen(): React.ReactElement {
   const [showAlbumArt, setShowAlbumArt] = useState(true);
   const [autoPlayPreviews, setAutoPlayPreviews] = useState(false);
   const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [spotifySync, setSpotifySync] = useState(true);
   const [weeklyReminders, setWeeklyReminders] = useState(true);
+
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   const [profile, setProfile] = useState<UserProfile & { isLoading: boolean }>({
     spotifyId: '',
@@ -106,12 +108,7 @@ export default function SettingsScreen(): React.ReactElement {
       });
   }, []);
 
-  const handleLogOut = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => void clearAuth() },
-    ]);
-  };
+  const handleLogOut = () => setLogoutModalVisible(true);
 
   const handleReconnect = () => {
     Alert.alert(
@@ -163,12 +160,6 @@ export default function SettingsScreen(): React.ReactElement {
 
         {/* Music Integration */}
         <Section title="MUSIC INTEGRATION">
-          <ToggleRow
-            label="Spotify Sync"
-            value={spotifySync}
-            onValueChange={setSpotifySync}
-          />
-          <View style={styles.divider} />
           <TouchableOpacity style={styles.reconnectButton} onPress={handleReconnect}>
             <Ionicons name="sync" size={14} color={colors.primary} />
             <Text style={styles.reconnectText}>Reconnect Service</Text>
@@ -208,7 +199,11 @@ export default function SettingsScreen(): React.ReactElement {
 
         {/* About */}
         <Section title="ABOUT">
-          <LinkRow label="Version" value={APP_VERSION} />
+          <LinkRow
+            label="Version"
+            value={Constants.expoConfig?.version ?? '—'}
+            onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}
+          />
           <View style={styles.divider} />
           <LinkRow label="Privacy Policy" onPress={handleComingSoon} />
           <View style={styles.divider} />
@@ -223,6 +218,20 @@ export default function SettingsScreen(): React.ReactElement {
           <Text style={styles.brandingText}>MUSICSWIPE</Text>
         </View>
       </ScrollView>
+
+      <AppModal
+        visible={logoutModalVisible}
+        title="Log Out"
+        message="Are you sure you want to log out of your Spotify account?"
+        warning="Your liked history will be cleared from this device."
+        confirmLabel="Log Out"
+        confirmDestructive
+        onConfirm={() => {
+          setLogoutModalVisible(false);
+          void clearAuth();
+        }}
+        onCancel={() => setLogoutModalVisible(false)}
+      />
     </View>
   );
 }
