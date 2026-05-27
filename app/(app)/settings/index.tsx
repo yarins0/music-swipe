@@ -8,9 +8,11 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AppModal } from '@/components/AppModal';
 import { Image } from 'expo-image';
 import { useAuthStore } from '@/stores/authStore';
+import { usePrefsStore } from '@/stores/prefsStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import type { MusicPlatformAdapter, UserProfile } from '@/adapters/interface';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -79,12 +81,17 @@ function Section({ title, children }: SectionProps): React.ReactElement {
 }
 
 export default function SettingsScreen(): React.ReactElement {
+  const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  const [showAlbumArt, setShowAlbumArt] = useState(true);
-  const [autoPlayPreviews, setAutoPlayPreviews] = useState(false);
-  const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [weeklyReminders, setWeeklyReminders] = useState(true);
+  const showAlbumArt = usePrefsStore((s) => s.showAlbumArt);
+  const autoPlayPreviews = usePrefsStore((s) => s.autoPlayPreviews);
+  const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
+  const weeklyReminders = usePrefsStore((s) => s.weeklyReminders);
+  const setShowAlbumArt = usePrefsStore((s) => s.setShowAlbumArt);
+  const setAutoPlayPreviews = usePrefsStore((s) => s.setAutoPlayPreviews);
+  const setHapticFeedback = usePrefsStore((s) => s.setHapticFeedback);
+  const setWeeklyReminders = usePrefsStore((s) => s.setWeeklyReminders);
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
@@ -119,10 +126,6 @@ export default function SettingsScreen(): React.ReactElement {
         { text: 'Reconnect', onPress: () => void clearAuth() },
       ],
     );
-  };
-
-  const handleComingSoon = () => {
-    Alert.alert('Coming Soon', 'This feature is not yet available.');
   };
 
   return (
@@ -200,14 +203,19 @@ export default function SettingsScreen(): React.ReactElement {
         {/* About */}
         <Section title="ABOUT">
           <LinkRow
+            label="Contact"
+            onPress={() => router.push('/(app)/settings/contact')}
+          />
+          <View style={styles.divider} />
+          <LinkRow
             label="Version"
             value={Constants.expoConfig?.version ?? '—'}
             onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}
           />
           <View style={styles.divider} />
-          <LinkRow label="Privacy Policy" onPress={handleComingSoon} />
+          <LinkRow label="Privacy Policy" onPress={() => router.push('/(app)/settings/privacy-policy')} />
           <View style={styles.divider} />
-          <LinkRow label="Terms of Service" onPress={handleComingSoon} />
+          <LinkRow label="Terms of Service" onPress={() => router.push('/(app)/settings/terms-of-service')} />
         </Section>
 
         {/* Branding footer */}
