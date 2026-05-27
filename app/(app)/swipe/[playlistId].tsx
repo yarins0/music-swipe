@@ -11,7 +11,7 @@ import { PlaylistWriter } from '@/services/PlaylistWriter';
 import { SessionTracker } from '@/services/SessionTracker';
 import { BackendSync } from '@/services/BackendSync';
 import type { MusicPlatformAdapter, Playlist, Track } from '@/adapters/interface';
-import { PlatformError, PlatformErrorCode } from '@/adapters/interface';
+import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 import { colors } from '@/theme';
@@ -122,6 +122,43 @@ export default function SwipeScreen(): React.ReactElement {
     // Phase 2: flush pending sync swipes from a prior crashed session,
     // then drain any playlist write operations that were interrupted mid-flight.
     const flush = async (): Promise<void> => {
+      const store = useSwipeStore.getState();
+      const isResuming = store.sessionId !== null && store.sourcePlaylistId === playlistId;
+      const hasInMemoryQueue = isResuming && store.queue.length > 0;
+
+      if (hasInMemoryQueue) {
+        // Queue and session state are intact in the Zustand singleton — skip all
+        // network phases (3 and 4) and go straight to ready. Flush and drain in
+        // the background so they don't block the transition.
+        backendSyncRef.current!.flushPending().catch((err: unknown) => {
+          console.warn('[SwipeScreen] background flushPending failed:', err);
+        });
+        PlaylistWriter.drainStoredQueue(adapterRef.current!).catch((err: unknown) => {
+          console.warn('[SwipeScreen] background drainStoredQueue failed:', err);
+        });
+
+        // Restore component state from store (no API calls)
+        setAvailablePlaylists(store.availablePlaylists);
+        totalTracksRef.current = store.totalTracks;
+
+        // sessionStore is in-memory only — repopulate from the persisted store values
+        // so the subtitle and destination IDs are correct if the app was restarted.
+        if (useSessionStore.getState().destinationPlaylistIds.length === 0) {
+          const srcName =
+            playlistId === LIKED_SONGS_PLAYLIST_ID
+              ? 'Liked Songs'
+              : (store.availablePlaylists.find((p) => p.id === playlistId)?.name ?? null);
+          if (srcName) useSessionStore.getState().setSource(playlistId, srcName);
+          if (store.activeDestinationIds.length > 0) {
+            useSessionStore.getState().setDestinations(store.activeDestinationIds);
+          }
+        }
+
+        setPhase('opening_session');
+        return;
+      }
+
+      // Normal path: await flush before fetching tracks.
       // flushPending() drains BackendSync's own in-memory queue (records from postSwipe
       // calls during this session). We intentionally do NOT call markSynced here:
       // pendingSyncSwipes is the source of truth for the history tab and must stay
@@ -248,13 +285,31 @@ export default function SwipeScreen(): React.ReactElement {
         // Fetch all tracks — paginate if needed (simple single-page fetch for now)
         const { tracks, total } = await adapter.getPlaylistTracks(playlistId, 0, 100);
         totalTracksRef.current = total;
+        useSwipeStore.getState().setTotalTracks(total);
 
         const sliced = isResuming ? tracks.slice(storedAbsoluteIndex) : tracks;
         const queueTracks = sliced.length > 0 ? sliced : tracks;
 
-        // Also fetch available playlists for the destination editor
+        // Fetch available playlists for the destination editor and subtitle
         const playlists = await adapter.getUserPlaylists();
         setAvailablePlaylists(playlists);
+        // Save to store so tab-away + return can restore instantly without an API call
+        useSwipeStore.getState().setAvailablePlaylists(playlists);
+
+        // sessionStore has no persist middleware so it is always empty on app restart.
+        // When resuming from AsyncStorage (queue not in memory), repopulate it so the
+        // Discover subtitle renders and phase 5 passes the correct destination IDs.
+        if (isResuming) {
+          const srcName =
+            playlistId === LIKED_SONGS_PLAYLIST_ID
+              ? 'Liked Songs'
+              : (playlists.find((p) => p.id === playlistId)?.name ?? null);
+          if (srcName) useSessionStore.getState().setSource(playlistId, srcName);
+          const storedDestIds = store.activeDestinationIds;
+          if (storedDestIds.length > 0 && useSessionStore.getState().destinationPlaylistIds.length === 0) {
+            useSessionStore.getState().setDestinations(storedDestIds);
+          }
+        }
 
         // Stash full track list (unsliced) so phase 5 can enrich pending tracks
         // whose position may be before currentIndex and therefore not in queueTracks.
@@ -299,6 +354,14 @@ export default function SwipeScreen(): React.ReactElement {
         const store = useSwipeStore.getState();
         const isResuming =
           store.sessionId !== null && store.sourcePlaylistId === playlistId;
+
+        // Queue is still in memory from the previous mount — skip re-initializing the
+        // session store to avoid resetting currentIndex back to 0.
+        if (isResuming && store.queue.length > 0) {
+          setSessionId(store.sessionId!);
+          setPhase('ready');
+          return;
+        }
 
         let sid: string;
         if (isResuming) {

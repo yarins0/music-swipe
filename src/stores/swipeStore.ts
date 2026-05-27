@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Track } from '@/adapters/interface';
+import type { Track, Playlist } from '@/adapters/interface';
 import { useSessionStore } from '@/stores/sessionStore';
 
 export type SwipeStatus = 'liked' | 'super_liked' | 'skipped' | 'pending';
@@ -59,6 +59,15 @@ interface SwipeState {
 
   // True while the user has tabbed away mid-session; prevents unmount cleanup from wiping state
   isSuspended: boolean;
+
+  // Total track count from the last getPlaylistTracks API call.
+  // Not persisted — kept in memory so the progress bar is correct on tab-away + return
+  // without re-fetching from Spotify.
+  totalTracks: number;
+
+  // User's playlist library — not persisted, survives component remounts within the same
+  // app session so the destination editor and subtitle work instantly on tab-away + return.
+  availablePlaylists: Playlist[];
 }
 
 interface SwipeActions {
@@ -119,6 +128,12 @@ interface SwipeActions {
 
   /** Clear the suspended flag when re-entering the swipe screen. */
   resumeSession: () => void;
+
+  /** Store the total playlist track count from the last API fetch. */
+  setTotalTracks: (count: number) => void;
+
+  /** Store the user's playlist library for instant restoration on tab-away + return. */
+  setAvailablePlaylists: (playlists: Playlist[]) => void;
 }
 
 const INITIAL_STATE: SwipeState = {
@@ -134,6 +149,8 @@ const INITIAL_STATE: SwipeState = {
   pendingSyncSwipes: [],
   likedHistory: [],
   isSuspended: false,
+  totalTracks: 0,
+  availablePlaylists: [],
 };
 
 export const useSwipeStore = create<SwipeState & SwipeActions>()(
@@ -249,6 +266,10 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
       suspendSession: () => set({ isSuspended: true }),
 
       resumeSession: () => set({ isSuspended: false }),
+
+      setTotalTracks: (count) => set({ totalTracks: count }),
+
+      setAvailablePlaylists: (playlists) => set({ availablePlaylists: playlists }),
     }),
     {
       name: 'swipe-store',
