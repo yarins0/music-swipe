@@ -87,11 +87,15 @@ function LikedTrackRow({ track, status, isRemoving, onRemove }: LikedTrackRowPro
         <Text style={trackStyles.artist} numberOfLines={1}>{track.artist}</Text>
       </View>
       <Text style={trackStyles.statusIcon}>{status === 'super_liked' ? '⭐' : '♥'}</Text>
-      <Pressable style={trackStyles.removeBtn} onPress={onRemove} disabled={isRemoving} accessibilityLabel="Remove track">
-        {isRemoving
-          ? <ActivityIndicator size="small" color={colors.primary} />
-          : <Text style={trackStyles.removeIcon}>✕</Text>}
-      </Pressable>
+      {isRemoving ? (
+        <View style={trackStyles.removeBtn}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : (
+        <Pressable style={trackStyles.removeBtn} onPress={onRemove} accessibilityLabel="Remove track">
+          <Text style={trackStyles.removeBtnText}>Cancel</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -351,6 +355,6 @@ const trackStyles = StyleSheet.create({
   title: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurface },
   artist: { fontSize: 12, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, marginTop: 2 },
   statusIcon: { fontSize: 16, marginHorizontal: 4 },
-  removeBtn: { width: 32, height: 32, borderRadius: radius.full, backgroundColor: colors.surfaceContainerHigh, justifyContent: 'center', alignItems: 'center' },
-  removeIcon: { fontSize: 12, color: colors.onSurfaceVariant, fontFamily: 'Outfit_600SemiBold' },
+  removeBtn: { backgroundColor: colors.surfaceContainerHigh, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full, minWidth: 72, alignItems: 'center', justifyContent: 'center' },
+  removeBtnText: { color: colors.onSurfaceVariant, fontSize: 13, fontFamily: 'Outfit_600SemiBold' },
 });

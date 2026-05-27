@@ -120,17 +120,15 @@ function TrackRow({ item, isRemoving, onRemove }: TrackRowProps): React.ReactEle
         </Text>
       </View>
       <StatusBadge status={item.status} />
-      <Pressable
-        style={[styles.removeButton, isRemoving && styles.removeButtonDisabled]}
-        onPress={() => onRemove(item)}
-        disabled={isRemoving}
-      >
-        {isRemoving ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
+      {isRemoving ? (
+        <View style={styles.removeButton}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : (
+        <Pressable style={styles.removeButton} onPress={() => onRemove(item)}>
           <Text style={styles.removeText}>Cancel</Text>
-        )}
-      </Pressable>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -338,9 +336,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     minWidth: 72,
     alignItems: 'center',
-  },
-  removeButtonDisabled: {
-    opacity: 0.5,
   },
   removeText: {
     color: colors.onSurfaceVariant,
