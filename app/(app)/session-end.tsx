@@ -71,12 +71,10 @@ interface LikedTrackRowProps {
   track: Track;
   status: string;
   isRemoving: boolean;
-  isRemoved: boolean;
   onRemove: () => void;
 }
 
-function LikedTrackRow({ track, status, isRemoving, isRemoved, onRemove }: LikedTrackRowProps) {
-  if (isRemoved) return null;
+function LikedTrackRow({ track, status, isRemoving, onRemove }: LikedTrackRowProps) {
   return (
     <View style={trackStyles.row}>
       {track.albumArtUrl ? (
@@ -113,9 +111,9 @@ export default function SessionEndScreen(): React.ReactElement {
 
   const pendingSyncSwipes = useSwipeStore((s) => s.pendingSyncSwipes);
   const clearSession = useSwipeStore((s) => s.clearSession);
+  const removeFromHistory = useSwipeStore((s) => s.removeFromHistory);
 
   const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(pendingSyncSwipes));
-  const [removedTrackIds, setRemovedTrackIds] = useState<Set<string>>(new Set());
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);
@@ -161,7 +159,8 @@ export default function SessionEndScreen(): React.ReactElement {
       const regularIds = destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
       await writer.undoWriteAsync(trackId, regularIds);
 
-      setRemovedTrackIds((prev) => new Set([...prev, trackId]));
+      // Removes from both session-end and History tab simultaneously.
+      if (record) removeFromHistory(record.swipedAt);
 
       // Best-effort: also remove from Liked Songs if we added it this session.
       if (record?.likedSongsWrittenByUs === true) {
@@ -175,7 +174,7 @@ export default function SessionEndScreen(): React.ReactElement {
       setRemovingIds((prev) => { const next = new Set(prev); next.delete(trackId); return next; });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destinationPlaylistIds, pendingSyncSwipes]);
+  }, [destinationPlaylistIds, pendingSyncSwipes, removeFromHistory]);
 
   const handleSaveAsPlaylist = useCallback(async (): Promise<void> => {
     if (isSaving || savedPlaylistId) return;
@@ -242,7 +241,6 @@ export default function SessionEndScreen(): React.ReactElement {
                 track={r.track}
                 status={r.status}
                 isRemoving={removingIds.has(r.track.id)}
-                isRemoved={removedTrackIds.has(r.track.id)}
                 onRemove={() => void handleRemoveTrack(r.track.id)}
               />
             ))}
