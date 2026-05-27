@@ -47,6 +47,8 @@ export interface AdapterCapabilities {
   requiresPremium: boolean;
   supportsLibrarySave: boolean;
   supportsPlaylistCreation: boolean;
+  /** False when the platform only allows reading tracks from playlists the user owns. */
+  canReadUnownedPlaylists: boolean;
 }
 
 export interface UserProfile {
@@ -87,6 +89,7 @@ export interface MusicPlatformAdapter {
   createPlaylist(name: string): Promise<string>;
 
   openPlatformDeepLink(uri: string): Promise<void>;
+  openPlaylistInApp(playlistId: string): Promise<void>;
 }
 
 export const LIKED_SONGS_PLAYLIST_ID = 'spotify:collection:tracks';

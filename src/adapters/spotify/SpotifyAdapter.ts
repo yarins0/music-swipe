@@ -44,6 +44,7 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     requiresPremium: true,
     supportsLibrarySave: true,
     supportsPlaylistCreation: true,
+    canReadUnownedPlaylists: false,
   };
 
   private readonly auth: SpotifyAuthContext;
@@ -356,5 +357,9 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
   async openPlatformDeepLink(uri: string): Promise<void> {
     console.log('[SpotifyAdapter] NO_ACTIVE_DEVICE — triggering deep link:', uri);
     await openPlatformDeepLink(uri);
+  }
+
+  async openPlaylistInApp(playlistId: string): Promise<void> {
+    await openPlatformDeepLink(`spotify:playlist:${playlistId}`);
   }
 }

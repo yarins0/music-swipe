@@ -224,6 +224,12 @@ describe('adapter contract — MockAdapter', () => {
       await adapter.openPlatformDeepLink('spotify:track:x');
       expect(adapter.calls.openPlatformDeepLink).toContain('spotify:track:x');
     });
+
+    it('openPlaylistInApp() resolves and records the playlistId', async () => {
+      const adapter = new MockAdapter();
+      await adapter.openPlaylistInApp('playlist-abc');
+      expect(adapter.calls.openPlaylistInApp).toContain('playlist-abc');
+    });
   });
 
   describe('capabilities', () => {
@@ -235,6 +241,7 @@ describe('adapter contract — MockAdapter', () => {
       expect(typeof caps.requiresPremium).toBe('boolean');
       expect(typeof caps.supportsLibrarySave).toBe('boolean');
       expect(typeof caps.supportsPlaylistCreation).toBe('boolean');
+      expect(typeof caps.canReadUnownedPlaylists).toBe('boolean');
     });
 
     it('supportsLibrarySave=false fixture sets capability to false', () => {

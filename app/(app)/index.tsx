@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,8 @@ import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists, resolvePlaylistFromUrl } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
 import { TabHeader } from '@/components/TabHeader';
-import type { Playlist } from '@/adapters/interface';
+import { AppModal } from '@/components/AppModal';
+import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
 
@@ -36,11 +37,15 @@ export default function SourcePickerScreen() {
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isResolvingUrl, setIsResolvingUrl] = useState(false);
 
+  const [unownedPlaylist, setUnownedPlaylist] = useState<Playlist | null>(null);
+  const adapterRef = useRef<MusicPlatformAdapter | null>(null);
+
   const loadPlaylists = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
     try {
       const adapter = createSpotifyAdapter();
+      adapterRef.current = adapter;
       const { owned, followed } = await getUserPlaylists(adapter);
       const built: Section[] = [{ title: 'My Playlists', data: owned }];
       if (followed.length > 0) built.push({ title: 'Following', data: followed });
@@ -57,6 +62,11 @@ export default function SourcePickerScreen() {
 
   const handleNext = () => {
     if (!selectedPlaylist) return;
+    const adapter = adapterRef.current;
+    if (adapter && !adapter.capabilities.canReadUnownedPlaylists && !selectedPlaylist.isOwned) {
+      setUnownedPlaylist(selectedPlaylist);
+      return;
+    }
     router.push({
       pathname: '/(app)/destination',
       params: { playlistId: selectedPlaylist.id, playlistName: selectedPlaylist.name },
@@ -68,14 +78,25 @@ export default function SourcePickerScreen() {
     setUrlError(null);
     setIsResolvingUrl(true);
     try {
-      const adapter = createSpotifyAdapter();
+      const adapter = adapterRef.current ?? createSpotifyAdapter();
+      adapterRef.current = adapter;
       const playlist = await resolvePlaylistFromUrl(urlInput, adapter);
+      if (!adapter.capabilities.canReadUnownedPlaylists && !playlist.isOwned) {
+        setUnownedPlaylist(playlist);
+        return;
+      }
       router.push({ pathname: '/(app)/destination', params: { playlistId: playlist.id, playlistName: playlist.name } });
     } catch (err) {
       setUrlError(err instanceof Error ? err.message : 'Could not resolve playlist');
     } finally {
       setIsResolvingUrl(false);
     }
+  };
+
+  const handleOpenUnownedInApp = async () => {
+    if (!unownedPlaylist || !adapterRef.current) return;
+    await adapterRef.current.openPlaylistInApp(unownedPlaylist.id);
+    setUnownedPlaylist(null);
   };
 
   const ownedPlaylists = sections.find((s) => s.title === 'My Playlists')?.data ?? [];
@@ -171,6 +192,16 @@ export default function SourcePickerScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <AppModal
+        visible={unownedPlaylist !== null}
+        title="Copy this playlist first"
+        message={`"${unownedPlaylist?.name ?? 'This playlist'}" belongs to someone else. Spotify only lets you read tracks from playlists you own — make a copy in Spotify, then come back and select your copy.`}
+        confirmLabel="Open in Spotify"
+        cancelLabel="Go back"
+        onConfirm={handleOpenUnownedInApp}
+        onCancel={() => setUnownedPlaylist(null)}
+      />
     </View>
   );
 }

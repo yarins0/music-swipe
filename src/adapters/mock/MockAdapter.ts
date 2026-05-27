@@ -83,6 +83,7 @@ export interface MockCalls {
   isInLibrary: string[];
   createPlaylist: string[];
   openPlatformDeepLink: string[];
+  openPlaylistInApp: string[];
 }
 
 export class MockAdapter implements MusicPlatformAdapter {
@@ -98,6 +99,7 @@ export class MockAdapter implements MusicPlatformAdapter {
     isInLibrary: [],
     createPlaylist: [],
     openPlatformDeepLink: [],
+    openPlaylistInApp: [],
   };
 
   /** Directly inspectable fixture state for tests. */
@@ -128,6 +130,7 @@ export class MockAdapter implements MusicPlatformAdapter {
       requiresPremium: false,
       supportsLibrarySave,
       supportsPlaylistCreation,
+      canReadUnownedPlaylists: true,
     };
   }
 
@@ -244,5 +247,9 @@ export class MockAdapter implements MusicPlatformAdapter {
 
   async openPlatformDeepLink(uri: string): Promise<void> {
     this.calls.openPlatformDeepLink.push(uri);
+  }
+
+  async openPlaylistInApp(playlistId: string): Promise<void> {
+    this.calls.openPlaylistInApp.push(playlistId);
   }
 }
