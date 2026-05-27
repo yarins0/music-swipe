@@ -262,6 +262,10 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
   }
 
   async addToPlaylist(playlistId: string, trackId: string): Promise<void> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      await this.saveToLibrary(trackId);
+      return;
+    }
     await spotifyFetch(
       `/playlists/${playlistId}/items`,
       {
@@ -273,6 +277,10 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
   }
 
   async removeFromPlaylist(playlistId: string, trackId: string): Promise<void> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      await this.removeFromLibrary(trackId);
+      return;
+    }
     await spotifyFetch(
       `/playlists/${playlistId}/items`,
       {

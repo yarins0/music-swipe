@@ -2,14 +2,24 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Track } from '@/adapters/interface';
+import { useSessionStore } from '@/stores/sessionStore';
 
 export type SwipeStatus = 'liked' | 'super_liked' | 'skipped' | 'pending';
+
+const LIKED_HISTORY_LIMIT = 100;
 
 export interface SwipeRecord {
   track: Track;
   status: SwipeStatus;
   destinationPlaylistIds: string[];
+  destinationPlaylistNames?: string[];
   swipedAt: string; // ISO timestamp
+  sessionId?: string;
+  sourcePlaylistName?: string;
+  // Set to true only after PlaylistWriter confirms the track was added to Liked Songs
+  // by us in this session (not pre-existing). Used by history/session-end to guard
+  // library removal without relying on cross-session AsyncStorage state.
+  likedSongsWrittenByUs?: boolean;
 }
 
 interface SwipeState {
@@ -43,6 +53,10 @@ interface SwipeState {
   // Swipes not yet confirmed by the backend (flushed on reconnect)
   pendingSyncSwipes: SwipeRecord[];
 
+  // Permanent cross-session history of all liked/super-liked tracks.
+  // Never cleared by clearSession() — accumulates across all sessions.
+  likedHistory: SwipeRecord[];
+
   // True while the user has tabbed away mid-session; prevents unmount cleanup from wiping state
   isSuspended: boolean;
 }
@@ -66,8 +80,9 @@ interface SwipeActions {
   /**
    * Record a committed swipe. Updates currentIndex, absoluteIndex, undoStack,
    * pendingSyncSwipes, and decideQueue (when status is 'pending').
+   * destinationNames should be human-readable names parallel to destinationIds.
    */
-  recordSwipe: (track: Track, status: SwipeStatus, destinationIds: string[]) => void;
+  recordSwipe: (track: Track, status: SwipeStatus, destinationIds: string[], destinationNames?: string[]) => void;
 
   /**
    * Undo the most recent swipe. Returns the undone record so callers can reverse
@@ -83,6 +98,18 @@ interface SwipeActions {
    * Called after a successful POST /swipes.
    */
   markSynced: (swipedAt: string) => void;
+
+  /**
+   * Mark a track as having been added to Liked Songs by us this session.
+   * Called by PlaylistWriter's onLibraryWritten callback after a confirmed write.
+   */
+  markLikedSongsWritten: (trackId: string) => void;
+
+  /**
+   * Remove a record from likedHistory (and pendingSyncSwipes) by its timestamp.
+   * Called after the user explicitly removes a track from the history view.
+   */
+  removeFromHistory: (swipedAt: string) => void;
 
   /** Wipe all session state (called when the user exits the swipe screen). */
   clearSession: () => void;
@@ -105,6 +132,7 @@ const INITIAL_STATE: SwipeState = {
   undoStack: [],
   activeDestinationIds: [],
   pendingSyncSwipes: [],
+  likedHistory: [],
   isSuspended: false,
 };
 
@@ -132,13 +160,17 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           pendingSyncSwipes: isResuming ? state.pendingSyncSwipes : [],
         })),
 
-      recordSwipe: (track, status, destinationIds) => {
+      recordSwipe: (track, status, destinationIds, destinationNames) => {
         const record: SwipeRecord = {
           track,
           status,
           destinationPlaylistIds: destinationIds,
+          destinationPlaylistNames: destinationNames,
           swipedAt: new Date().toISOString(),
+          sessionId: get().sessionId ?? undefined,
+          sourcePlaylistName: useSessionStore.getState().sourcePlaylistName ?? undefined,
         };
+        const isLiked = status === 'liked' || status === 'super_liked';
         set((state) => ({
           currentIndex: state.currentIndex + 1,
           // Only advance the playlist offset when consuming a regular (non-pending) track.
@@ -149,6 +181,9 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
               : state.absoluteIndex + 1,
           undoStack: [record], // keep only the last 1 swipe for undo
           pendingSyncSwipes: [...state.pendingSyncSwipes, record],
+          likedHistory: isLiked
+            ? [...state.likedHistory, record].slice(-LIKED_HISTORY_LIMIT) // cap history to most recent N liked/super-liked tracks
+            : state.likedHistory,
           decideQueue:
             status === 'pending'
               ? [...state.decideQueue, track]
@@ -172,6 +207,7 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           pendingSyncSwipes: state.pendingSyncSwipes.filter(
             (s) => s.swipedAt !== last.swipedAt,
           ),
+          likedHistory: state.likedHistory.filter((s) => s.swipedAt !== last.swipedAt),
           decideQueue:
             last.status === 'pending'
               ? state.decideQueue.filter((t) => t.id !== last.track.id)
@@ -190,7 +226,25 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           ),
         })),
 
-      clearSession: () => set(INITIAL_STATE),
+      markLikedSongsWritten: (trackId) =>
+        set((state) => ({
+          pendingSyncSwipes: state.pendingSyncSwipes.map((r) =>
+            r.track.id === trackId ? { ...r, likedSongsWrittenByUs: true } : r,
+          ),
+          likedHistory: state.likedHistory.map((r) =>
+            r.track.id === trackId ? { ...r, likedSongsWrittenByUs: true } : r,
+          ),
+        })),
+
+      removeFromHistory: (swipedAt) =>
+        set((state) => ({
+          likedHistory: state.likedHistory.filter((r) => r.swipedAt !== swipedAt),
+          pendingSyncSwipes: state.pendingSyncSwipes.filter((r) => r.swipedAt !== swipedAt),
+        })),
+
+      // Preserve likedHistory across session boundaries — only session-specific state is reset.
+      clearSession: () =>
+        set((state) => ({ ...INITIAL_STATE, likedHistory: state.likedHistory })),
 
       suspendSession: () => set({ isSuspended: true }),
 
@@ -208,6 +262,7 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         absoluteIndex: state.absoluteIndex,
         activeDestinationIds: state.activeDestinationIds,
         pendingSyncSwipes: state.pendingSyncSwipes,
+        likedHistory: state.likedHistory,
       }),
     },
   ),

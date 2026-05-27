@@ -54,10 +54,10 @@ export function SwipeCard({
 const styles = StyleSheet.create({
   card: {
     width: '100%',
+    height: '100%',
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
-    aspectRatio: 0.72,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,

@@ -96,7 +96,9 @@ export function BottomNavBar(): React.ReactElement {
         if (pathname.startsWith('/swipe')) return;
 
         if (sessionId && sourcePlaylistId) {
-          router.push({
+          // Use navigate (not push) so Expo Router pops back to the existing swipe
+          // screen in the stack instead of mounting a brand-new instance.
+          router.navigate({
             pathname: '/(app)/swipe/[playlistId]',
             params: { playlistId: sourcePlaylistId },
           });
@@ -107,14 +109,15 @@ export function BottomNavBar(): React.ReactElement {
             toValue: playlistsIndex * tabWidth,
             duration: INDICATOR_SLIDE_MS,
             useNativeDriver: true,
-          }).start(() => router.push('/(app)'));
+          }).start(() => router.navigate('/(app)'));
         }
       } else {
         // Suspend the swipe session instead of ending it when tabbing away
         if (pathname.startsWith('/swipe')) {
           suspendSession();
         }
-        router.push(item.route);
+        // Use navigate (not push) to avoid stacking duplicate tab screens
+        router.navigate(item.route);
       }
     },
     [sessionId, sourcePlaylistId, pathname, suspendSession, router, indicatorAnim, tabWidth],

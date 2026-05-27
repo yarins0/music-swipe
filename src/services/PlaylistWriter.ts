@@ -1,5 +1,5 @@
 import AsyncStorageDefault from '@react-native-async-storage/async-storage';
-import { MusicPlatformAdapter, PlatformError, PlatformErrorCode } from '../adapters/interface';
+import { MusicPlatformAdapter, PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '../adapters/interface';
 
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
@@ -29,10 +29,16 @@ export class PlaylistWriter {
   private writtenPairsLoaded = false;
   private readonly libraryWrittenIds = new Set<string>();
   private libraryWrittenIdsLoaded = false;
+  private readonly onLibraryWritten?: (trackId: string) => void;
 
-  constructor(adapter: MusicPlatformAdapter, storage: StorageInterface = AsyncStorageDefault) {
+  constructor(
+    adapter: MusicPlatformAdapter,
+    storage: StorageInterface = AsyncStorageDefault,
+    onLibraryWritten?: (trackId: string) => void,
+  ) {
     this.adapter = adapter;
     this.storage = storage;
+    this.onLibraryWritten = onLibraryWritten;
   }
 
   private pairKey(trackId: string, playlistId: string): string {
@@ -156,6 +162,32 @@ export class PlaylistWriter {
         return;
       }
 
+      // Liked Songs requires a pre-existing check: only record as "ours to remove"
+      // if the track was not already in the library before this swipe.
+      if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+        await this.ensureLibraryWrittenIdsLoaded();
+        if (this.libraryWrittenIds.has(trackId)) return; // already added by us this session
+
+        // Conservative default: if the check throws, assume pre-existing so undo
+        // never accidentally removes a track the user already had liked.
+        let preExisting = true;
+        try { preExisting = await this.adapter.isInLibrary(trackId); } catch { /* keep conservative */ }
+
+        // If the track was already in Liked Songs, leave it untouched. We never
+        // write it, so libraryWrittenIds never records it, and undo can never remove it.
+        if (preExisting) return;
+
+        const succeeded = await this.executeWithBackoff(() =>
+          this.adapter.addToPlaylist(playlistId, trackId),
+        );
+        if (succeeded) {
+          this.libraryWrittenIds.add(trackId);
+          void this.persistLibraryWrittenIds();
+          this.onLibraryWritten?.(trackId);
+        }
+        return;
+      }
+
       // 1. Add to durable queue before attempting the network call.
       const queue = await this.readQueue();
       const alreadyQueued = queue.some(
@@ -193,6 +225,23 @@ export class PlaylistWriter {
   // swipe can re-add the track if the user changes their mind.
   undoWrite(trackId: string, destinationIds: string[]): void {
     for (const playlistId of destinationIds) {
+      if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+        // Only remove from library if WE added it this session; pre-existing liked
+        // songs must be left untouched even after an undo.
+        void (async () => {
+          await this.ensureLibraryWrittenIdsLoaded();
+          if (!this.libraryWrittenIds.has(trackId)) return;
+          try {
+            await this.adapter.removeFromPlaylist(playlistId, trackId);
+            this.libraryWrittenIds.delete(trackId);
+            void this.persistLibraryWrittenIds();
+          } catch (err: unknown) {
+            console.warn(`[PlaylistWriter] undoWrite removeFromLibrary failed for trackId=${trackId}:`, err);
+          }
+        })();
+        continue;
+      }
+
       this.adapter.removeFromPlaylist(playlistId, trackId).then(() => {
         this.writtenPairs.delete(this.pairKey(trackId, playlistId));
         void this.persistWrittenPairs();
@@ -202,27 +251,33 @@ export class PlaylistWriter {
     }
   }
 
-  // Undo a super-like: removes from playlists we added to, and from library only if WE
-  // added it (i.e. it was not already liked before the super-like).
-  undoSuperLike(trackId: string, destinationIds: string[]): void {
-    this.undoWrite(trackId, destinationIds);
-    void (async () => {
-      await this.ensureLibraryWrittenIdsLoaded();
-      if (!this.libraryWrittenIds.has(trackId)) {
-        return; // Pre-existing liked song — leave it in the library
-      }
-      try {
-        await this.adapter.removeFromLibrary(trackId);
+  // Awaitable undo for callers that need to surface errors to the user (e.g. history
+  // and session-end pages). Mirrors undoWrite logic but throws on API failure instead
+  // of swallowing the error with console.warn.
+  // For Liked Songs: only removes if we added it this session — pre-existing liked
+  // songs are skipped entirely (same guard as undoWrite).
+  async undoWriteAsync(trackId: string, destinationIds: string[]): Promise<void> {
+    for (const playlistId of destinationIds) {
+      if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+        await this.ensureLibraryWrittenIdsLoaded();
+        if (!this.libraryWrittenIds.has(trackId)) continue;
+        await this.adapter.removeFromPlaylist(playlistId, trackId);
         this.libraryWrittenIds.delete(trackId);
         void this.persistLibraryWrittenIds();
-      } catch (err: unknown) {
-        if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
-          console.warn('[PlaylistWriter] removeFromLibrary 403 — Spotify body:', err.message);
-          return;
-        }
-        console.warn('[PlaylistWriter] removeFromLibrary failed:', err);
+        continue;
       }
-    })();
+
+      await this.ensureWrittenPairsLoaded();
+      await this.adapter.removeFromPlaylist(playlistId, trackId);
+      this.writtenPairs.delete(this.pairKey(trackId, playlistId));
+      void this.persistWrittenPairs();
+    }
+  }
+
+  // Undo a super-like: removes from destination playlists and from library,
+  // delegating both to undoWrite (which guards the library removal behind libraryWrittenIds).
+  undoSuperLike(trackId: string, destinationIds: string[]): void {
+    this.undoWrite(trackId, [...destinationIds, LIKED_SONGS_PLAYLIST_ID]);
   }
 
   // Super-like: writes to all destinations AND saves to library, both fire-and-forget.
@@ -236,18 +291,22 @@ export class PlaylistWriter {
       if (this.libraryWrittenIds.has(trackId)) {
         return; // Already added by us — skip (deduplication, same as writtenPairs for playlists)
       }
-      let preExisting = false;
+      let preExisting = true;
       try {
         preExisting = await this.adapter.isInLibrary(trackId);
       } catch {
-        // If the check fails, treat as new — better to add than silently skip
+        // If the check fails, treat as pre-existing — conservative: never risk
+        // removing a track the user already had liked before the super-like.
       }
+
+      // If already liked, leave it untouched — same logic as write() for Liked Songs.
+      if (preExisting) return;
+
       try {
         await this.adapter.saveToLibrary(trackId);
-        if (!preExisting) {
-          this.libraryWrittenIds.add(trackId);
-          void this.persistLibraryWrittenIds();
-        }
+        this.libraryWrittenIds.add(trackId);
+        void this.persistLibraryWrittenIds();
+        this.onLibraryWritten?.(trackId);
       } catch (error: unknown) {
         if (error instanceof PlatformError && error.code === PlatformErrorCode.PERMISSION_DENIED) {
           console.warn('[PlaylistWriter] saveToLibrary 403 — Spotify body:', error.message);

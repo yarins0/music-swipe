@@ -17,6 +17,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
+import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
@@ -153,17 +154,28 @@ export default function SessionEndScreen(): React.ReactElement {
     setRemovingIds((prev) => new Set([...prev, trackId]));
     try {
       const adapter = getAdapter();
-      for (const pid of destinationPlaylistIds) {
-        await adapter.removeFromPlaylist(pid, trackId);
-      }
+      const writer = new PlaylistWriter(adapter);
+      const record = pendingSyncSwipes.find((r) => r.track.id === trackId);
+
+      // Remove from regular playlists — this gates the UI update.
+      const regularIds = destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
+      await writer.undoWriteAsync(trackId, regularIds);
+
       setRemovedTrackIds((prev) => new Set([...prev, trackId]));
+
+      // Best-effort: also remove from Liked Songs if we added it this session.
+      if (record?.likedSongsWrittenByUs === true) {
+        writer.undoWriteAsync(trackId, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
+          console.warn('[SessionEnd] removeFromLikedSongs failed:', err);
+        });
+      }
     } catch {
       Alert.alert('Error', 'Could not remove track. Please try manually.');
     } finally {
       setRemovingIds((prev) => { const next = new Set(prev); next.delete(trackId); return next; });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destinationPlaylistIds]);
+  }, [destinationPlaylistIds, pendingSyncSwipes]);
 
   const handleSaveAsPlaylist = useCallback(async (): Promise<void> => {
     if (isSaving || savedPlaylistId) return;

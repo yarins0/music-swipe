@@ -5,7 +5,11 @@ export interface MatchRecord {
   track: Track;
   status: 'liked' | 'super_liked';
   destinationPlaylistIds: string[];
+  destinationPlaylistNames?: string[];
   swipedAt: string;
+  sessionId?: string;
+  sourcePlaylistName?: string;
+  likedSongsWrittenByUs?: boolean;
 }
 
 interface UseMatchesStoreResult {
@@ -14,19 +18,19 @@ interface UseMatchesStoreResult {
 }
 
 export function useMatchesStore(): UseMatchesStoreResult {
-  const pendingSyncSwipes = useSwipeStore((state) => state.pendingSyncSwipes);
+  const likedHistory = useSwipeStore((state) => state.likedHistory);
 
-  const matches: MatchRecord[] = pendingSyncSwipes
-    .filter(
-      (record): record is typeof record & { status: 'liked' | 'super_liked' } =>
-        record.status === 'liked' || record.status === 'super_liked',
-    )
-    .map((record) => ({
-      track: record.track,
-      status: record.status,
-      destinationPlaylistIds: record.destinationPlaylistIds,
-      swipedAt: record.swipedAt,
-    }));
+  // Most-recent-first — reverse without mutating the original array.
+  const matches: MatchRecord[] = [...likedHistory].reverse().map((record) => ({
+    track: record.track,
+    status: record.status as 'liked' | 'super_liked',
+    destinationPlaylistIds: record.destinationPlaylistIds,
+    destinationPlaylistNames: record.destinationPlaylistNames,
+    swipedAt: record.swipedAt,
+    sessionId: record.sessionId,
+    sourcePlaylistName: record.sourcePlaylistName,
+    likedSongsWrittenByUs: record.likedSongsWrittenByUs,
+  }));
 
   return { matches, isLoading: false };
 }

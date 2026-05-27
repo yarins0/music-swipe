@@ -18,8 +18,10 @@ export async function getUserPlaylists(
     return a.name.localeCompare(b.name);
   });
 
+  // Exclude owned playlists — Spotify marks them as both isOwned and isFollowed,
+  // which would produce duplicate IDs across the two SectionList sections.
   const followed = all
-    .filter((p) => p.isFollowed)
+    .filter((p) => p.isFollowed && !p.isOwned)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return { owned, followed };

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,14 +10,83 @@ import {
 } from 'react-native';
 import { colors, spacing, radius } from '@/theme';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
-import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
-import { useMatchesStore, fetchFromBackend, type MatchRecord } from '@/matches/useMatchesStore';
+import { useMatchesStore, type MatchRecord } from '@/matches/useMatchesStore';
+import { useSwipeStore } from '@/stores/swipeStore';
 import type { MusicPlatformAdapter } from '@/adapters/interface';
+import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
+import { PlaylistWriter } from '@/services/PlaylistWriter';
 import { TabHeader } from '@/components/TabHeader';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
+// ---------------------------------------------------------------------------
+// Session grouping helpers
+// ---------------------------------------------------------------------------
+
+interface SessionHeader {
+  type: 'header';
+  key: string;
+  sessionId: string | undefined;
+  sourcePlaylistName: string | undefined;
+  destinationNames: string[] | undefined;
+  date: string;
+}
+
+interface TrackItem {
+  type: 'track';
+  key: string;
+  record: MatchRecord;
+}
+
+type ListItem = SessionHeader | TrackItem;
+
+function buildSessionGroups(matches: MatchRecord[]): ListItem[] {
+  const items: ListItem[] = [];
+  let lastSessionId: string | undefined = undefined;
+
+  for (const record of matches) {
+    const sid = record.sessionId ?? '__legacy__';
+
+    if (sid !== lastSessionId) {
+      lastSessionId = sid;
+      const date = new Date(record.swipedAt).toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric',
+      });
+      items.push({
+        type: 'header',
+        key: `header-${sid}-${record.swipedAt}`,
+        sessionId: record.sessionId,
+        sourcePlaylistName: record.sourcePlaylistName,
+        destinationNames: record.destinationPlaylistNames,
+        date,
+      });
+    }
+
+    items.push({ type: 'track', key: record.swipedAt, record });
+  }
+
+  return items;
+}
+
+function SessionDivider({ item }: { item: SessionHeader }): React.ReactElement {
+  const title = item.sourcePlaylistName ?? 'Session';
+  const destLabel = item.destinationNames && item.destinationNames.length > 0
+    ? item.destinationNames.join(', ')
+    : null;
+
+  return (
+    <View style={dividerStyles.container}>
+      <View style={dividerStyles.line} />
+      <View style={dividerStyles.pill}>
+        <Text style={dividerStyles.source} numberOfLines={1}>{title}</Text>
+        {destLabel ? (
+          <Text style={dividerStyles.dest} numberOfLines={1}>→ {destLabel}</Text>
+        ) : null}
+        <Text style={dividerStyles.date}>{item.date}</Text>
+      </View>
+      <View style={dividerStyles.line} />
+    </View>
+  );
+}
 
 function StatusBadge({ status }: { status: MatchRecord['status'] }): React.ReactElement {
   const isSuperLiked = status === 'super_liked';
@@ -59,7 +128,7 @@ function TrackRow({ item, isRemoving, onRemove }: TrackRowProps): React.ReactEle
         {isRemoving ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.removeText}>Remove</Text>
+          <Text style={styles.removeText}>Cancel</Text>
         )}
       </Pressable>
     </View>
@@ -67,14 +136,11 @@ function TrackRow({ item, isRemoving, onRemove }: TrackRowProps): React.ReactEle
 }
 
 export default function MatchesScreen(): React.ReactElement {
-  const { sessionId } = useLocalSearchParams<{ sessionId?: string }>();
-
-  const supabaseToken = useAuthStore((s) => s.supabaseToken);
-  const { matches: zustandMatches } = useMatchesStore();
-
-  const [matches, setMatches] = useState<MatchRecord[]>(zustandMatches);
-  const [isLoadingBackend, setIsLoadingBackend] = useState(false);
+  const { matches } = useMatchesStore();
+  const removeFromHistory = useSwipeStore((s) => s.removeFromHistory);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+
+  const listData = useMemo(() => buildSessionGroups(matches), [matches]);
 
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
   const getAdapter = (): MusicPlatformAdapter => {
@@ -84,81 +150,65 @@ export default function MatchesScreen(): React.ReactElement {
     return adapterRef.current;
   };
 
-  // Fallback: if Zustand is empty (clearSession already called), fetch from backend
-  useEffect(() => {
-    if (zustandMatches.length > 0) {
-      setMatches(zustandMatches);
-      return;
-    }
-
-    if (!sessionId || !supabaseToken) return;
-
-    setIsLoadingBackend(true);
-    fetchFromBackend(sessionId, supabaseToken, BACKEND_URL)
-      .then((backendMatches) => {
-        setMatches(backendMatches);
-      })
-      .catch((err) => {
-        console.warn('[Matches] fetchFromBackend failed:', err);
-      })
-      .finally(() => {
-        setIsLoadingBackend(false);
-      });
-  }, []);
-
   const handleRemove = useCallback(
     async (record: MatchRecord): Promise<void> => {
+      const { swipedAt } = record;
       const trackId = record.track.id;
-      setRemovingIds((prev) => new Set(prev).add(trackId));
+      setRemovingIds((prev) => new Set(prev).add(swipedAt));
 
       try {
         const adapter = getAdapter();
-        for (const destId of record.destinationPlaylistIds) {
-          await adapter.removeFromPlaylist(destId, trackId);
+        const writer = new PlaylistWriter(adapter);
+
+        // Remove from regular playlists — this gates the UI update.
+        const regularIds = record.destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
+        await writer.undoWriteAsync(trackId, regularIds);
+
+        // Remove from persistent history — only reached if regular undo succeeded.
+        removeFromHistory(swipedAt);
+
+        // Best-effort: also remove from Liked Songs if we added it this session.
+        // Runs after UI update so a failure here never aborts the visible removal.
+        if (record.likedSongsWrittenByUs === true) {
+          writer.undoWriteAsync(trackId, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
+            console.warn('[Matches] removeFromLikedSongs failed:', err);
+          });
         }
-        // Optimistic removal from local state on success
-        setMatches((prev) => prev.filter((m) => m.track.id !== trackId));
       } catch {
         Alert.alert('Error', 'Could not remove track. Please try again.');
       } finally {
         setRemovingIds((prev) => {
           const next = new Set(prev);
-          next.delete(trackId);
+          next.delete(swipedAt);
           return next;
         });
       }
     },
-    [],
+    [removeFromHistory],
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: MatchRecord }) => (
-      <TrackRow
-        item={item}
-        isRemoving={removingIds.has(item.track.id)}
-        onRemove={(record) => void handleRemove(record)}
-      />
-    ),
+    ({ item }: { item: ListItem }) => {
+      if (item.type === 'header') return <SessionDivider item={item} />;
+      return (
+        <TrackRow
+          item={item.record}
+          isRemoving={removingIds.has(item.record.swipedAt)}
+          onRemove={(record) => void handleRemove(record)}
+        />
+      );
+    },
     [removingIds, handleRemove],
   );
 
-  const keyExtractor = useCallback((item: MatchRecord) => item.track.id, []);
-
-  if (isLoadingBackend) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1DB954" />
-        <Text style={styles.loadingText}>Loading matches…</Text>
-      </View>
-    );
-  }
+  const keyExtractor = useCallback((item: ListItem) => item.key, []);
 
   return (
     <View style={styles.container}>
       <TabHeader title="History" />
 
       <FlatList
-        data={matches}
+        data={listData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         contentContainerStyle={
@@ -166,7 +216,7 @@ export default function MatchesScreen(): React.ReactElement {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No liked tracks this session</Text>
+            <Text style={styles.emptyText}>No liked tracks yet</Text>
           </View>
         }
       />
@@ -174,22 +224,49 @@ export default function MatchesScreen(): React.ReactElement {
   );
 }
 
+const dividerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  line: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.surfaceContainerHigh,
+  },
+  pill: {
+    alignItems: 'center',
+    gap: 2,
+    maxWidth: '70%',
+  },
+  source: {
+    fontSize: 12,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.onSurface,
+    textAlign: 'center',
+  },
+  dest: {
+    fontSize: 11,
+    fontFamily: 'Outfit_400Regular',
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  date: {
+    fontSize: 10,
+    fontFamily: 'Outfit_400Regular',
+    color: colors.outlineVariant,
+    textAlign: 'center',
+    marginTop: 1,
+  },
+});
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  center: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  loadingText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
   },
   listContent: {
     paddingVertical: spacing.sm,

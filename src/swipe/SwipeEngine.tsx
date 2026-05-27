@@ -19,9 +19,10 @@ import type { TrackPlayer } from '@/player/TrackPlayer';
 import type { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { SessionTracker } from '@/services/SessionTracker';
 import type { BackendSync } from '@/services/BackendSync';
-import { PlatformError, PlatformErrorCode } from '@/adapters/interface';
+import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { Playlist } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
+import { useSessionStore } from '@/stores/sessionStore';
 import type { SwipeDirection } from '@/swipe/useSwipeGesture';
 
 interface SwipeEngineProps {
@@ -66,6 +67,28 @@ export function SwipeEngine({
   const [perTrackOverrideIds, setPerTrackOverrideIds] = useState<string[] | null>(null);
   // Destination editor modal visibility
   const [showDestEditor, setShowDestEditor] = useState(false);
+
+  const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
+
+  // Build a human-readable subtitle: "Source Name  →  Dest1, Dest2"
+  const headerSubtitle = React.useMemo(() => {
+    if (!sourcePlaylistName) return undefined;
+    const destNames = activeDestinationIds.map((id) => {
+      if (id === LIKED_SONGS_PLAYLIST_ID) return 'Liked Songs';
+      return availablePlaylists.find((p) => p.id === id)?.name ?? id;
+    });
+    const destLabel = destNames.length > 0 ? destNames.join(', ') : 'No destinations';
+    return `${sourcePlaylistName}  →  ${destLabel}`;
+  }, [sourcePlaylistName, activeDestinationIds, availablePlaylists]);
+
+  const resolveDestNames = useCallback(
+    (ids: string[]): string[] =>
+      ids.map((id) => {
+        if (id === LIKED_SONGS_PLAYLIST_ID) return 'Liked Songs';
+        return availablePlaylists.find((p) => p.id === id)?.name ?? id;
+      }),
+    [availablePlaylists],
+  );
 
   const currentTrack = queue[currentIndex] ?? null;
   const nextTrack = queue[currentIndex + 1] ?? null;
@@ -148,8 +171,9 @@ export function SwipeEngine({
 
       // Snapshot effective destinations BEFORE recordSwipe mutates state (Pitfall 6)
       const effectiveDestinations = getEffectiveDestinations();
+      const effectiveDestNames = resolveDestNames(effectiveDestinations);
 
-      recordSwipe(currentTrack, status, effectiveDestinations);
+      recordSwipe(currentTrack, status, effectiveDestinations, effectiveDestNames);
 
       if (status === 'liked') {
         playlistWriter.write(currentTrack.id, effectiveDestinations);
@@ -179,6 +203,7 @@ export function SwipeEngine({
     [
       currentTrack,
       getEffectiveDestinations,
+      resolveDestNames,
       recordSwipe,
       playlistWriter,
       sessionTracker,
@@ -254,7 +279,7 @@ export function SwipeEngine({
   if (!currentTrack) {
     return (
       <View style={styles.screen}>
-        <TabHeader title="Discover" />
+        <TabHeader title="Discover" subtitle={headerSubtitle} />
         <View style={styles.empty}>
           <Text style={styles.emptyText}>No more tracks</Text>
         </View>
@@ -269,7 +294,7 @@ export function SwipeEngine({
 
   return (
     <View style={styles.screen}>
-      <TabHeader title="Discover" />
+      <TabHeader title="Discover" subtitle={headerSubtitle} />
       <View style={styles.container}>
       {/* Progress section */}
       <View style={styles.progressSection}>
@@ -391,6 +416,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     position: 'relative',
+    overflow: 'hidden',
   },
   currentCard: {
     position: 'absolute',

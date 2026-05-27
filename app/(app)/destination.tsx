@@ -47,7 +47,7 @@ export default function DestinationPickerScreen() {
     setIsLoading(true);
     try {
       const { owned } = await getUserPlaylists(adapterInstance);
-      setOwnedPlaylists(owned.filter((p) => p.id !== LIKED_SONGS_PLAYLIST_ID));
+      setOwnedPlaylists(owned);
     } finally {
       setIsLoading(false);
     }
@@ -237,6 +237,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.lg,
     marginTop: spacing.sm,
+    marginBottom: spacing.sm,
     borderWidth: 2,
     borderColor: colors.outlineVariant,
     borderStyle: 'dashed',

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useSwipeStore } from '@/stores/swipeStore';
@@ -40,10 +40,13 @@ export default function SwipeScreen(): React.ReactElement {
   const swipeStore = useSwipeStore();
   const { initSession, clearSession } = swipeStore;
 
-  // Clear the suspended flag so future unmounts correctly trigger teardown
-  useEffect(() => {
-    useSwipeStore.getState().resumeSession();
-  }, []);
+  // Clear the suspended flag whenever this screen gains focus — covers both initial
+  // mount and returning from another tab via navigate (which doesn't remount the screen).
+  useFocusEffect(
+    useCallback(() => {
+      useSwipeStore.getState().resumeSession();
+    }, []),
+  );
 
   // Service refs — stable across re-renders, never re-instantiated after mount
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
@@ -80,7 +83,9 @@ export default function SwipeScreen(): React.ReactElement {
     const getToken = (): string => useAuthStore.getState().supabaseToken ?? '';
 
     trackPlayerRef.current = new TrackPlayer(adapter, setPreviewUrl);
-    playlistWriterRef.current = new PlaylistWriter(adapter);
+    playlistWriterRef.current = new PlaylistWriter(adapter, undefined, (trackId) => {
+      useSwipeStore.getState().markLikedSongsWritten(trackId);
+    });
     sessionTrackerRef.current = new SessionTracker(BACKEND_URL, getToken);
     backendSyncRef.current = new BackendSync(BACKEND_URL, getToken);
 
@@ -117,19 +122,13 @@ export default function SwipeScreen(): React.ReactElement {
     // Phase 2: flush pending sync swipes from a prior crashed session,
     // then drain any playlist write operations that were interrupted mid-flight.
     const flush = async (): Promise<void> => {
-      const pending = useSwipeStore.getState().pendingSyncSwipes;
-      if (pending.length > 0) {
-        try {
-          await backendSyncRef.current!.flushPending();
-          // Mark each as synced using its swipedAt timestamp
-          for (const record of pending) {
-            useSwipeStore.getState().markSynced(record.swipedAt);
-          }
-        } catch {
-          // flush failure is non-fatal — pending will retry on next AppState reconnect
-          console.warn('[SwipeScreen] pendingSyncSwipes flush failed; will retry on reconnect');
-        }
-      }
+      // flushPending() drains BackendSync's own in-memory queue (records from postSwipe
+      // calls during this session). We intentionally do NOT call markSynced here:
+      // pendingSyncSwipes is the source of truth for the history tab and must stay
+      // intact until clearSession() is called at natural session end.
+      await backendSyncRef.current!.flushPending().catch((err: unknown) => {
+        console.warn('[SwipeScreen] flushPending failed; will retry on reconnect', err);
+      });
 
       // Drain any write-queue entries that survived a previous crash.
       // Fire-and-forget from the perspective of the init sequence — failures are
@@ -144,6 +143,28 @@ export default function SwipeScreen(): React.ReactElement {
 
     void flush();
   }, [phase, buildServices]);
+
+  // ---------------------------------------------------------------------------
+  // Token refresh helper — re-registers with backend using current Spotify token
+  // to obtain a fresh Supabase JWT. Called on 401 before retrying openSession.
+  // ---------------------------------------------------------------------------
+  const refreshSupabaseToken = useCallback(async (): Promise<void> => {
+    const { accessToken: spotifyToken } = useAuthStore.getState();
+    if (!spotifyToken) throw new Error('No Spotify access token available for re-authentication');
+
+    const response = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spotifyAccessToken: spotifyToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Token refresh failed: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { supabaseToken: string };
+    await useAuthStore.getState().updateSupabaseToken(data.supabaseToken);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'fetching_pending') return;
@@ -268,28 +289,6 @@ export default function SwipeScreen(): React.ReactElement {
   const fullTracksRef = useRef<Track[]>([]);
   // True total track count from the API (not the loaded slice size)
   const totalTracksRef = useRef<number>(0);
-
-  // ---------------------------------------------------------------------------
-  // Token refresh helper — re-registers with backend using current Spotify token
-  // to obtain a fresh Supabase JWT. Called on 401 before retrying openSession.
-  // ---------------------------------------------------------------------------
-  const refreshSupabaseToken = useCallback(async (): Promise<void> => {
-    const { accessToken: spotifyToken } = useAuthStore.getState();
-    if (!spotifyToken) throw new Error('No Spotify access token available for re-authentication');
-
-    const response = await fetch(`${BACKEND_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spotifyAccessToken: spotifyToken }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token refresh failed: ${response.status}`);
-    }
-
-    const data = (await response.json()) as { supabaseToken: string };
-    await useAuthStore.getState().updateSupabaseToken(data.supabaseToken);
-  }, []);
 
   useEffect(() => {
     if (phase !== 'opening_session') return;

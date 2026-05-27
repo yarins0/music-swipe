@@ -39,7 +39,8 @@ const DEST_IDS = ['playlist-1'];
 // ---------------------------------------------------------------------------
 
 function setSwipes(swipes: ReturnType<typeof makeSwipeRecord>[]) {
-  useSwipeStore.setState({ pendingSyncSwipes: swipes });
+  // useMatchesStore reads from likedHistory (persisted cross-session history)
+  useSwipeStore.setState({ likedHistory: swipes });
 }
 
 function makeSwipeRecord(
@@ -65,6 +66,7 @@ beforeEach(() => {
     undoStack: [],
     activeDestinationIds: [],
     pendingSyncSwipes: [],
+    likedHistory: [],
   });
 });
 
@@ -73,11 +75,11 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('useMatchesStore', () => {
-  it('returns only liked records', () => {
-    setSwipes([
-      makeSwipeRecord(TRACK_A, 'liked'),
-      makeSwipeRecord(TRACK_B, 'skipped'),
-    ]);
+  // likedHistory only ever contains liked/super_liked records — skipped/pending
+  // are filtered at the write path (recordSwipe) before reaching likedHistory.
+
+  it('returns liked records from likedHistory', () => {
+    setSwipes([makeSwipeRecord(TRACK_A, 'liked')]);
 
     const { result } = renderHook(() => useMatchesStore());
 
@@ -86,11 +88,8 @@ describe('useMatchesStore', () => {
     expect(result.current.matches[0].status).toBe('liked');
   });
 
-  it('returns only super_liked records', () => {
-    setSwipes([
-      makeSwipeRecord(TRACK_A, 'super_liked'),
-      makeSwipeRecord(TRACK_B, 'skipped'),
-    ]);
+  it('returns super_liked records from likedHistory', () => {
+    setSwipes([makeSwipeRecord(TRACK_A, 'super_liked')]);
 
     const { result } = renderHook(() => useMatchesStore());
 
@@ -99,12 +98,10 @@ describe('useMatchesStore', () => {
     expect(result.current.matches[0].status).toBe('super_liked');
   });
 
-  it('returns both liked and super_liked, excludes skipped and pending', () => {
+  it('returns both liked and super_liked from likedHistory', () => {
     setSwipes([
       makeSwipeRecord(TRACK_A, 'liked'),
       makeSwipeRecord(TRACK_B, 'super_liked'),
-      makeSwipeRecord(TRACK_C, 'skipped'),
-      makeSwipeRecord(makeTrack('d'), 'pending'),
     ]);
 
     const { result } = renderHook(() => useMatchesStore());
@@ -114,24 +111,12 @@ describe('useMatchesStore', () => {
     const ids = matches.map((m) => m.track.id);
     expect(ids).toContain('a');
     expect(ids).toContain('b');
-    expect(ids).not.toContain('c');
-    expect(ids).not.toContain('d');
   });
 
   it('returns empty array when store has no swipes', () => {
     const { result } = renderHook(() => useMatchesStore());
     expect(result.current.matches).toHaveLength(0);
     expect(result.current.matches).toEqual([]);
-  });
-
-  it('returns empty array when all swipes are skipped or pending', () => {
-    setSwipes([
-      makeSwipeRecord(TRACK_A, 'skipped'),
-      makeSwipeRecord(TRACK_B, 'pending'),
-    ]);
-
-    const { result } = renderHook(() => useMatchesStore());
-    expect(result.current.matches).toHaveLength(0);
   });
 
   it('always returns isLoading as false', () => {

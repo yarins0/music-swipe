@@ -1,16 +1,19 @@
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/theme';
 
 interface TabHeaderProps {
   title: string;
+  subtitle?: string;
 }
 
-export function TabHeader({ title }: TabHeaderProps): React.ReactElement {
+export function TabHeader({ title, subtitle }: TabHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
       <Text style={styles.title}>{title}</Text>
+      {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -27,7 +30,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: 'Outfit_700Bold',
-    color: colors.onSurface,
+    color: colors.primary,
     letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: 'Outfit_400Regular',
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
 });
