@@ -5,6 +5,7 @@ import {
   PlatformError,
   PlatformErrorCode,
   Track,
+  UserProfile,
 } from '../interface';
 
 interface MockFixtures {
@@ -140,6 +141,10 @@ export class MockAdapter implements MusicPlatformAdapter {
 
   async getUserId(): Promise<string> {
     return this.fixtures.userId;
+  }
+
+  async getUserProfile(): Promise<UserProfile> {
+    return { spotifyId: this.fixtures.userId, displayName: 'Mock User', avatarUrl: null, email: null };
   }
 
   async getUserPlaylists(): Promise<Playlist[]> {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,10 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useAuthStore } from '@/stores/authStore';
+import { createSpotifyAdapter } from '@/auth/AuthGateway';
+import type { MusicPlatformAdapter, UserProfile } from '@/adapters/interface';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TabHeader } from '@/components/TabHeader';
 import { colors, spacing, radius } from '@/theme';
@@ -75,7 +78,6 @@ function Section({ title, children }: SectionProps): React.ReactElement {
 }
 
 export default function SettingsScreen(): React.ReactElement {
-  const userId = useAuthStore((s) => s.userId);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const [showAlbumArt, setShowAlbumArt] = useState(true);
@@ -83,6 +85,26 @@ export default function SettingsScreen(): React.ReactElement {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [spotifySync, setSpotifySync] = useState(true);
   const [weeklyReminders, setWeeklyReminders] = useState(true);
+
+  const [profile, setProfile] = useState<UserProfile & { isLoading: boolean }>({
+    spotifyId: '',
+    displayName: null,
+    avatarUrl: null,
+    email: null,
+    isLoading: true,
+  });
+
+  const adapterRef = useRef<MusicPlatformAdapter | null>(null);
+
+  useEffect(() => {
+    if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
+    adapterRef.current.getUserProfile()
+      .then((p) => setProfile({ ...p, isLoading: false }))
+      .catch((err: unknown) => {
+        console.error('[Settings] getUserProfile failed:', err);
+        setProfile({ spotifyId: '', displayName: null, avatarUrl: null, email: null, isLoading: false });
+      });
+  }, []);
 
   const handleLogOut = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -92,7 +114,18 @@ export default function SettingsScreen(): React.ReactElement {
   };
 
   const handleReconnect = () => {
-    Alert.alert('Reconnect', 'This will re-authenticate your Spotify account.');
+    Alert.alert(
+      'Reconnect Spotify',
+      'You will be signed out and redirected to log in again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reconnect', onPress: () => void clearAuth() },
+      ],
+    );
+  };
+
+  const handleComingSoon = () => {
+    Alert.alert('Coming Soon', 'This feature is not yet available.');
   };
 
   return (
@@ -106,13 +139,19 @@ export default function SettingsScreen(): React.ReactElement {
         {/* Account */}
         <Section title="ACCOUNT">
           <View style={styles.accountRow}>
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={28} color={colors.onSurfaceVariant} />
-            </View>
+            {profile.avatarUrl ? (
+              <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} contentFit="cover" />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={28} color={colors.onSurfaceVariant} />
+              </View>
+            )}
             <View style={styles.accountInfo}>
-              <Text style={styles.accountName}>Spotify User</Text>
+              <Text style={styles.accountName}>
+                {profile.isLoading ? '—' : (profile.displayName ?? profile.email ?? 'Spotify User')}
+              </Text>
               <Text style={styles.accountId} numberOfLines={1}>
-                {userId ?? '—'}
+                {profile.isLoading ? '' : (profile.spotifyId ? `spotify:${profile.spotifyId}` : '—')}
               </Text>
             </View>
           </View>
@@ -171,9 +210,9 @@ export default function SettingsScreen(): React.ReactElement {
         <Section title="ABOUT">
           <LinkRow label="Version" value={APP_VERSION} />
           <View style={styles.divider} />
-          <LinkRow label="Privacy Policy" onPress={() => {}} />
+          <LinkRow label="Privacy Policy" onPress={handleComingSoon} />
           <View style={styles.divider} />
-          <LinkRow label="Terms of Service" onPress={() => {}} />
+          <LinkRow label="Terms of Service" onPress={handleComingSoon} />
         </Section>
 
         {/* Branding footer */}
@@ -264,6 +303,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   avatarPlaceholder: {
     width: 52,

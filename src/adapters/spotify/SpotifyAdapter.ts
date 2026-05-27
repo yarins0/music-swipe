@@ -1,4 +1,4 @@
-import type { MusicPlatformAdapter, Playlist, Track, AdapterCapabilities } from '../interface';
+import type { MusicPlatformAdapter, Playlist, Track, AdapterCapabilities, UserProfile } from '../interface';
 import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '../interface';
 import { spotifyFetch, type SpotifyAuthContext } from './spotifyFetch';
 import { mapSpotifyPlaylist, mapSpotifyTrack, type SpotifyPlaylistItem, type SpotifyTrackItem } from './mappers';
@@ -14,6 +14,7 @@ interface SpotifyMeResponse {
   id: string;
   display_name: string | null;
   email: string | null;
+  images?: Array<{ url: string; width: number | null; height: number | null }>;
 }
 
 interface SpotifyNewPlaylistResponse {
@@ -46,7 +47,7 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
   };
 
   private readonly auth: SpotifyAuthContext;
-  private cachedUserId: string | null = null;
+  private cachedProfile: UserProfile | null = null;
   private cachedDeviceId: string | null = null;
 
   constructor(auth: SpotifyAuthContext) {
@@ -84,11 +85,20 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     // spotifyFetch handles refresh internally; calling this is a no-op for now
   }
 
-  async getUserId(): Promise<string> {
-    if (this.cachedUserId) return this.cachedUserId;
+  async getUserProfile(): Promise<UserProfile> {
+    if (this.cachedProfile) return this.cachedProfile;
     const data = await spotifyFetch<SpotifyMeResponse>('/me', {}, this.auth);
-    this.cachedUserId = data.id;
-    return data.id;
+    this.cachedProfile = {
+      spotifyId: data.id,
+      displayName: data.display_name ?? null,
+      avatarUrl: data.images?.[0]?.url ?? null,
+      email: data.email ?? null,
+    };
+    return this.cachedProfile;
+  }
+
+  async getUserId(): Promise<string> {
+    return (await this.getUserProfile()).spotifyId;
   }
 
   async getUserPlaylists(): Promise<Playlist[]> {
@@ -160,7 +170,6 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     limit = 50,
   ): Promise<{ tracks: Track[]; total: number }> {
     const isLikedSongs = playlistId === LIKED_SONGS_PLAYLIST_ID;
-    console.log(`[SpotifyAdapter] getPlaylistTracks — playlistId="${playlistId}" isLikedSongs=${isLikedSongs} LIKED_SONGS_PLAYLIST_ID="${LIKED_SONGS_PLAYLIST_ID}"`);
     // /me/tracks accepts max 50; /playlists/{id}/items accepts up to 100
     const effectiveLimit = isLikedSongs ? Math.min(limit, 50) : limit;
     const endpoint = isLikedSongs

@@ -49,6 +49,13 @@ export interface AdapterCapabilities {
   supportsPlaylistCreation: boolean;
 }
 
+export interface UserProfile {
+  spotifyId: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  email: string | null;
+}
+
 export interface MusicPlatformAdapter {
   readonly capabilities: AdapterCapabilities;
 
@@ -56,6 +63,7 @@ export interface MusicPlatformAdapter {
   refreshAuth(): Promise<void>;
 
   getUserId(): Promise<string>;
+  getUserProfile(): Promise<UserProfile>;
 
   getUserPlaylists(): Promise<Playlist[]>;
   getPlaylistById(playlistId: string): Promise<Playlist>;

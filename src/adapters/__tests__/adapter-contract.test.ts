@@ -29,6 +29,19 @@ describe('adapter contract — MockAdapter', () => {
       const adapter = new MockAdapter({ userId: 'custom-user' });
       expect(await adapter.getUserId()).toBe('custom-user');
     });
+
+    it('getUserProfile() returns spotifyId matching getUserId()', async () => {
+      const adapter = new MockAdapter();
+      const profile = await adapter.getUserProfile();
+      expect(profile.spotifyId).toBe(await adapter.getUserId());
+    });
+
+    it('getUserProfile() returns a displayName and nullable avatarUrl', async () => {
+      const adapter = new MockAdapter();
+      const profile = await adapter.getUserProfile();
+      expect(typeof profile.displayName === 'string' || profile.displayName === null).toBe(true);
+      expect(typeof profile.avatarUrl === 'string' || profile.avatarUrl === null).toBe(true);
+    });
   });
 
   describe('playlists', () => {

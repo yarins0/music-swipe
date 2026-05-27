@@ -79,18 +79,18 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
     const deterministicEmail = `${spotifyUser.id}@music-swipe.internal`;
     const password = deriveUserPassword(spotifyUser.id);
 
-    // Create Supabase auth user — safe to ignore "already registered" since we upsert below.
-    // Uses supabaseAuth (auth-only client) to avoid polluting supabase's REST headers.
+    // Create Supabase auth user — idempotent; all errors are intentionally ignored.
+    // The user may already exist (returning user, or partial deletion), and
+    // signInWithPassword below is the authoritative check. Creating only fails
+    // permanently if the account was fully deleted and can't be recreated — in
+    // that case signInWithPassword will surface the real error.
     const { error: createError } = await supabaseAuth.auth.admin.createUser({
       email: deterministicEmail,
       password,
       email_confirm: true,
     });
-
-    if (createError && !createError.message?.includes('already been registered')) {
-      console.error('Supabase createUser error:', createError);
-      res.status(500).json({ error: 'Failed to create user' });
-      return;
+    if (createError) {
+      console.warn('Supabase createUser (non-fatal):', createError.message);
     }
 
     // Sign in to get the session and the canonical Supabase user UUID.
@@ -106,8 +106,10 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
       return;
     }
 
-    // Upsert public.users — idempotent, handles first-time and returning users,
-    // and recovers from any prior failed inserts.
+    // Upsert public.users — resolve on spotify_user_id (the stable identity) so that
+    // re-registering after an auth user was deleted updates supabase_id in-place rather
+    // than failing with a duplicate-key violation. supabase_id is updated to the current
+    // auth UUID so requireAuth's supabase_id lookup keeps working.
     const { error: upsertError } = await supabase
       .from('users')
       .upsert(
@@ -117,7 +119,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
           display_name: spotifyUser.display_name,
           email: spotifyUser.email,
         },
-        { onConflict: 'supabase_id' },
+        { onConflict: 'spotify_user_id' },
       );
 
     if (upsertError) {
