@@ -79,26 +79,30 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
     const deterministicEmail = `${spotifyUser.id}@music-swipe.internal`;
     const password = deriveUserPassword(spotifyUser.id);
 
-    // Create Supabase auth user — idempotent; all errors are intentionally ignored.
-    // The user may already exist (returning user, or partial deletion), and
-    // signInWithPassword below is the authoritative check. Creating only fails
-    // permanently if the account was fully deleted and can't be recreated — in
-    // that case signInWithPassword will surface the real error.
-    const { error: createError } = await supabaseAuth.auth.admin.createUser({
+    // Sign in first — succeeds immediately for returning users without touching createUser.
+    // Only create the auth account when sign-in fails (first-time registration).
+    let { data: sessionData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
       email: deterministicEmail,
       password,
-      email_confirm: true,
     });
-    if (createError) {
-      console.warn('Supabase createUser (non-fatal):', createError.message);
-    }
 
-    // Sign in to get the session and the canonical Supabase user UUID.
-    // Uses supabaseAuth so signInWithPassword does not update the DB client's auth state.
-    const { data: sessionData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
-      email: deterministicEmail,
-      password,
-    });
+    if (signInError || !sessionData.session) {
+      const { error: createError } = await supabaseAuth.auth.admin.createUser({
+        email: deterministicEmail,
+        password,
+        email_confirm: true,
+      });
+      if (createError) {
+        console.error('Supabase createUser error:', createError.message);
+        res.status(500).json({ error: 'Failed to create session' });
+        return;
+      }
+
+      ({ data: sessionData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
+        email: deterministicEmail,
+        password,
+      }));
+    }
 
     if (signInError || !sessionData.session) {
       console.error('Supabase signIn error:', signInError);
