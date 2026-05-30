@@ -40,7 +40,7 @@ export function SegmentNavigator({
   };
 
   return (
-    <View style={styles.container} pointerEvents="box-none">
+    <View style={styles.container} pointerEvents={disabled ? 'none' : 'box-none'}>
       <Pressable
         style={styles.half}
         onPress={handleSeekBack}

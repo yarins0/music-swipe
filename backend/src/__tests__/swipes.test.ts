@@ -128,7 +128,7 @@ describe('POST /swipes', () => {
     unauthenticated();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
 
@@ -139,7 +139,7 @@ describe('POST /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({});
@@ -152,7 +152,7 @@ describe('POST /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [] });
@@ -165,7 +165,7 @@ describe('POST /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({
@@ -180,7 +180,7 @@ describe('POST /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, status: 'liked' }] });
@@ -193,7 +193,7 @@ describe('POST /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -213,7 +213,7 @@ describe('POST /swipes', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -229,7 +229,7 @@ describe('POST /swipes', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -268,7 +268,7 @@ describe('POST /swipes', () => {
       .mockReturnValueOnce(destInsert1Mock);  // swipe_destinations for swipe 1
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({
@@ -341,7 +341,7 @@ describe('POST /swipes', () => {
       .mockReturnValueOnce(insertDestMock);  // swipe_destinations re-insert
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({
@@ -372,7 +372,7 @@ describe('POST /swipes', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -396,7 +396,7 @@ describe('POST /swipes', () => {
       .mockReturnValueOnce(existingMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -423,7 +423,7 @@ describe('POST /swipes', () => {
       .mockReturnValueOnce(insertMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/swipes')
       .set('Authorization', VALID_TOKEN)
       .send({ swipes: [{ sessionId: SESSION_ID, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
@@ -441,7 +441,7 @@ describe('GET /swipes', () => {
     unauthenticated();
 
     const app = buildApp();
-    const res = await request(app).get('/swipes');
+    const res = await request(tabs).get('/swipes');
 
     expect(res.status).toBe(401);
   });
@@ -450,7 +450,7 @@ describe('GET /swipes', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes?status=disliked')
       .set('Authorization', VALID_TOKEN);
 
@@ -487,7 +487,7 @@ describe('GET /swipes', () => {
       .mockReturnValueOnce(destMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes')
       .set('Authorization', VALID_TOKEN);
 
@@ -510,7 +510,7 @@ describe('GET /swipes', () => {
     mockFrom.mockReturnValueOnce(swipeMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes')
       .set('Authorization', VALID_TOKEN);
 
@@ -525,7 +525,7 @@ describe('GET /swipes', () => {
     mockFrom.mockReturnValueOnce(swipeMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes')
       .set('Authorization', VALID_TOKEN);
 
@@ -557,7 +557,7 @@ describe('GET /swipes', () => {
       .mockReturnValueOnce(destMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes')
       .set('Authorization', VALID_TOKEN);
 
@@ -572,7 +572,7 @@ describe('GET /swipes', () => {
     mockFrom.mockReturnValueOnce(swipeMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/swipes?status=liked&source_playlist_id=${PLAYLIST_A}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -627,7 +627,7 @@ describe('GET /swipes?session_id=', () => {
       .mockReturnValueOnce(destMock);            // swipe_destinations
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/swipes?session_id=${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -656,7 +656,7 @@ describe('GET /swipes?session_id=', () => {
       .mockReturnValueOnce(swipesMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/swipes?session_id=${SESSION_ID_2}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -675,7 +675,7 @@ describe('GET /swipes?session_id=', () => {
     mockFrom.mockReturnValueOnce(sessionOwnershipMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/swipes?session_id=${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -694,7 +694,7 @@ describe('GET /swipes?session_id=', () => {
     mockFrom.mockReturnValueOnce(sessionOwnershipMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get('/swipes?session_id=nonexistent-session')
       .set('Authorization', VALID_TOKEN);
 
@@ -713,7 +713,7 @@ describe('GET /swipes?session_id=', () => {
     mockFrom.mockReturnValueOnce(sessionOwnershipMock);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/swipes?session_id=${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 

@@ -100,7 +100,9 @@ export function DestinationEditor({
       onRequestClose={onClose}
       accessibilityViewIsModal
     >
-      <Pressable style={styles.backdrop} onPress={onClose} />
+      {/* overlay fills the screen; sheet is anchored to the bottom */}
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
 
       <View style={styles.sheet}>
         {/* Header */}
@@ -206,13 +208,15 @@ export function DestinationEditor({
           </Pressable>
         )}
       </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     flex: 1,
+    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {

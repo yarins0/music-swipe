@@ -4,6 +4,8 @@ interface SessionState {
   sourcePlaylistId: string | null;
   sourcePlaylistName: string | null;
   destinationPlaylistIds: string[];
+  /** When true the session operates in filter mode: left swipe deletes from source, right keeps. */
+  isFilterMode: boolean;
 }
 
 interface SessionActions {
@@ -11,6 +13,7 @@ interface SessionActions {
   setDestinations: (playlistIds: string[]) => void;
   addDestination: (playlistId: string) => void;
   removeDestination: (playlistId: string) => void;
+  setFilterMode: (value: boolean) => void;
   clearSession: () => void;
 }
 
@@ -18,6 +21,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set) => ({
   sourcePlaylistId: null,
   sourcePlaylistName: null,
   destinationPlaylistIds: [],
+  isFilterMode: false,
 
   setSource: (playlistId, playlistName) =>
     set({ sourcePlaylistId: playlistId, sourcePlaylistName: playlistName }),
@@ -37,10 +41,13 @@ export const useSessionStore = create<SessionState & SessionActions>((set) => ({
       destinationPlaylistIds: state.destinationPlaylistIds.filter((id) => id !== playlistId),
     })),
 
+  setFilterMode: (value) => set({ isFilterMode: value }),
+
   clearSession: () =>
     set({
       sourcePlaylistId: null,
       sourcePlaylistName: null,
       destinationPlaylistIds: [],
+      isFilterMode: false,
     }),
 }));

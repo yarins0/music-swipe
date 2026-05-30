@@ -17,14 +17,14 @@ type TabItem = {
   label: string;
   iconActive: React.ComponentProps<typeof Ionicons>['name'];
   iconInactive: React.ComponentProps<typeof Ionicons>['name'];
-  route: '/(app)' | '/(app)/matches' | '/(app)/settings';
+  route: '/(tabs)' | '/(tabs)/matches' | '/(tabs)/settings';
 };
 
 const TAB_ITEMS: TabItem[] = [
-  { label: 'Discover', iconActive: 'compass', iconInactive: 'compass-outline', route: '/(app)' },
-  { label: 'Playlists', iconActive: 'library', iconInactive: 'library-outline', route: '/(app)' },
-  { label: 'History', iconActive: 'time', iconInactive: 'time-outline', route: '/(app)/matches' },
-  { label: 'Settings', iconActive: 'settings', iconInactive: 'settings-outline', route: '/(app)/settings' },
+  { label: 'Discover', iconActive: 'compass', iconInactive: 'compass-outline', route: '/(tabs)' },
+  { label: 'Playlists', iconActive: 'library', iconInactive: 'library-outline', route: '/(tabs)' },
+  { label: 'History', iconActive: 'time', iconInactive: 'time-outline', route: '/(tabs)/matches' },
+  { label: 'Settings', iconActive: 'settings', iconInactive: 'settings-outline', route: '/(tabs)/settings' },
 ];
 
 const TAB_COUNT = TAB_ITEMS.length;
@@ -99,7 +99,7 @@ export function BottomNavBar(): React.ReactElement {
           // Use navigate (not push) so Expo Router pops back to the existing swipe
           // screen in the stack instead of mounting a brand-new instance.
           router.navigate({
-            pathname: '/(app)/swipe/[playlistId]',
+            pathname: '/(tabs)/swipe/[playlistId]',
             params: { playlistId: sourcePlaylistId },
           });
         } else {
@@ -109,7 +109,7 @@ export function BottomNavBar(): React.ReactElement {
             toValue: playlistsIndex * tabWidth,
             duration: INDICATOR_SLIDE_MS,
             useNativeDriver: true,
-          }).start(() => router.navigate('/(app)'));
+          }).start(() => router.navigate('/(tabs)'));
         }
       } else {
         // Suspend the swipe session instead of ending it when tabbing away

@@ -68,7 +68,7 @@ describe('POST /sessions', () => {
     unauthenticated();
 
     const app = buildApp();
-    const res = await request(app).post('/sessions').send({ sourcePlaylistId: PLAYLIST_ID });
+    const res = await request(tabs).post('/sessions').send({ sourcePlaylistId: PLAYLIST_ID });
 
     expect(res.status).toBe(401);
   });
@@ -77,7 +77,7 @@ describe('POST /sessions', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/sessions')
       .set('Authorization', VALID_TOKEN)
       .send({});
@@ -90,7 +90,7 @@ describe('POST /sessions', () => {
     authenticateAs();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/sessions')
       .set('Authorization', VALID_TOKEN)
       .send({ sourcePlaylistId: 42 });
@@ -112,7 +112,7 @@ describe('POST /sessions', () => {
     mockFrom.mockReturnValue(mockInsertChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/sessions')
       .set('Authorization', VALID_TOKEN)
       .send({ sourcePlaylistId: PLAYLIST_ID });
@@ -140,7 +140,7 @@ describe('POST /sessions', () => {
     mockFrom.mockReturnValue(mockInsertChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .post('/sessions')
       .set('Authorization', VALID_TOKEN)
       .send({ sourcePlaylistId: PLAYLIST_ID });
@@ -158,7 +158,7 @@ describe('GET /sessions/:id', () => {
     unauthenticated();
 
     const app = buildApp();
-    const res = await request(app).get(`/sessions/${SESSION_ID}`);
+    const res = await request(tabs).get(`/sessions/${SESSION_ID}`);
 
     expect(res.status).toBe(401);
   });
@@ -186,7 +186,7 @@ describe('GET /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -216,7 +216,7 @@ describe('GET /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -238,7 +238,7 @@ describe('GET /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/sessions/nonexistent-id`)
       .set('Authorization', VALID_TOKEN);
 
@@ -260,7 +260,7 @@ describe('GET /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .get(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN);
 
@@ -277,7 +277,7 @@ describe('PATCH /sessions/:id', () => {
     unauthenticated();
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .send({ endedAt: new Date().toISOString() });
 
@@ -298,7 +298,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ swipedCount: 10 });
@@ -321,7 +321,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ swipedCount: 10 });
@@ -343,7 +343,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({});
@@ -376,7 +376,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ endedAt, swipedCount: 15, likedCount: 8, superLikedCount: 2 });
@@ -411,7 +411,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ likedCount: 5 });
@@ -436,7 +436,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValue(mockSelectChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ swipedCount: 5 });
@@ -465,7 +465,7 @@ describe('PATCH /sessions/:id', () => {
     mockFrom.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
 
     const app = buildApp();
-    const res = await request(app)
+    const res = await request(tabs)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
       .send({ swipedCount: 5 });

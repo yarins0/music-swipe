@@ -3,68 +3,15 @@
 
 | Agent | Description | Owns | Highest ID used |
 |-------|-------------|------|-----------------|
-| A | Settings / Prefs domain | `src/stores/prefsStore.ts`, `app/(app)/settings.tsx`, `app/(app)/privacy-policy.tsx`, `app/(app)/terms-of-service.tsx`, `app/(app)/contact.tsx` | A5 |
+| A | Settings / Prefs domain | `src/stores/prefsStore.ts`, `app/(tabs)/settings.tsx`, `app/(tabs)/privacy-policy.tsx`, `app/(tabs)/terms-of-service.tsx`, `app/(tabs)/contact.tsx` | A5 |
 | B | Swipe card UI & gesture | `src/swipe/SwipeCard.tsx`, `src/swipe/SwipeEngine.tsx`, `src/swipe/useSwipeGesture.ts`, `src/components/TabHeader.tsx` | B3 |
-| C | Preview player integration | `app/(app)/swipe/[playlistId].tsx`, `src/player/usePreviewPlayer.ts`, `src/player/TrackPlayer.ts` | C1 |
-| D | Filter mode feature | `app/(app)/destination.tsx`, `src/stores/sessionStore.ts`, `src/swipe/SwipeEngine.tsx`, `src/swipe/ButtonBar.tsx`, `app/(app)/session-end.tsx` | D4 |
+| C | Preview player integration | `app/(tabs)/swipe/[playlistId].tsx`, `src/player/usePreviewPlayer.ts`, `src/player/TrackPlayer.ts` | C1 |
+| D | Filter mode feature | `app/(tabs)/destination.tsx`, `src/stores/sessionStore.ts`, `src/swipe/SwipeEngine.tsx`, `src/swipe/ButtonBar.tsx`, `app/(tabs)/session-end.tsx` | D4 |
+| Q | Manual QA — testing only | n/a | Q4 |
 
 ---
 
 ## Agent A — Settings / Prefs
-
-## A1 · Persisted prefs store + wire settings.tsx
-
-**What:** Create `src/stores/prefsStore.ts` — a Zustand store with AsyncStorage persist middleware — holding all user preference flags. Replace the five `useState` calls in `settings.tsx` with reads/writes from this store so values survive app restarts.
-
-**Why:** Every toggle currently resets on restart because they're local component state. The store is also the prerequisite for B1, B2, and C1, which need to read prefs at runtime.
-
-**What to change:**
-- Create `src/stores/prefsStore.ts`. Fields: `showAlbumArt: boolean` (default `true`), `autoPlayPreviews: boolean` (default `false`), `hapticFeedback: boolean` (default `true`), `weeklyReminders: boolean` (default `true`).
-- Use `create` + `persist` from `zustand/middleware` with the `AsyncStorage` adapter (same pattern as `swipeStore`).
-- In `app/(app)/settings.tsx`: replace `const [showAlbumArt, setShowAlbumArt] = useState(true)` etc. with `usePrefsStore` selector/action calls. Remove all five `useState` declarations for prefs.
-
-**Effort:** S
-**Priority:** P0
-
----
-
----
-
----
-
-## A4 · Privacy Policy and Terms of Service screens
-
-**What:** Replace the `handleComingSoon` Alert on both "Privacy Policy" and "Terms of Service" rows with navigation to real in-app screens. Create `app/(app)/privacy-policy.tsx` and `app/(app)/terms-of-service.tsx` as scrollable static-content screens with placeholder text formatted as section headers + paragraphs.
-
-**Why:** The "Coming Soon" alert makes the app look unfinished and is a blocker for App Store submission (both documents are required).
-
-**What to change:**
-- Create `app/(app)/privacy-policy.tsx` and `app/(app)/terms-of-service.tsx`. Each is a full-screen `ScrollView` with a back button, the document title, and placeholder section text (e.g. "Data Collection", "Contact", "Governing Law"). Use the same header pattern as `destination.tsx` (`insets.top + 12`, back `←` button, centred title).
-- `app/(app)/settings.tsx`: replace `handleComingSoon` calls on Privacy/ToS rows with `router.push('/(app)/privacy-policy')` and `router.push('/(app)/terms-of-service')`. Import `useRouter`.
-
-**Effort:** S
-**Priority:** P2
-
----
-
-## A5 · Contact Me screen
-
-**What:** Create `app/(app)/contact.tsx` — a simple screen with tappable action rows for emailing the developer, opening GitHub Issues, and (optionally) rating the app. Wire the ABOUT section "Contact" row in settings to navigate there.
-
-**Why:** There is currently no way for users to reach out from inside the app. The settings screen has no contact entry at all.
-
-**What to change:**
-- Create `app/(app)/contact.tsx`. Rows (use `expo-web-browser` / `Linking`):
-  - "Send Feedback" → `Linking.openURL('mailto:your@email.com?subject=MusicSwipe Feedback')`
-  - "Report a Bug" → `WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/issues')`
-  - "View on GitHub" → `WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe')`
-  - Use the same full-screen layout as the policy screens (back button, section card rows).
-- `app/(app)/settings.tsx`: add a "Contact" `<LinkRow onPress={() => router.push('/(app)/contact')}>` inside the ABOUT section, above the Version row.
-
-**Effort:** S
-**Priority:** P2
-
----
 
 ## Agent B — Swipe Card UI & Gesture
 
@@ -110,7 +57,7 @@
 **Why:** `usePreviewPlayer` is already called in `swipe/[playlistId].tsx` (line 60) but its return value is discarded — nothing ever calls `player.play()`. `TrackPlayer` already fires `setPreviewUrl` (its `onPreviewRequired` callback) when the adapter fails and a preview URL exists, but the audio never starts.
 
 **What to change:**
-- `app/(app)/swipe/[playlistId].tsx`:
+- `app/(tabs)/swipe/[playlistId].tsx`:
   - Capture the return value: `const previewPlayer = usePreviewPlayer(previewUrl)`.
   - Add a `useEffect([previewUrl])`: when `previewUrl` is non-null and `autoPlayPreviews` pref is on, call `previewPlayer.play()`.
   - When `autoPlayPreviews` is off, pass `null` instead of `setPreviewUrl` to the `TrackPlayer` constructor so the adapter-failure preview path is fully skipped: `new TrackPlayer(adapter, autoPlayPreviews ? setPreviewUrl : null)`.
@@ -150,7 +97,7 @@
 
 **What to change:**
 - `src/stores/sessionStore.ts`: add `isFilterMode: boolean` (default `false`) and `setFilterMode(value: boolean)` action. Add `clearSession()` call to reset it alongside the existing fields.
-- `app/(app)/destination.tsx`: in `handleToggle`, when the toggled ID equals `playlistId` (the source) and it's being added: call `setSelectedIds(new Set([playlistId]))` (clears others, locks to source). Show a filter mode banner/chip below the search bar while source is selected ("Filter Mode — left swipe will delete from this playlist"). In `handleConfirm`: if source is in `selectedIds`, show a `AppModal` explaining the semantics ("You're entering Filter Mode. Swipe LEFT to delete tracks, swipe RIGHT to keep them. This is permanent."). On modal confirm: `setIsFilterMode(true)` then navigate. On cancel: do nothing.
+- `app/(tabs)/destination.tsx`: in `handleToggle`, when the toggled ID equals `playlistId` (the source) and it's being added: call `setSelectedIds(new Set([playlistId]))` (clears others, locks to source). Show a filter mode banner/chip below the search bar while source is selected ("Filter Mode — left swipe will delete from this playlist"). In `handleConfirm`: if source is in `selectedIds`, show a `AppModal` explaining the semantics ("You're entering Filter Mode. Swipe LEFT to delete tracks, swipe RIGHT to keep them. This is permanent."). On modal confirm: `setIsFilterMode(true)` then navigate. On cancel: do nothing.
 - Import `AppModal` and `useSessionStore` in destination.tsx.
 
 **Effort:** M
@@ -200,7 +147,7 @@
 **Why:** The existing session-end screen describes curation into new playlists. In filter mode the user was culling an existing playlist — the framing is entirely different and the "save as playlist" action is redundant/confusing.
 
 **What to change:**
-- `app/(app)/session-end.tsx`:
+- `app/(tabs)/session-end.tsx`:
   - Read `isFilterMode` from `useSessionStore`.
   - Stats row: when filter mode, `addedCount` label → "TRACKS KEPT", `discardedCount` label → "TRACKS DELETED".
   - Hero subtitle: "You've finished filtering. Here's what you decided to keep and delete."
@@ -214,7 +161,69 @@
 
 ---
 
+## Agent Q — Manual QA (testing only)
+
+> Owns: n/a — these are manual verification steps, not automatable tasks.
+
+
+## Q3 · Preview Player QA
+
+**What:** Verify auto-play previews trigger, stop on swipe, and respect the pref toggle.
+
+**Checks:**
+[] "Auto-play Previews" on + no active device → 30s preview plays automatically when adapter fails  - RESULT: I dont know what that means, is that what causes the first track to not play?
+[x] Swipe to next track → previous preview stops, no audio bleed from prior track
+[] "Auto-play Previews" off → no audio plays even when adapter fails
+ISSUE : at first it does - than when turned on it starts working - turned off again it still works
+[] "Auto-play Previews" off → `previewUrl` state never gets set during a session
+ISSUE: cant really test that mabually - add a log
+[] Queue exhausted and session ends → no lingering preview audio
+ISSUE: music continues
+[] Undo (step back to previous card) → preview resets cleanly, no double-play or stale audio
+
+**Effort:** S
+**Priority:** P1
+
+---
+
+## Q4 · Filter Mode QA
+
+**What:** Verify the full filter mode flow — selection lock, confirmation modal, swipe semantics, undo, and session-end screen.
+
+**Checks:**
+[x] Destination screen: tap source playlist → all other selections clear, only source checked, red "Filter Mode — left swipe will delete from this playlist" banner appears
+[x] With source selected, tap "Start Swiping" → filter mode confirmation modal appears with destructive red confirm button and permanent-deletion warning
+[x] Cancel modal → no navigation occurs, selection unchanged
+[x] Confirm modal → swipe screen opens, skip button shows red trash icon + "DELETE" label instead of ✕
+[x] Filter mode: swipe left → track removed from source playlist in Spotify (verify in Spotify app)
+[x] Filter mode: swipe right → nothing written, track stays in playlist
+[] Filter mode: undo a left swipe → track re-added to source playlist
+[] Session-end after filter mode: "TRACKS KEPT"/"TRACKS DELETED" labels, "Tracks You Kept" title, no per-track remove buttons, no "Save as Playlist" CTA
+[] Normal session (non-filter): skip button shows ✕, labels read "ADDED TO PLAYLISTS"/"DISCARDED", remove buttons present, "Save as Playlist" visible
+[x] New session started after filter mode: `isFilterMode` reset — no banner on destination picker, normal ✕ skip button in swipe screen
+
+**Effort:** M
+**Priority:** P0
+
+---
+
 # Done ✅
+
+## Q1 · Settings & Prefs QA
+
+**What:** Verify persisted prefs, new screens, and contact rows work correctly in the running app.
+**Completed:** 2026-05-30
+**Summary:** All pref toggles persist across app restarts. Privacy Policy, Terms of Service, and Contact screens open and navigate correctly. Navbar highlight on settings sub-routes (contact, privacy, terms) is a known routing quirk; deferred.
+
+---
+
+## Q2 · Swipe Card UI QA
+
+**What:** Verify album art toggle, haptics, back-card animation, and header pencil button.
+**Completed:** 2026-05-30
+**Summary:** Album art toggle, haptics, and no-art icon card all verified. Back-card scale animation works during drag; post-release bounce-back lag is acceptable and deferred. DestinationEditor button removed from header (modal was invisible — feature disabled rather than debugged; code preserved). Title centering untested but layout is structurally correct.
+
+---
 
 ## A3 · Dynamic version + GitHub releases link
 
@@ -223,7 +232,7 @@
 **Why:** The hardcoded string will drift out of sync with `app.json` on every release. Using `Constants.expoConfig.version` makes the settings screen authoritative, and the GitHub link lets users see what changed between releases.
 
 **What to change:**
-- `app/(app)/settings.tsx`: remove `const APP_VERSION = '1.0.0 (1)'`. Import `Constants` from `expo-constants`. Derive the version string as `Constants.expoConfig?.version ?? '—'`. Optionally append the native build number: `ios.buildNumber` or `android.versionCode` from `Constants.expoConfig`.
+- `app/(tabs)/settings.tsx`: remove `const APP_VERSION = '1.0.0 (1)'`. Import `Constants` from `expo-constants`. Derive the version string as `Constants.expoConfig?.version ?? '—'`. Optionally append the native build number: `ios.buildNumber` or `android.versionCode` from `Constants.expoConfig`.
 - Change the Version `<LinkRow>` from disabled (no `onPress`) to tappable: `onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}`. Import `WebBrowser` from `expo-web-browser`. (Update the GitHub URL to the actual repo path if it differs.)
 
 **Effort:** XS
@@ -238,9 +247,54 @@
 **Why:** There is no meaningful "off" state for this toggle. `PlaylistWriter` and `BackendSync` have no disable path — toggling it off would silently do nothing while implying the app stopped syncing. The Reconnect Service button directly below it is sufficient for the section.
 
 **What to change:**
-- `app/(app)/settings.tsx`: delete `const [spotifySync, setSpotifySync] = useState(true)` and the `<ToggleRow label="Spotify Sync" .../>` + the `<View style={styles.divider} />` that precedes the Reconnect button.
+- `app/(tabs)/settings.tsx`: delete `const [spotifySync, setSpotifySync] = useState(true)` and the `<ToggleRow label="Spotify Sync" .../>` + the `<View style={styles.divider} />` that precedes the Reconnect button.
 
 **Effort:** XS
 **Priority:** P1
 **Completed:** 2026-05-27
-**Summary:** Deleted `const [spotifySync, setSpotifySync] = useState(true)`, the `<ToggleRow label="Spotify Sync" .../>`, and the `<View style={styles.divider} />` that preceded the Reconnect button in `app/(app)/settings.tsx`. MUSIC INTEGRATION section now contains only the Reconnect Service button.
+**Summary:** Deleted `const [spotifySync, setSpotifySync] = useState(true)`, the `<ToggleRow label="Spotify Sync" .../>`, and the `<View style={styles.divider} />` that preceded the Reconnect button in `app/(tabs)/settings.tsx`. MUSIC INTEGRATION section now contains only the Reconnect Service button.
+
+## A1 · Persisted prefs store + wire settings.tsx
+
+**What:** Create `src/stores/prefsStore.ts` — a Zustand store with AsyncStorage persist middleware — holding all user preference flags. Replace the five `useState` calls in `settings.tsx` with reads/writes from this store so values survive app restarts.
+
+**Why:** Every toggle currently resets on restart because they're local component state. The store is also the prerequisite for B1, B2, and C1, which need to read prefs at runtime.
+
+**What to change:**
+- Create `src/stores/prefsStore.ts`. Fields: `showAlbumArt: boolean` (default `true`), `autoPlayPreviews: boolean` (default `false`), `hapticFeedback: boolean` (default `true`), `weeklyReminders: boolean` (default `true`).
+- Use `create` + `persist` from `zustand/middleware` with the `AsyncStorage` adapter (same pattern as `swipeStore`).
+- In `app/(tabs)/settings.tsx`: replace `const [showAlbumArt, setShowAlbumArt] = useState(true)` etc. with `usePrefsStore` selector/action calls. Remove all five `useState` declarations for prefs.
+
+**Effort:** S
+**Priority:** P0
+**Completed:** 2026-05-27
+
+## A4 · Privacy Policy and Terms of Service screens
+
+**What:** Replace the `handleComingSoon` Alert on both "Privacy Policy" and "Terms of Service" rows with navigation to real in-app screens. Create `app/(tabs)/privacy-policy.tsx` and `app/(tabs)/terms-of-service.tsx` as scrollable static-content screens with placeholder text formatted as section headers + paragraphs.
+
+**Why:** The "Coming Soon" alert makes the app look unfinished and is a blocker for App Store submission (both documents are required).
+
+**What to change:**
+- Create `app/(tabs)/settings/privacy-policy.tsx` and `app/(tabs)/settings/terms-of-service.tsx`. Each is a full-screen `ScrollView` with a back button, the document title, and placeholder section text.
+- `app/(tabs)/settings/index.tsx`: push to `/(tabs)/settings/privacy-policy` and `/(tabs)/settings/terms-of-service`.
+
+**Effort:** S
+**Priority:** P2
+**Completed:** 2026-05-27
+**Note:** Screens placed under `app/(tabs)/settings/` so `/settings/*` paths keep the Settings navbar tab active.
+
+## A5 · Contact Me screen
+
+**What:** Create `app/(tabs)/contact.tsx` — a simple screen with tappable action rows for emailing the developer, opening GitHub Issues, and (optionally) rating the app. Wire the ABOUT section "Contact" row in settings to navigate there.
+
+**Why:** There is currently no way for users to reach out from inside the app. The settings screen has no contact entry at all.
+
+**What to change:**
+- Create `app/(tabs)/settings/contact.tsx`. Rows: Send Feedback (mailto), Report a Bug (GitHub Issues), View on GitHub.
+- `app/(tabs)/settings/index.tsx`: push to `/(tabs)/settings/contact`.
+
+**Effort:** S
+**Priority:** P2
+**Completed:** 2026-05-27
+**Note:** Screen placed at `app/(tabs)/settings/contact.tsx`; settings moved to `settings/index.tsx`.

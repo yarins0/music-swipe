@@ -258,7 +258,7 @@ export default function SessionEndScreen(): React.ReactElement {
             </Text>
             {likedTracks.map((r) => (
               <LikedTrackRow
-                key={r.track.id}
+                key={r.swipedAt}
                 track={r.track}
                 status={r.status}
                 isRemoving={removingIds.has(r.track.id)}

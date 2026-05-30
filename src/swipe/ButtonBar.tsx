@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/theme';
 
 interface ButtonBarProps {
@@ -10,6 +11,8 @@ interface ButtonBarProps {
   onDecideLater: () => void;
   canUndo: boolean;
   isDecideLaterEnabled: boolean;
+  /** When true, the skip button shows a destructive delete icon instead of the neutral skip icon. */
+  isFilterMode?: boolean;
 }
 
 export function ButtonBar({
@@ -20,6 +23,7 @@ export function ButtonBar({
   onDecideLater,
   canUndo,
   isDecideLaterEnabled,
+  isFilterMode = false,
 }: ButtonBarProps): React.ReactElement {
   return (
     <View style={styles.row}>
@@ -37,9 +41,17 @@ export function ButtonBar({
         style={styles.largeButton}
         onPress={onSkip}
         accessibilityRole="button"
-        accessibilityLabel="Skip"
+        accessibilityLabel={isFilterMode ? 'Delete from playlist' : 'Skip'}
       >
-        <Text style={[styles.largeIcon, { color: colors.nope }]}>✕</Text>
+        {isFilterMode ? (
+          // Destructive icon in filter mode — signals that left swipe permanently deletes
+          <View style={styles.filterSkipContent}>
+            <Ionicons name="trash-outline" size={26} color={colors.nope} />
+            <Text style={styles.filterSkipLabel}>DELETE</Text>
+          </View>
+        ) : (
+          <Text style={[styles.largeIcon, { color: colors.nope }]}>✕</Text>
+        )}
       </Pressable>
 
       <Pressable
@@ -114,4 +126,6 @@ const styles = StyleSheet.create({
   smallIcon: { fontSize: 22 },
   largeIcon: { fontSize: 28 },
   dimmed: { opacity: 0.3 },
+  filterSkipContent: { alignItems: 'center', gap: 2 },
+  filterSkipLabel: { fontSize: 9, fontFamily: 'Outfit_600SemiBold', color: colors.nope, letterSpacing: 0.5 },
 });

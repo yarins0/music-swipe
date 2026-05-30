@@ -1,14 +1,18 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import type { Track } from '@/adapters/interface';
 import { SegmentNavigator } from '@/player/SegmentNavigator';
+import { colors } from '@/theme';
 
 interface SwipeCardProps {
   track: Track;
   onSeekBack: () => void;
   onSeekForward: () => void;
   isSeekEnabled: boolean;
+  /** When false, replaces the album art image with a solid background and a musical-note icon. */
+  showAlbumArt?: boolean;
 }
 
 export function SwipeCard({
@@ -16,15 +20,23 @@ export function SwipeCard({
   onSeekBack,
   onSeekForward,
   isSeekEnabled,
+  showAlbumArt = true,
 }: SwipeCardProps): React.ReactElement {
   return (
     <View style={styles.card}>
-      <Image
-        source={{ uri: track.albumArtUrl }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        accessibilityLabel={`Album art for ${track.album}`}
-      />
+      {showAlbumArt ? (
+        <Image
+          source={{ uri: track.albumArtUrl }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          accessibilityLabel={`Album art for ${track.album}`}
+          cachePolicy="memory-disk"
+        />
+      ) : (
+        <View style={styles.artPlaceholder}>
+          <Ionicons name="musical-note" size={48} color={colors.onSurfaceVariant} />
+        </View>
+      )}
 
       {/* Dark gradient overlay */}
       <View style={styles.gradientOverlay} pointerEvents="none" />
@@ -63,6 +75,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 10,
+  },
+  artPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.surfaceContainerHigh,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,

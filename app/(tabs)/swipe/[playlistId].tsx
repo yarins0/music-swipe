@@ -175,7 +175,7 @@ export default function SwipeScreen(): React.ReactElement {
 
         // Restore component state from store (no API calls)
         setAvailablePlaylists(store.availablePlaylists);
-        totalTracksRef.current = store.totalTracks;
+        setTotalTracksState(store.totalTracks);
 
         // sessionStore is in-memory only — repopulate from the persisted store values
         // so the subtitle and destination IDs are correct if the app was restarted.
@@ -320,7 +320,7 @@ export default function SwipeScreen(): React.ReactElement {
 
         // Fetch all tracks — paginate if needed (simple single-page fetch for now)
         const { tracks, total } = await adapter.getPlaylistTracks(playlistId, 0, 100);
-        totalTracksRef.current = total;
+        setTotalTracksState(total);
         useSwipeStore.getState().setTotalTracks(total);
 
         const sliced = isResuming ? tracks.slice(storedAbsoluteIndex) : tracks;
@@ -378,8 +378,9 @@ export default function SwipeScreen(): React.ReactElement {
   const queueTracksRef = useRef<Track[]>([]);
   // Full unsliced playlist — used to enrich pending tracks with complete metadata
   const fullTracksRef = useRef<Track[]>([]);
-  // True total track count from the API (not the loaded slice size)
-  const totalTracksRef = useRef<number>(0);
+  // True total track count from the API (not the loaded slice size).
+  // Must be state (not a ref) so changes propagate as a prop update to SwipeEngine.
+  const [totalTracks, setTotalTracksState] = useState<number>(0);
 
   useEffect(() => {
     if (phase !== 'opening_session') return;
@@ -591,7 +592,7 @@ export default function SwipeScreen(): React.ReactElement {
       adapter={adapterRef.current!}
       sessionId={sessionId}
       availablePlaylists={availablePlaylists}
-      totalTracks={totalTracksRef.current}
+      totalTracks={totalTracks}
       onSessionEnd={handleSessionEnd}
       onEntireSession={handleEntireSession}
     />

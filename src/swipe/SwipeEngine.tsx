@@ -6,13 +6,14 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { colors } from '@/theme';
 import { TabHeader } from '@/components/TabHeader';
-import Animated from 'react-native-reanimated';
-import { GestureDetector } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useSwipeStore } from '@/stores/swipeStore';
-import { useSwipeGesture } from '@/swipe/useSwipeGesture';
 import { SwipeCard } from '@/swipe/SwipeCard';
+import { SwipeFrontCard } from '@/swipe/SwipeFrontCard';
 import { ButtonBar } from '@/swipe/ButtonBar';
 import { DestinationEditor } from '@/swipe/DestinationEditor';
 import type { TrackPlayer } from '@/player/TrackPlayer';
@@ -20,16 +21,25 @@ import type { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { SessionTracker } from '@/services/SessionTracker';
 import type { BackendSync } from '@/services/BackendSync';
 import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
-import type { Playlist } from '@/adapters/interface';
+import type { MusicPlatformAdapter, Playlist } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { useSessionStore } from '@/stores/sessionStore';
+import { usePrefsStore } from '@/stores/prefsStore';
 import type { SwipeDirection } from '@/swipe/useSwipeGesture';
+
+// DEBUG: visual aids for the swipe-card flicker investigation.
+// When true, paints red border + track label on the front card and blue
+// border + track label on the back card so we can see exactly which view
+// holds which content during the swipe transition. Flip to false to remove.
+const DEBUG_FLICKER = false;
 
 interface SwipeEngineProps {
   trackPlayer: TrackPlayer;
   playlistWriter: PlaylistWriter;
   sessionTracker: SessionTracker;
   backendSync: BackendSync;
+  /** Adapter instance — required for filter mode destructive removes. */
+  adapter: MusicPlatformAdapter;
   sessionId: string;
   availablePlaylists: Playlist[];
   /** Total tracks in the source playlist (from the API, not the loaded slice). */
@@ -38,12 +48,12 @@ interface SwipeEngineProps {
   /** When provided, replaces the internal entire-session handler. */
   onEntireSession?: (added: string[], removed: string[], confirmedRemove: boolean) => void;
 }
-
 export function SwipeEngine({
   trackPlayer,
   playlistWriter,
   sessionTracker,
   backendSync,
+  adapter,
   sessionId,
   availablePlaylists,
   totalTracks,
@@ -69,6 +79,12 @@ export function SwipeEngine({
   const [showDestEditor, setShowDestEditor] = useState(false);
 
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
+  const sourcePlaylistId = useSessionStore((s) => s.sourcePlaylistId);
+  const isFilterMode = useSessionStore((s) => s.isFilterMode);
+
+  // User preferences that affect swipe-card rendering and gesture behaviour
+  const showAlbumArt = usePrefsStore((s) => s.showAlbumArt);
+  const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
 
   // Build a human-readable subtitle: "Source Name  →  Dest1, Dest2"
   const headerSubtitle = React.useMemo(() => {
@@ -158,9 +174,20 @@ export function SwipeEngine({
     }
   }, [currentIndex, queue.length, onSessionEnd]);
 
-  // resetCard is populated after useSwipeGesture is called below.
-  // Using a ref avoids circular hook dependency while keeping callbacks stable.
-  const resetCardRef = useRef<() => void>(() => undefined);
+  // Preload upcoming tracks' album art so back-card image swaps don't flicker.
+  // When the back card's track prop swaps in place (D → E), expo-image must
+  // load E's URL from network if it isn't cached, leaving the Image area blank
+  // for a frame. Prefetching ~3 ahead ensures the URL is in the cache before
+  // it appears in any visible slot.
+  useEffect(() => {
+    const PRELOAD_AHEAD = 3;
+    const upcoming = queue.slice(currentIndex + 1, currentIndex + 1 + PRELOAD_AHEAD);
+    upcoming.forEach((track) => {
+      if (track?.albumArtUrl) {
+        Image.prefetch(track.albumArtUrl);
+      }
+    });
+  }, [currentIndex, queue]);
 
   const handleSwipe = useCallback(
     (direction: SwipeDirection): void => {
@@ -175,10 +202,20 @@ export function SwipeEngine({
 
       recordSwipe(currentTrack, status, effectiveDestinations, effectiveDestNames);
 
-      if (status === 'liked') {
-        playlistWriter.write(currentTrack.id, effectiveDestinations);
-      } else if (status === 'super_liked') {
-        playlistWriter.superLike(currentTrack.id, effectiveDestinations);
+      if (isFilterMode) {
+        // Filter mode: left swipe (skipped) = delete from source playlist; right/up = keep (no-op).
+        if (status === 'skipped' && sourcePlaylistId) {
+          void adapter.removeFromPlaylist(sourcePlaylistId, currentTrack.id).catch((err: unknown) => {
+            console.warn('[SwipeEngine] filter mode removeFromPlaylist failed:', err);
+          });
+        }
+        // Right/up swipes are intentional no-ops in filter mode — track stays in the playlist.
+      } else {
+        if (status === 'liked') {
+          playlistWriter.write(currentTrack.id, effectiveDestinations);
+        } else if (status === 'super_liked') {
+          playlistWriter.superLike(currentTrack.id, effectiveDestinations);
+        }
       }
 
       sessionTracker.incrementCounts(sessionId, {
@@ -197,8 +234,6 @@ export function SwipeEngine({
 
       // Clear per-track override after each swipe
       setPerTrackOverrideIds(null);
-
-      resetCardRef.current();
     },
     [
       currentTrack,
@@ -209,6 +244,9 @@ export function SwipeEngine({
       sessionTracker,
       sessionId,
       backendSync,
+      isFilterMode,
+      sourcePlaylistId,
+      adapter,
     ],
   );
 
@@ -223,26 +261,31 @@ export function SwipeEngine({
       timestamp: new Date().toISOString(),
     });
     sessionTracker.incrementCounts(sessionId, { skipped: 1 });
-    resetCardRef.current();
   }, [currentTrack, recordSwipe, backendSync, sessionId, sessionTracker]);
 
   const handleUndo = useCallback((): void => {
     const record = undo();
     if (!record) return;
-    if (record.status === 'liked') {
-      playlistWriter.undoWrite(record.track.id, record.destinationPlaylistIds);
-    } else if (record.status === 'super_liked') {
-      playlistWriter.undoSuperLike(record.track.id, record.destinationPlaylistIds);
+
+    if (isFilterMode) {
+      // Filter mode undo: a skipped (deleted) track needs to be re-added to the source.
+      // Liked/super_liked tracks were never removed — nothing to re-add.
+      if (record.status === 'skipped' && sourcePlaylistId) {
+        playlistWriter.write(record.track.id, [sourcePlaylistId]);
+      }
+    } else {
+      if (record.status === 'liked') {
+        playlistWriter.undoWrite(record.track.id, record.destinationPlaylistIds);
+      } else if (record.status === 'super_liked') {
+        playlistWriter.undoSuperLike(record.track.id, record.destinationPlaylistIds);
+      }
     }
-    resetCardRef.current();
-  }, [undo, playlistWriter]);
 
-  const { gesture, animatedStyle, resetCard } = useSwipeGesture({
-    onSwipe: handleSwipe,
-  });
+  }, [undo, playlistWriter, isFilterMode, sourcePlaylistId]);
 
-  // Wire resetCard into the ref after the hook provides it
-  resetCardRef.current = resetCard;
+  const hapticCallback = hapticFeedback
+    ? () => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }
+    : undefined;
 
   // DestinationEditor handlers
   const handleThisTrack = useCallback((playlistIds: string[]): void => {
@@ -276,6 +319,19 @@ export function SwipeEngine({
     [activeDestinationIds, setActiveDestinations, onEntireSessionProp],
   );
 
+  // The pencil button lives in the TabHeader's right slot — conventional location for
+  // a screen-level action and keeps it next to the "Source → Dest" subtitle it edits.
+  const destEditorButton = (
+    <Pressable
+      onPress={() => setShowDestEditor(true)}
+      accessibilityRole="button"
+      accessibilityLabel="Edit destination playlists"
+      style={styles.headerActionButton}
+    >
+      <Ionicons name="create-outline" size={20} color={colors.onSurfaceVariant} />
+    </Pressable>
+  );
+
   if (!currentTrack) {
     return (
       <View style={styles.screen}>
@@ -307,40 +363,46 @@ export function SwipeEngine({
         </View>
       </View>
 
-      {/* Card stack: next card renders behind, current card on top with gesture */}
-      <View style={styles.cardStack}>
+      {/* cardArea holds the back card and the GestureDetector as siblings so
+          the nextCard is completely outside the gesture view hierarchy.
+          nextCard renders first (behind) by natural stacking order. */}
+      <View style={styles.cardArea}>
         {nextTrack && (
-          <View style={styles.nextCard}>
+          <View
+            style={[styles.nextCard, DEBUG_FLICKER && styles.debugBackBorder]}
+            pointerEvents="none"
+          >
             <SwipeCard
               track={nextTrack}
               onSeekBack={() => undefined}
               onSeekForward={() => undefined}
               isSeekEnabled={false}
+              showAlbumArt={showAlbumArt}
             />
+            {DEBUG_FLICKER && (
+              <View style={styles.debugLabelBack} pointerEvents="none">
+                <Text style={styles.debugLabelText}>
+                  BACK · {nextTrack.title.slice(0, 20)} · id={nextTrack.id.slice(-6)}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
-        <GestureDetector gesture={gesture}>
-          <Animated.View style={[styles.currentCard, animatedStyle as object]}>
-            <SwipeCard
-              track={currentTrack}
-              onSeekBack={handleSeekBack}
-              onSeekForward={handleSeekForward}
-              isSeekEnabled={isSeekEnabled}
-            />
-          </Animated.View>
-        </GestureDetector>
+        {/* NOT keyed — same instance across tracks. Image updates in-place from
+            memory cache (no flash). Gesture state reset happens via useEffect
+            inside SwipeFrontCard when track.id changes. */}
+        <SwipeFrontCard
+          track={currentTrack}
+          onSwipe={handleSwipe}
+          onHaptic={hapticCallback}
+          onSeekBack={handleSeekBack}
+          onSeekForward={handleSeekForward}
+          isSeekEnabled={isSeekEnabled}
+          showAlbumArt={showAlbumArt}
+          debug={DEBUG_FLICKER}
+        />
       </View>
-
-      {/* Destination editor trigger */}
-      <Pressable
-        style={styles.destEditButton}
-        onPress={() => setShowDestEditor(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Edit destination playlists"
-      >
-        <Text style={styles.destEditIcon}>✎</Text>
-      </Pressable>
 
       {/* Button bar */}
       <ButtonBar
@@ -351,6 +413,7 @@ export function SwipeEngine({
         onDecideLater={handleDecideLater}
         canUndo={undoStack.length > 0}
         isDecideLaterEnabled
+        isFilterMode={isFilterMode}
       />
 
       {/* Destination editor modal */}
@@ -412,39 +475,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 3,
   },
-  cardStack: {
+  cardArea: {
     flex: 1,
     width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  currentCard: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    zIndex: 2,
   },
   nextCard: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    zIndex: 1,
-    transform: [{ scale: 0.97 }],
-    opacity: 0.6,
   },
-  destEditButton: {
-    alignSelf: 'flex-end',
-    minWidth: 36,
-    minHeight: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: 18,
-    paddingHorizontal: 10,
-  },
-  destEditIcon: {
-    color: colors.onSurfaceVariant,
-    fontSize: 16,
+  headerActionButton: {
+    padding: 8,
   },
   empty: {
     flex: 1,
@@ -456,5 +497,26 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: 18,
     fontFamily: 'Outfit_400Regular',
+  },
+  // DEBUG styles — used only when DEBUG_FLICKER is true.
+  // (Front debug styles live in SwipeFrontCard.tsx.)
+  debugBackBorder: {
+    borderWidth: 4,
+    borderColor: 'blue',
+  },
+  debugLabelBack: {
+    position: 'absolute',
+    top: 50,
+    left: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,255,0.85)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  debugLabelText: {
+    color: 'white',
+    fontSize: 12,
+    fontFamily: 'Outfit_700Bold',
   },
 });

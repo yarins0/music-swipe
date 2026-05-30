@@ -154,7 +154,10 @@ export default function SourcePickerScreen() {
     <View style={styles.screen}>
       {/* Header */}
       <TabHeader title="Playlists" />
-
+      {/* Section Header */}
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+              <Text style={styles.headerTitle}>Select Source</Text>
+            </View>
       {/* List */}
       <SectionList
         sections={sections}
@@ -219,6 +222,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 4,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceContainerHigh,
+  },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: colors.onSurface, letterSpacing: -0.3 },
   sectionSubtitle: {
     fontSize: 14,
     fontFamily: 'Outfit_400Regular',

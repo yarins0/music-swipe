@@ -6,7 +6,7 @@ export default function AuthLayout() {
   const isLoading = useAuthStore((s) => s.isLoading);
 
   if (!isLoading && isAuthenticated) {
-    return <Redirect href="/(app)" />;
+    return <Redirect href="/(tabs)" />;
   }
 
   return <Slot />;

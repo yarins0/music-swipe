@@ -1,4 +1,4 @@
-import { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { Gesture } from 'react-native-gesture-handler';
 import { Dimensions } from 'react-native';
 
@@ -7,6 +7,7 @@ import { Dimensions } from 'react-native';
 // ---------------------------------------------------------------------------
 
 export const SCREEN_WIDTH = Dimensions.get('window').width;
+export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 /** Minimum horizontal translation (30% of screen) to commit a left/right swipe. */
 export const SWIPE_THRESHOLD_X = SCREEN_WIDTH * 0.3;
@@ -19,6 +20,9 @@ export const SWIPE_THRESHOLD_Y = 120;
  * Allows fast flick gestures to commit even when the card hasn't travelled far.
  */
 export const VELOCITY_THRESHOLD = 500;
+
+/** Duration of the fly-off animation when a swipe commits. */
+const FLY_OFF_DURATION = 250;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,10 +75,17 @@ export function detectSwipeDirection(
 
 interface UseSwipeGestureOptions {
   /**
-   * Called on the JS thread after a swipe is committed and the snap animation
-   * has been scheduled. The card will be animating off-screen at this point.
+   * Called on the JS thread AFTER the fly-off animation completes. The card
+   * will be off-screen at this point. The parent should advance state so this
+   * component unmounts and the next card mounts in its place.
    */
   onSwipe: (direction: SwipeDirection) => void;
+  /**
+   * Optional callback fired on the JS thread when a swipe is committed.
+   * Intended for triggering haptic feedback without coupling the worklet to
+   * a specific haptics library.
+   */
+  onHaptic?: () => void;
 }
 
 interface UseSwipeGestureResult {
@@ -82,16 +93,28 @@ interface UseSwipeGestureResult {
   gesture: ReturnType<typeof Gesture.Pan>;
   /** Reanimated animated style for the card's <Animated.View>. */
   animatedStyle: ReturnType<typeof useAnimatedStyle>;
-  /** Reset all shared values to zero (call after the card has been removed from the tree). */
+  /**
+   * Reset all shared values to resting state. Call when the track changes
+   * (without remounting the component) so the new track starts centered with
+   * no stale fly-off offset. Safe to call while the card is off-screen.
+   */
   resetCard: () => void;
 }
 
 /**
- * Pan gesture + spring animation hook for a swipe card.
+ * Pan gesture + fly-off animation hook for a single swipe card.
+ *
+ * This hook owns ONE card's animation state. When the parent remounts the
+ * card (via `key={track.id}`), this hook is re-created with fresh shared
+ * values defaulting to centered + visible. The previous card's off-screen
+ * fly-off state belongs to its own hook instance, which is garbage collected
+ * along with the unmounted view. There is no shared mutable state between
+ * cards, which is what eliminates the "gap frame" the user perceived as a
+ * flicker.
  *
  * Usage:
  * ```tsx
- * const { gesture, animatedStyle, resetCard } = useSwipeGesture({ onSwipe: handleSwipe });
+ * const { gesture, animatedStyle } = useSwipeGesture({ onSwipe: handleSwipe });
  *
  * return (
  *   <GestureDetector gesture={gesture}>
@@ -101,18 +124,13 @@ interface UseSwipeGestureResult {
  *   </GestureDetector>
  * );
  * ```
- *
- * Architectural notes:
- * - All animation runs on the UI thread (Reanimated worklet).
- * - onSwipe is called via runOnJS so it is safe to update Zustand store state.
- * - isAnimating guards against double-commits on fast successive touches.
  */
-export function useSwipeGesture({ onSwipe }: UseSwipeGestureOptions): UseSwipeGestureResult {
+export function useSwipeGesture({ onSwipe, onHaptic }: UseSwipeGestureOptions): UseSwipeGestureResult {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  // Subtle rotation proportional to horizontal travel (max ±15 degrees).
+  // Subtle rotation proportional to horizontal travel.
   const rotation = useSharedValue(0);
-  // Guard: prevents a second gesture starting while the snap animation plays.
+  // Guard: prevents a second gesture starting while the fly-off animation plays.
   const isAnimating = useSharedValue(false);
 
   const gesture = Gesture.Pan()
@@ -135,32 +153,33 @@ export function useSwipeGesture({ onSwipe }: UseSwipeGestureOptions): UseSwipeGe
       if (direction !== null) {
         isAnimating.value = true;
 
-        // Snap the card off-screen in the committed direction.
-        const targetX =
-          direction === 'left'
-            ? -SCREEN_WIDTH * 1.5
-            : direction === 'right'
-              ? SCREEN_WIDTH * 1.5
-              : 0;
-        const targetY = direction === 'up' ? -800 : 0;
+        // Animate the card off-screen. onSwipe fires in the completion callback,
+        // not immediately — so by the time React advances state and unmounts this
+        // card, the user has already seen it fly away. The next card mounts as
+        // a fresh component with its own shared values defaulting to centered +
+        // visible, so there is no opacity / position gap during the swap.
+        const horizontalTarget =
+          direction === 'right' ? SCREEN_WIDTH * 1.5
+          : direction === 'left' ? -SCREEN_WIDTH * 1.5
+          : event.translationX;
+        const verticalTarget = direction === 'up' ? -SCREEN_HEIGHT : event.translationY;
+        const rotationTarget = (horizontalTarget / SCREEN_WIDTH) * 30;
+        const config = { duration: FLY_OFF_DURATION, easing: Easing.out(Easing.cubic) };
 
-        translateX.value = withSpring(targetX, {
-          velocity: event.velocityX,
-          overshootClamping: true,
+        translateY.value = withTiming(verticalTarget, config);
+        rotation.value = withTiming(rotationTarget, config);
+        translateX.value = withTiming(horizontalTarget, config, (finished) => {
+          if (finished) {
+            runOnJS(onSwipe)(direction);
+            if (onHaptic) runOnJS(onHaptic)();
+          }
         });
-        translateY.value = withSpring(targetY, {
-          velocity: event.velocityY,
-          overshootClamping: true,
-        });
-
-        // Notify the JS thread so the store can advance the card stack.
-        // runOnJS is required because onSwipe touches JS-thread Zustand state.
-        runOnJS(onSwipe)(direction);
       } else {
-        // Below threshold — spring back to resting position.
-        translateX.value = withSpring(0, { stiffness: 300, damping: 30 });
-        translateY.value = withSpring(0, { stiffness: 300, damping: 30 });
-        rotation.value = withSpring(0);
+        // Below threshold — ease back to resting position.
+        const snapBack = { duration: 300, easing: Easing.out(Easing.cubic) };
+        translateX.value = withTiming(0, snapBack);
+        translateY.value = withTiming(0, snapBack);
+        rotation.value = withTiming(0, snapBack);
       }
     });
 
@@ -172,10 +191,6 @@ export function useSwipeGesture({ onSwipe }: UseSwipeGestureOptions): UseSwipeGe
     ],
   }));
 
-  /**
-   * Reset all shared values to zero. Call this after the old card component
-   * has been removed from the tree so the new card starts at rest.
-   */
   function resetCard(): void {
     translateX.value = 0;
     translateY.value = 0;

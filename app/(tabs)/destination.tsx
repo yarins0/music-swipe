@@ -101,7 +101,6 @@ export default function DestinationPickerScreen() {
   };
 
   const handleConfirm = () => {
-    console.log('[destination] handleConfirm — playlistId:', playlistId, 'selectedIds:', Array.from(selectedIds));
     if (playlistId && selectedIds.has(playlistId) && selectedIds.size === 1) {
       // Source selected as the sole destination — require explicit confirmation before
       // entering filter mode because left swipes are permanently destructive.
