@@ -15,39 +15,6 @@
 
 ## Agent B — Swipe Card UI & Gesture
 
-## B1 · Wire showAlbumArt pref to SwipeCard
-
-**What:** When the "Show Album Art" pref is off, replace the full-bleed `<Image>` in `SwipeCard` with a solid `colors.surfaceContainerHigh` background and a centered `Ionicons musical-note` icon. Track title and artist text overlays remain unchanged.
-
-**Why:** The card currently always renders the album image unconditionally. There's no way for the user to get a distraction-free, icon-only card view even after toggling the setting.
-
-**What to change:**
-- `src/swipe/SwipeCard.tsx`: add a `showAlbumArt: boolean` prop (default `true`). Render the `<Image>` only when `showAlbumArt` is true; otherwise render a `<View style={styles.artPlaceholder}>` with a centered `<Ionicons name="musical-note" size={48} color={colors.onSurfaceVariant} />`.
-- `src/swipe/SwipeEngine.tsx`: read `showAlbumArt` from `usePrefsStore` and pass it to both `<SwipeCard>` instances (current and next card).
-
-**Effort:** S
-**Priority:** P1
-**Depends on:** A1
-
----
-
-## B2 · Haptic feedback on swipe + next-card scale animation
-
-**What:** Fire a haptic impact when a swipe commits. Animate the back card's scale (0.97 → 1.0) and opacity (0.6 → 1.0) proportionally as the top card is dragged, so the deck feels alive during the gesture.
-
-**Why:** Swipes currently have no tactile feedback, and the back card sits static at scale 0.97 / opacity 0.6 the whole time — there is no sense of the deck responding to the drag.
-
-**What to change:**
-- Run `npx expo install expo-haptics` first.
-- `src/swipe/useSwipeGesture.ts`: add an optional `onHaptic?: () => void` callback to `UseSwipeGestureOptions`. Call it via `runOnJS(onHaptic)()` inside the `direction !== null` branch of `.onEnd`. Also export two new shared values `dragProgress` (0→1, based on absolute horizontal travel / SCREEN_WIDTH) so callers can drive secondary animations.
-- `src/swipe/SwipeEngine.tsx`: read `hapticFeedback` from `usePrefsStore`. Pass `onHaptic={() => { if (hapticFeedback) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}` to `useSwipeGesture`. Use the returned `dragProgress` shared value with `useAnimatedStyle` on the `nextCard` view: interpolate `scale` from `0.97` to `1.0` and `opacity` from `0.6` to `1.0` as `dragProgress` goes 0 → 1.
-
-**Effort:** S
-**Priority:** P1
-**Depends on:** A1
-
----
-
 ## Agent C — Preview Player
 
 ## C1 · Wire auto-play previews end-to-end
@@ -67,23 +34,6 @@
 **Effort:** M
 **Priority:** P1
 **Depends on:** A1
-
----
-
-## B3 · Move destination editor button to swipe header
-
-**What:** Add a `rightAction?: React.ReactNode` prop to `TabHeader` and move the floating pencil button from `SwipeEngine`'s content area into the header's right slot. The button triggers `DestinationEditor` — the wiring is already complete (`setShowDestEditor(true)` / modal rendering) but the button is easy to miss in its current position.
-
-**Why:** The current `destEditButton` sits between the card stack and the button bar — it's a small `✎` circle that users don't discover. The header right slot is the conventional location for a screen-level action and puts it alongside the "Source → Dest" subtitle, which is exactly the context the editor changes.
-
-**What to change:**
-- `src/components/TabHeader.tsx`: add `rightAction?: React.ReactNode` to `TabHeaderProps`. Change the header layout from `alignItems: 'center'` (pure center stack) to a 3-column row: a left spacer `<View style={{flex:1}}/>`, a center column containing `title` + `subtitle`, and a right slot `<View style={{flex:1, alignItems:'flex-end'}}>{rightAction}</View>`. Title text should remain centered.
-- `src/swipe/SwipeEngine.tsx`: remove the `<Pressable style={styles.destEditButton}>` block and its `destEditButton` + `destEditIcon` style entries. Instead, pass `rightAction` to `<TabHeader>`: a `<Pressable>` wrapping `<Ionicons name="create-outline" size={20} color={colors.onSurfaceVariant} />` that calls `setShowDestEditor(true)`. Add appropriate padding so it's easy to tap.
-
-**Effort:** S
-**Priority:** P1
-
----
 
 ---
 
@@ -165,7 +115,6 @@
 
 > Owns: n/a — these are manual verification steps, not automatable tasks.
 
-
 ## Q3 · Preview Player QA
 
 **What:** Verify auto-play previews trigger, stop on swipe, and respect the pref toggle.
@@ -210,7 +159,6 @@ ISSUE: music continues
 # Done ✅
 
 ## Q1 · Settings & Prefs QA
-
 **What:** Verify persisted prefs, new screens, and contact rows work correctly in the running app.
 **Completed:** 2026-05-30
 **Summary:** All pref toggles persist across app restarts. Privacy Policy, Terms of Service, and Contact screens open and navigate correctly. Navbar highlight on settings sub-routes (contact, privacy, terms) is a known routing quirk; deferred.
@@ -218,83 +166,62 @@ ISSUE: music continues
 ---
 
 ## Q2 · Swipe Card UI QA
-
 **What:** Verify album art toggle, haptics, back-card animation, and header pencil button.
 **Completed:** 2026-05-30
-**Summary:** Album art toggle, haptics, and no-art icon card all verified. Back-card scale animation works during drag; post-release bounce-back lag is acceptable and deferred. DestinationEditor button removed from header (modal was invisible — feature disabled rather than debugged; code preserved). Title centering untested but layout is structurally correct.
+**Summary:** Album art toggle, haptics, and no-art icon card all verified. Back-card scale animation works during drag; post-release bounce-back lag is acceptable and deferred. DestinationEditor button removed from header (modal was invisible — feature disabled rather than debugged; code preserved).
+
+---
+
+## B1 · Wire showAlbumArt pref to SwipeCard
+**What:** When "Show Album Art" is off, replace the full-bleed image with a solid background and centered musical-note icon.
+**Completed:** 2026-05-30
+**Summary:** Added `showAlbumArt` prop to `SwipeCard`; renders `Ionicons musical-note` on `surfaceContainerHigh` background when off. `SwipeEngine` reads pref from `usePrefsStore` and passes it to both card instances.
+
+---
+
+## B2 · Haptic feedback on swipe + next-card scale animation
+**What:** Fire a haptic impact on swipe commit; animate back card scale/opacity proportionally during drag.
+**Completed:** 2026-05-30
+**Summary:** Added `onHaptic` callback to `useSwipeGesture`, wired to `expo-haptics` in `SwipeEngine` behind `hapticFeedback` pref. Back card animates scale 0.97→1.0 and opacity 0.6→1.0 proportional to drag via `dragProgress` shared value.
+
+---
+
+## B3 · Move destination editor button to swipe header
+**What:** Add `rightAction` prop to `TabHeader` and move the pencil button into the header's right slot.
+**Completed:** 2026-05-30
+**Summary:** `TabHeader` updated to 3-column layout with `rightAction` slot. Button was moved to header; later removed when `DestinationEditor` was disabled. `TabHeader` layout changes preserved.
+
+---
+
+## A1 · Persisted prefs store + wire settings.tsx
+**What:** Create a Zustand + AsyncStorage prefs store and replace `useState` toggles in settings with store reads/writes.
+**Completed:** 2026-05-27
+**Summary:** Created `src/stores/prefsStore.ts` with `showAlbumArt`, `autoPlayPreviews`, `hapticFeedback`, `weeklyReminders`. Replaced all five `useState` prefs in `settings.tsx` with `usePrefsStore` selectors and actions.
+
+---
+
+## A2 · Remove Spotify Sync toggle
+**What:** Delete the "Spotify Sync" toggle and its backing state from `settings.tsx`.
+**Completed:** 2026-05-27
+**Summary:** Deleted `spotifySync` state and `<ToggleRow label="Spotify Sync" .../>`. MUSIC INTEGRATION section now contains only the Reconnect Service button.
 
 ---
 
 ## A3 · Dynamic version + GitHub releases link
-
-**What:** Replace the hardcoded `APP_VERSION = '1.0.0 (1)'` constant with a live value read from `expo-constants`, and make the Version row tappable — tapping opens the app's GitHub releases page in the in-app browser.
-
-**Why:** The hardcoded string will drift out of sync with `app.json` on every release. Using `Constants.expoConfig.version` makes the settings screen authoritative, and the GitHub link lets users see what changed between releases.
-
-**What to change:**
-- `app/(tabs)/settings.tsx`: remove `const APP_VERSION = '1.0.0 (1)'`. Import `Constants` from `expo-constants`. Derive the version string as `Constants.expoConfig?.version ?? '—'`. Optionally append the native build number: `ios.buildNumber` or `android.versionCode` from `Constants.expoConfig`.
-- Change the Version `<LinkRow>` from disabled (no `onPress`) to tappable: `onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}`. Import `WebBrowser` from `expo-web-browser`. (Update the GitHub URL to the actual repo path if it differs.)
-
-**Effort:** XS
-**Priority:** P2
+**What:** Replace hardcoded version string with `expo-constants` and make the Version row open GitHub releases.
 **Completed:** 2026-05-27
-**Summary:** Removed `const APP_VERSION = '1.0.0 (1)'`. Added `expo-constants` and `expo-web-browser` imports. Version row now reads `Constants.expoConfig?.version` and opens the GitHub releases page in-app when tapped.
+**Summary:** Removed `APP_VERSION` constant. Version row reads `Constants.expoConfig?.version` and opens the GitHub releases page in-app when tapped.
 
-## A2 · Remove Spotify Sync toggle
-
-**What:** Delete the "Spotify Sync" `ToggleRow` and its backing `spotifySync` useState from `settings.tsx`. Remove the toggle from the MUSIC INTEGRATION section, leaving only the Reconnect Service button.
-
-**Why:** There is no meaningful "off" state for this toggle. `PlaylistWriter` and `BackendSync` have no disable path — toggling it off would silently do nothing while implying the app stopped syncing. The Reconnect Service button directly below it is sufficient for the section.
-
-**What to change:**
-- `app/(tabs)/settings.tsx`: delete `const [spotifySync, setSpotifySync] = useState(true)` and the `<ToggleRow label="Spotify Sync" .../>` + the `<View style={styles.divider} />` that precedes the Reconnect button.
-
-**Effort:** XS
-**Priority:** P1
-**Completed:** 2026-05-27
-**Summary:** Deleted `const [spotifySync, setSpotifySync] = useState(true)`, the `<ToggleRow label="Spotify Sync" .../>`, and the `<View style={styles.divider} />` that preceded the Reconnect button in `app/(tabs)/settings.tsx`. MUSIC INTEGRATION section now contains only the Reconnect Service button.
-
-## A1 · Persisted prefs store + wire settings.tsx
-
-**What:** Create `src/stores/prefsStore.ts` — a Zustand store with AsyncStorage persist middleware — holding all user preference flags. Replace the five `useState` calls in `settings.tsx` with reads/writes from this store so values survive app restarts.
-
-**Why:** Every toggle currently resets on restart because they're local component state. The store is also the prerequisite for B1, B2, and C1, which need to read prefs at runtime.
-
-**What to change:**
-- Create `src/stores/prefsStore.ts`. Fields: `showAlbumArt: boolean` (default `true`), `autoPlayPreviews: boolean` (default `false`), `hapticFeedback: boolean` (default `true`), `weeklyReminders: boolean` (default `true`).
-- Use `create` + `persist` from `zustand/middleware` with the `AsyncStorage` adapter (same pattern as `swipeStore`).
-- In `app/(tabs)/settings.tsx`: replace `const [showAlbumArt, setShowAlbumArt] = useState(true)` etc. with `usePrefsStore` selector/action calls. Remove all five `useState` declarations for prefs.
-
-**Effort:** S
-**Priority:** P0
-**Completed:** 2026-05-27
+---
 
 ## A4 · Privacy Policy and Terms of Service screens
-
-**What:** Replace the `handleComingSoon` Alert on both "Privacy Policy" and "Terms of Service" rows with navigation to real in-app screens. Create `app/(tabs)/privacy-policy.tsx` and `app/(tabs)/terms-of-service.tsx` as scrollable static-content screens with placeholder text formatted as section headers + paragraphs.
-
-**Why:** The "Coming Soon" alert makes the app look unfinished and is a blocker for App Store submission (both documents are required).
-
-**What to change:**
-- Create `app/(tabs)/settings/privacy-policy.tsx` and `app/(tabs)/settings/terms-of-service.tsx`. Each is a full-screen `ScrollView` with a back button, the document title, and placeholder section text.
-- `app/(tabs)/settings/index.tsx`: push to `/(tabs)/settings/privacy-policy` and `/(tabs)/settings/terms-of-service`.
-
-**Effort:** S
-**Priority:** P2
+**What:** Replace "Coming Soon" alerts with real in-app scrollable screens for Privacy Policy and Terms of Service.
 **Completed:** 2026-05-27
-**Note:** Screens placed under `app/(tabs)/settings/` so `/settings/*` paths keep the Settings navbar tab active.
+**Summary:** Created `app/(tabs)/settings/privacy-policy.tsx` and `terms-of-service.tsx` as scrollable screens. Routes placed under `/settings/*` so the Settings navbar tab stays active.
+
+---
 
 ## A5 · Contact Me screen
-
-**What:** Create `app/(tabs)/contact.tsx` — a simple screen with tappable action rows for emailing the developer, opening GitHub Issues, and (optionally) rating the app. Wire the ABOUT section "Contact" row in settings to navigate there.
-
-**Why:** There is currently no way for users to reach out from inside the app. The settings screen has no contact entry at all.
-
-**What to change:**
-- Create `app/(tabs)/settings/contact.tsx`. Rows: Send Feedback (mailto), Report a Bug (GitHub Issues), View on GitHub.
-- `app/(tabs)/settings/index.tsx`: push to `/(tabs)/settings/contact`.
-
-**Effort:** S
-**Priority:** P2
+**What:** Create a Contact screen with Send Feedback, Report a Bug, and View on GitHub rows.
 **Completed:** 2026-05-27
-**Note:** Screen placed at `app/(tabs)/settings/contact.tsx`; settings moved to `settings/index.tsx`.
+**Summary:** Created `app/(tabs)/settings/contact.tsx`. Settings navigates to `/(tabs)/settings/contact`.
