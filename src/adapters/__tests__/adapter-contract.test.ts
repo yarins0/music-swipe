@@ -1,5 +1,5 @@
 import { MockAdapter } from '../mock/MockAdapter';
-import { PlatformError, PlatformErrorCode, AdapterCapabilities, Track } from '../interface';
+import { PlatformError, PlatformErrorCode, AdapterCapabilities, Track, LIKED_SONGS_PLAYLIST_ID } from '../interface';
 
 describe('adapter contract — MockAdapter', () => {
   describe('auth', () => {
@@ -170,6 +170,12 @@ describe('adapter contract — MockAdapter', () => {
       ).rejects.toMatchObject({ code: PlatformErrorCode.NOT_FOUND });
     });
 
+    it('addToPlaylist(LIKED_SONGS_PLAYLIST_ID) delegates to saveToLibrary', async () => {
+      const adapter = new MockAdapter({ supportsLibrarySave: true });
+      await adapter.addToPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-1');
+      expect(adapter.calls.saveToLibrary).toContain('mock-track-1');
+    });
+
     it('removeFromPlaylist() resolves and records the call', async () => {
       const adapter = new MockAdapter();
       await adapter.removeFromPlaylist('mock-playlist-1', 'mock-track-1');
@@ -177,6 +183,12 @@ describe('adapter contract — MockAdapter', () => {
         playlistId: 'mock-playlist-1',
         trackId: 'mock-track-1',
       });
+    });
+
+    it('removeFromPlaylist(LIKED_SONGS_PLAYLIST_ID) delegates to removeFromLibrary', async () => {
+      const adapter = new MockAdapter();
+      await adapter.removeFromPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-1');
+      expect(adapter.calls.removeFromLibrary).toContain('mock-track-1');
     });
 
     it('saveToLibrary() resolves and records call when supportsLibrarySave=true', async () => {
@@ -190,6 +202,22 @@ describe('adapter contract — MockAdapter', () => {
       await expect(adapter.saveToLibrary('mock-track-1')).rejects.toMatchObject({
         code: PlatformErrorCode.PERMISSION_DENIED,
       });
+    });
+
+    it('isInLibrary() returns true for a track in likedTrackIds fixture', async () => {
+      const adapter = new MockAdapter({ likedTrackIds: new Set(['mock-track-1']) });
+      expect(await adapter.isInLibrary('mock-track-1')).toBe(true);
+    });
+
+    it('isInLibrary() returns false for a track not in likedTrackIds fixture', async () => {
+      const adapter = new MockAdapter();
+      expect(await adapter.isInLibrary('mock-track-1')).toBe(false);
+    });
+
+    it('removeFromLibrary() resolves and records the call', async () => {
+      const adapter = new MockAdapter();
+      await adapter.removeFromLibrary('mock-track-1');
+      expect(adapter.calls.removeFromLibrary).toContain('mock-track-1');
     });
   });
 

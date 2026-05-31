@@ -465,6 +465,241 @@ describe('PlaylistWriter', () => {
     });
   });
 
+  describe('write() — Liked Songs destination', () => {
+    it('calls addToPlaylist(LIKED_SONGS_PLAYLIST_ID) for a track not pre-existing in library', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.isInLibrary).toHaveBeenCalledWith('track-1');
+      expect(adapter.addToPlaylist).toHaveBeenCalledWith(LIKED_SONGS_PLAYLIST_ID, 'track-1');
+    });
+
+    it('skips addToPlaylist when track is pre-existing in library', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(true) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('skips addToPlaylist when track was already added by us this session', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // First write records in libraryWrittenIds
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
+
+      adapter.addToPlaylist.mockClear();
+      adapter.isInLibrary.mockClear();
+
+      // Second write is blocked by in-session deduplication
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+      expect(adapter.isInLibrary).not.toHaveBeenCalled();
+    });
+
+    it('fires onLibraryWritten callback with the trackId after a successful add', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const onLibraryWritten = jest.fn();
+      const writer = new PlaylistWriter(adapter, storage, onLibraryWritten);
+
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      expect(onLibraryWritten).toHaveBeenCalledWith('track-1');
+    });
+
+    it('does NOT persist to the write queue (LIKED_SONGS path bypasses queueing)', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      const raw = await storage.getItem('@music-swipe/playlist-write-queue');
+      const queue: PendingWrite[] = raw ? (JSON.parse(raw) as PendingWrite[]) : [];
+      expect(queue.find((e) => e.trackId === 'track-1')).toBeUndefined();
+    });
+  });
+
+  describe('undoWrite() — Liked Songs destination', () => {
+    it('calls removeFromPlaylist(LIKED_SONGS) after a successful write()', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      writer.undoWrite('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith(LIKED_SONGS_PLAYLIST_ID, 'track-1');
+    });
+
+    it('does NOT call removeFromPlaylist(LIKED_SONGS) when we never wrote it this session', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // undoWrite without any prior write — libraryWrittenIds is empty
+      writer.undoWrite('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('undoWriteAsync()', () => {
+    it('awaits removeFromPlaylist for a regular playlist destination', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.undoWriteAsync('track-1', ['playlist-a']);
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+    });
+
+    it('removes from multiple regular destinations in order', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.undoWriteAsync('track-1', ['playlist-a', 'playlist-b']);
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledTimes(2);
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-b', 'track-1');
+    });
+
+    it('removes from Liked Songs when track was added by write() this session', async () => {
+      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      // Populate libraryWrittenIds via write()
+      writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+      await jest.runAllTimersAsync();
+
+      await writer.undoWriteAsync('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith(LIKED_SONGS_PLAYLIST_ID, 'track-1');
+    });
+
+    it('skips Liked Songs removal when track not in libraryWrittenIds', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.undoWriteAsync('track-1', [LIKED_SONGS_PLAYLIST_ID]);
+
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('throws when removeFromPlaylist rejects (unlike undoWrite which swallows)', async () => {
+      const adapter = buildMockAdapter({
+        removeFromPlaylist: jest.fn().mockRejectedValue(new Error('Spotify 500')),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await expect(writer.undoWriteAsync('track-1', ['playlist-a'])).rejects.toThrow('Spotify 500');
+    });
+
+    it('returns a Promise (is awaitable)', () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      const result = writer.undoWriteAsync('track-1', ['playlist-a']);
+      expect(result).toBeInstanceOf(Promise);
+    });
+  });
+
+  describe('superLike() — filter mode (empty destinations)', () => {
+    it('does not call addToPlaylist when destinations array is empty', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('still saves to library when destinations array is empty', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.isInLibrary).toHaveBeenCalledWith('track-1');
+      expect(adapter.saveToLibrary).toHaveBeenCalledWith('track-1');
+    });
+  });
+
+  describe('undoSuperLike() — filter mode (empty destinations)', () => {
+    it('removes from library after a filter-mode superLike', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      writer.undoSuperLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      // undoSuperLike([], []) → undoWrite(id, [LIKED_SONGS_PLAYLIST_ID])
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith(LIKED_SONGS_PLAYLIST_ID, 'track-1');
+    });
+
+    it('does not call removeFromPlaylist for any regular playlists', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.superLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      writer.undoSuperLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      // Only LIKED_SONGS removal — no regular playlist removal
+      const regularCalls = (adapter.removeFromPlaylist.mock.calls as [string, string][])
+        .filter(([pid]) => pid !== LIKED_SONGS_PLAYLIST_ID);
+      expect(regularCalls).toHaveLength(0);
+    });
+
+    it('does not remove from library when filter-mode superLike was never called', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.undoSuperLike('track-1', []);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
+    });
+  });
+
   describe('drainStoredQueue()', () => {
     it('retries stored entries and removes them on success', async () => {
       const storedQueue: PendingWrite[] = [

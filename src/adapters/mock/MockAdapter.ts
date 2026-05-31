@@ -6,6 +6,7 @@ import {
   PlatformErrorCode,
   Track,
   UserProfile,
+  LIKED_SONGS_PLAYLIST_ID,
 } from '../interface';
 
 interface MockFixtures {
@@ -195,6 +196,11 @@ export class MockAdapter implements MusicPlatformAdapter {
   }
 
   async addToPlaylist(playlistId: string, trackId: string): Promise<void> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      await this.saveToLibrary(trackId);
+      this.calls.addToPlaylist.push({ playlistId, trackId });
+      return;
+    }
     const exists = this.fixtures.playlists.some((p) => p.id === playlistId);
     if (!exists) {
       throw new PlatformError(PlatformErrorCode.NOT_FOUND, `Playlist not found: ${playlistId}`);
@@ -203,6 +209,11 @@ export class MockAdapter implements MusicPlatformAdapter {
   }
 
   async removeFromPlaylist(playlistId: string, trackId: string): Promise<void> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      await this.removeFromLibrary(trackId);
+      this.calls.removeFromPlaylist.push({ playlistId, trackId });
+      return;
+    }
     this.calls.removeFromPlaylist.push({ playlistId, trackId });
   }
 

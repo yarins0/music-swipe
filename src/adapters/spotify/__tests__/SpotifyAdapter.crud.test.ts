@@ -271,6 +271,44 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(mockSpotifyFetch).not.toHaveBeenCalled();
   });
 
+  // --- addToPlaylist / removeFromPlaylist with LIKED_SONGS ---
+
+  it('addToPlaylist() with LIKED_SONGS_PLAYLIST_ID delegates to saveToLibrary', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({});
+
+    await adapter.addToPlaylist(LIKED_SONGS_PLAYLIST_ID, 'track-liked');
+
+    const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/library?uris=spotify%3Atrack%3Atrack-liked');
+    expect(options.method).toBe('PUT');
+  });
+
+  it('removeFromPlaylist() with LIKED_SONGS_PLAYLIST_ID delegates to removeFromLibrary', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({});
+
+    await adapter.removeFromPlaylist(LIKED_SONGS_PLAYLIST_ID, 'track-liked');
+
+    const [endpoint, options] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/library?uris=spotify%3Atrack%3Atrack-liked');
+    expect(options.method).toBe('DELETE');
+  });
+
+  it('isInLibrary() returns false when API returns [false]', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce([false]);
+
+    const result = await adapter.isInLibrary('track-not-saved');
+
+    expect(result).toBe(false);
+  });
+
+  it('isInLibrary() returns false (not true) when result array is empty', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce([]);
+
+    const result = await adapter.isInLibrary('track-missing');
+
+    expect(result).toBe(false);
+  });
+
   // --- capabilities ---
 
   it('capabilities flags match expected Spotify values', () => {
