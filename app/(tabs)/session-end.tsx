@@ -19,8 +19,7 @@ import { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
+import { BACKEND_URL } from '@/config';
 
 interface SessionStats {
   swipedCount: number;

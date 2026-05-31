@@ -18,6 +18,12 @@ export interface PendingWrite {
   attempts: number;
 }
 
+// Identifies which write failed, passed to the onWriteError callback.
+export interface WriteErrorContext {
+  trackId: string;
+  playlistId: string;
+}
+
 const QUEUE_KEY = '@music-swipe/playlist-write-queue';
 const WRITTEN_PAIRS_KEY = '@music-swipe/written-pairs';
 const LIBRARY_WRITTEN_IDS_KEY = '@music-swipe/library-written-ids';
@@ -30,15 +36,31 @@ export class PlaylistWriter {
   private readonly libraryWrittenIds = new Set<string>();
   private libraryWrittenIdsLoaded = false;
   private readonly onLibraryWritten?: (trackId: string) => void;
+  // Invoked when a write fails for a non-retryable reason (e.g. PERMISSION_DENIED,
+  // NOT_FOUND). Rate-limit exhaustion is intentionally NOT reported here — those
+  // entries stay in the durable queue and are retried on the next launch.
+  private readonly onWriteError?: (error: unknown, context: WriteErrorContext) => void;
 
   constructor(
     adapter: MusicPlatformAdapter,
     storage: StorageInterface = AsyncStorageDefault,
     onLibraryWritten?: (trackId: string) => void,
+    onWriteError?: (error: unknown, context: WriteErrorContext) => void,
   ) {
     this.adapter = adapter;
     this.storage = storage;
     this.onLibraryWritten = onLibraryWritten;
+    this.onWriteError = onWriteError;
+  }
+
+  // Surfaces a non-retryable write failure instead of swallowing it: logs it and
+  // notifies onWriteError so the UI can tell the user the save did not land.
+  private reportWriteError(error: unknown, context: WriteErrorContext): void {
+    console.warn(
+      `[PlaylistWriter] write failed (non-retryable) for trackId=${context.trackId} playlistId=${context.playlistId}:`,
+      error,
+    );
+    this.onWriteError?.(error, context);
   }
 
   private pairKey(trackId: string, playlistId: string): string {
@@ -121,7 +143,10 @@ export class PlaylistWriter {
   // Returns true when fn succeeded, false when all retries were exhausted or a
   // non-retryable error was encountered — lets the caller decide what to do with
   // persisted queue state.
-  private async executeWithBackoff(fn: () => Promise<void>): Promise<boolean> {
+  private async executeWithBackoff(
+    fn: () => Promise<void>,
+    context: WriteErrorContext,
+  ): Promise<boolean> {
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       try {
         await fn();
@@ -131,8 +156,8 @@ export class PlaylistWriter {
           error instanceof PlatformError && error.code === PlatformErrorCode.RATE_LIMITED;
 
         if (!isRateLimited) {
-          // Non-retryable error — warn and exit immediately
-          console.warn('[PlaylistWriter] Non-retryable error, aborting:', error);
+          // Non-retryable error — surface it (don't swallow) and exit immediately
+          this.reportWriteError(error, context);
           return false;
         }
 
@@ -177,8 +202,9 @@ export class PlaylistWriter {
         // write it, so libraryWrittenIds never records it, and undo can never remove it.
         if (preExisting) return;
 
-        const succeeded = await this.executeWithBackoff(() =>
-          this.adapter.addToPlaylist(playlistId, trackId),
+        const succeeded = await this.executeWithBackoff(
+          () => this.adapter.addToPlaylist(playlistId, trackId),
+          { trackId, playlistId },
         );
         if (succeeded) {
           this.libraryWrittenIds.add(trackId);
@@ -201,7 +227,7 @@ export class PlaylistWriter {
       // 2. Attempt the write with exponential backoff.
       const succeeded = await this.executeWithBackoff(async () => {
         await this.adapter.addToPlaylist(playlistId, trackId);
-      });
+      }, { trackId, playlistId });
 
       if (succeeded) {
         // 3a. Success — remove from durable queue and record so future swipes skip this pair.
@@ -308,11 +334,8 @@ export class PlaylistWriter {
         void this.persistLibraryWrittenIds();
         this.onLibraryWritten?.(trackId);
       } catch (error: unknown) {
-        if (error instanceof PlatformError && error.code === PlatformErrorCode.PERMISSION_DENIED) {
-          console.warn('[PlaylistWriter] saveToLibrary 403 — Spotify body:', error.message);
-          return;
-        }
-        console.warn('[PlaylistWriter] saveToLibrary failed:', error);
+        // saveToLibrary bypasses executeWithBackoff, so surface its failures here too.
+        this.reportWriteError(error, { trackId, playlistId: LIKED_SONGS_PLAYLIST_ID });
       }
     })();
   }
@@ -372,7 +395,11 @@ export class PlaylistWriter {
       }
 
       if (!succeeded) {
-        remaining.push({ ...entry, attempts: MAX_ATTEMPTS });
+        // Reset attempts to 0 so the next launch retries this entry from scratch.
+        // Persisting MAX_ATTEMPTS here would make the next launch's loop
+        // (`for (attempt = entry.attempts; attempt < MAX_ATTEMPTS; ...)`) a no-op,
+        // permanently abandoning the write even after connectivity is restored.
+        remaining.push({ ...entry, attempts: 0 });
       }
     }
 

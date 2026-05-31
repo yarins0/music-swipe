@@ -77,4 +77,14 @@ export class TrackPlayer {
     if (!this.adapter.capabilities.supportsSeek) return;
     await this.adapter.seek(positionMs);
   }
+
+  /**
+   * Returns the current playback position in milliseconds via the adapter.
+   * Returns 0 when the adapter does not support seeking (and therefore cannot
+   * report a position) so callers can compute relative seeks without crashing.
+   */
+  async getCurrentPositionMs(): Promise<number> {
+    if (!this.adapter.capabilities.supportsSeek) return 0;
+    return this.adapter.getCurrentPositionMs();
+  }
 }

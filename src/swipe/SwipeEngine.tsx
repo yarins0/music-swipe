@@ -33,6 +33,14 @@ import type { SwipeDirection } from '@/swipe/useSwipeGesture';
 // holds which content during the swipe transition. Flip to false to remove.
 const DEBUG_FLICKER = false;
 
+// Tap-to-seek step: one-eighth of the track length, floored at 20s so short
+// tracks still move a meaningful amount. (durationMs / 8 is below 20s exactly
+// when the track is shorter than 160s.)
+const SEEK_MIN_STEP_MS = 20000;
+function computeSeekStepMs(durationMs: number): number {
+  return Math.max(SEEK_MIN_STEP_MS, Math.round(durationMs / 8));
+}
+
 interface SwipeEngineProps {
   trackPlayer: TrackPlayer;
   playlistWriter: PlaylistWriter;
@@ -115,24 +123,33 @@ export function SwipeEngine({
     return perTrackOverrideIds ?? activeDestinationIds;
   }, [perTrackOverrideIds, activeDestinationIds]);
 
-  // Seek helpers — get current position then seek relative to it
+  // Seek helpers — read the live position, then seek one step relative to it.
+  // Step is one-eighth of the track (min 20s); see computeSeekStepMs.
   const handleSeekBack = useCallback(async (): Promise<void> => {
+    if (!currentTrack) return;
     try {
-      const pos = await trackPlayer.seekTo(0).then(() => 0);
-      // seekTo doesn't return position; use getCurrentPositionMs from adapter path
-      void trackPlayer.seekTo(Math.max(0, pos - 20000));
+      const position = await trackPlayer.getCurrentPositionMs();
+      const step = computeSeekStepMs(currentTrack.durationMs);
+      await trackPlayer.seekTo(Math.max(0, position - step));
     } catch {
       // seek errors are non-fatal
     }
-  }, [trackPlayer]);
+  }, [trackPlayer, currentTrack]);
 
   const handleSeekForward = useCallback(async (): Promise<void> => {
+    if (!currentTrack) return;
     try {
-      void trackPlayer.seekTo(20000);
+      const position = await trackPlayer.getCurrentPositionMs();
+      const step = computeSeekStepMs(currentTrack.durationMs);
+      const target = position + step;
+      // Clamp to the track end when the duration is known so we never seek past it.
+      const clamped =
+        currentTrack.durationMs > 0 ? Math.min(target, currentTrack.durationMs) : target;
+      await trackPlayer.seekTo(clamped);
     } catch {
       // seek errors are non-fatal
     }
-  }, [trackPlayer]);
+  }, [trackPlayer, currentTrack]);
 
   // Play the track at queue[idx] and update seek availability
   const playTrackAt = useCallback(

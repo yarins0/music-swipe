@@ -16,8 +16,7 @@ import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 import { usePrefsStore } from '@/stores/prefsStore';
 import { colors } from '@/theme';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
+import { BACKEND_URL } from '@/config';
 
 type InitPhase =
   | 'hydrating'
@@ -99,6 +98,9 @@ export default function SwipeScreen(): React.ReactElement {
 
   // Tracks whether unmount already closed the session (prevents double-close)
   const sessionClosedRef = useRef(false);
+  // Ensures the "couldn't save" alert is shown at most once per session, so a
+  // burst of failed writes doesn't spam the user with dialogs.
+  const writeErrorShownRef = useRef(false);
   // Mirrors sessionId state in a ref so the unmount cleanup always sees the latest value
   // without needing sessionId in the cleanup effect's dependency array.
   const sessionIdRef = useRef<string | null>(null);
@@ -119,9 +121,23 @@ export default function SwipeScreen(): React.ReactElement {
     // When the pref is off, passing null skips the entire adapter-failure preview path.
     const previewCallback = usePrefsStore.getState().autoPlayPreviews ? setPreviewUrl : null;
     trackPlayerRef.current = new TrackPlayer(adapter, previewCallback);
-    playlistWriterRef.current = new PlaylistWriter(adapter, undefined, (trackId) => {
-      useSwipeStore.getState().markLikedSongsWritten(trackId);
-    });
+    playlistWriterRef.current = new PlaylistWriter(
+      adapter,
+      undefined,
+      (trackId) => {
+        useSwipeStore.getState().markLikedSongsWritten(trackId);
+      },
+      // Surface non-retryable write failures once per session — a track that
+      // genuinely can't be saved (e.g. permission revoked) should not vanish silently.
+      () => {
+        if (writeErrorShownRef.current) return;
+        writeErrorShownRef.current = true;
+        Alert.alert(
+          "Couldn't save some tracks",
+          'A like couldn’t be added to a destination playlist. Check that you’re still logged in and have permission to edit it.',
+        );
+      },
+    );
     sessionTrackerRef.current = new SessionTracker(BACKEND_URL, getToken);
     backendSyncRef.current = new BackendSync(BACKEND_URL, getToken);
 

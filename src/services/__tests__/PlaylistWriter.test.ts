@@ -16,6 +16,7 @@ const stubCapabilities: AdapterCapabilities = {
   requiresPremium: false,
   supportsLibrarySave: true,
   supportsPlaylistCreation: false,
+  canReadUnownedPlaylists: false,
 };
 
 function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.Mocked<MusicPlatformAdapter> {
@@ -24,6 +25,12 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     isAuthenticated: jest.fn().mockResolvedValue(true),
     refreshAuth: jest.fn().mockResolvedValue(undefined),
     getUserId: jest.fn().mockResolvedValue('user-1'),
+    getUserProfile: jest.fn().mockResolvedValue({
+      spotifyId: 'user-1',
+      displayName: null,
+      avatarUrl: null,
+      email: null,
+    }),
     getUserPlaylists: jest.fn().mockResolvedValue([]),
     getPlaylistById: jest.fn().mockResolvedValue({} as Playlist),
     getPlaylistTracks: jest.fn().mockResolvedValue({ tracks: [], total: 0 }),
@@ -39,6 +46,7 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     isInLibrary: jest.fn().mockResolvedValue(false),
     createPlaylist: jest.fn().mockResolvedValue('new-playlist-id'),
     openPlatformDeepLink: jest.fn().mockResolvedValue(undefined),
+    openPlaylistInApp: jest.fn().mockResolvedValue(undefined),
   };
   return { ...base, ...overrides } as jest.Mocked<MusicPlatformAdapter>;
 }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import * as AuthSession from 'expo-auth-session';
 import { useAuthStore } from '../stores/authStore';
+import { BACKEND_URL } from '../config';
 
 const SPOTIFY_CLIENT_ID = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID ?? '';
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3000';
 
 const discovery = {
   authorizationEndpoint: 'https://accounts.spotify.com/authorize',
