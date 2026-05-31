@@ -1,1 +1,2 @@
 npx jest --no-coverage
+npx expo lint

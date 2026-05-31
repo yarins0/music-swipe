@@ -12,9 +12,7 @@ type AudioPlayer = {
 };
 type AudioStatus = { currentTime?: number; duration?: number; playing?: boolean };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _nativeUseAudioPlayer: ((source: string) => AudioPlayer) | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _nativeUseAudioPlayerStatus: ((player: AudioPlayer) => AudioStatus) | null = null;
 
 try {
