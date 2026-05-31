@@ -60,6 +60,9 @@ interface SwipeState {
   // True while the user has tabbed away mid-session; prevents unmount cleanup from wiping state
   isSuspended: boolean;
 
+  // Persisted so it survives tab-away + resume without going back through destination.tsx
+  isFilterMode: boolean;
+
   // Total track count from the last getPlaylistTracks API call.
   // Not persisted — kept in memory so the progress bar is correct on tab-away + return
   // without re-fetching from Spotify.
@@ -137,6 +140,9 @@ interface SwipeActions {
 
   /** Store the user's playlist library for instant restoration on tab-away + return. */
   setAvailablePlaylists: (playlists: Playlist[]) => void;
+
+  /** Persist filter mode flag alongside session state so resume restores it correctly. */
+  setIsFilterMode: (value: boolean) => void;
 }
 
 const INITIAL_STATE: SwipeState = {
@@ -152,6 +158,7 @@ const INITIAL_STATE: SwipeState = {
   pendingSyncSwipes: [],
   likedHistory: [],
   isSuspended: false,
+  isFilterMode: false,
   totalTracks: 0,
   availablePlaylists: [],
 };
@@ -275,6 +282,8 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
       setTotalTracks: (count) => set({ totalTracks: count }),
 
       setAvailablePlaylists: (playlists) => set({ availablePlaylists: playlists }),
+
+      setIsFilterMode: (value) => set({ isFilterMode: value }),
     }),
     {
       name: 'swipe-store',
@@ -289,6 +298,7 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         activeDestinationIds: state.activeDestinationIds,
         pendingSyncSwipes: state.pendingSyncSwipes,
         likedHistory: state.likedHistory,
+        isFilterMode: state.isFilterMode,
       }),
     },
   ),

@@ -121,6 +121,7 @@
 
 **Checks:**
 [] "Auto-play Previews" on + no active device → 30s preview plays automatically when adapter fails  - RESULT: I dont know what that means, is that what causes the first track to not play?
+TODO: incostitant behavior - try solving by adding an reconnect spotify buttron under the setting swith which will open spotify in the background, also clicking pn "No Previe" on swipe screen should send the use to this setting (have the setting blink twice when opened)
 [x] Swipe to next track → previous preview stops, no audio bleed from prior track
 [] "Auto-play Previews" off → no audio plays even when adapter fails
 ISSUE : at first it does - than when turned on it starts working - turned off again it still works
@@ -128,7 +129,7 @@ ISSUE : at first it does - than when turned on it starts working - turned off ag
 ISSUE: cant really test that mabually - add a log
 [] Queue exhausted and session ends → no lingering preview audio
 ISSUE: music continues
-[] Undo (step back to previous card) → preview resets cleanly, no double-play or stale audio
+[x] Undo (step back to previous card) → preview resets cleanly, no double-play or stale audio
 
 **Effort:** S
 **Priority:** P1
@@ -147,8 +148,10 @@ ISSUE: music continues
 [x] Filter mode: swipe left → track removed from source playlist in Spotify (verify in Spotify app)
 [x] Filter mode: swipe right → nothing written, track stays in playlist
 [] Filter mode: undo a left swipe → track re-added to source playlist
-[] Session-end after filter mode: "TRACKS KEPT"/"TRACKS DELETED" labels, "Tracks You Kept" title, no per-track remove buttons, no "Save as Playlist" CTA
-[] Normal session (non-filter): skip button shows ✕, labels read "ADDED TO PLAYLISTS"/"DISCARDED", remove buttons present, "Save as Playlist" visible
+ISSUES: undo doesnt work - doesnt restore anything - for both a regular platlists and liked
+ISSUE: super like doesnt do anything
+[x] Session-end after filter mode: "TRACKS KEPT"/"TRACKS DELETED" labels, "Tracks You Kept" title, no per-track remove buttons, no "Save as Playlist" CTA
+[x] Normal session (non-filter): skip button shows ✕, labels read "ADDED TO PLAYLISTS"/"DISCARDED", remove buttons present, "Save as Playlist" visible
 [x] New session started after filter mode: `isFilterMode` reset — no banner on destination picker, normal ✕ skip button in swipe screen
 
 **Effort:** M

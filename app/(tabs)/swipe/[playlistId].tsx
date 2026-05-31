@@ -189,6 +189,9 @@ export default function SwipeScreen(): React.ReactElement {
             useSessionStore.getState().setDestinations(store.activeDestinationIds);
           }
         }
+        // Always restore filter mode from the persisted store — sessionStore is in-memory
+        // and may have been overwritten if the user briefly visited destination.tsx.
+        useSessionStore.getState().setFilterMode(store.isFilterMode);
 
         setPhase('opening_session');
         return;
@@ -345,6 +348,7 @@ export default function SwipeScreen(): React.ReactElement {
           if (storedDestIds.length > 0 && useSessionStore.getState().destinationPlaylistIds.length === 0) {
             useSessionStore.getState().setDestinations(storedDestIds);
           }
+          useSessionStore.getState().setFilterMode(store.isFilterMode);
         }
 
         // Stash full track list (unsliced) so phase 5 can enrich pending tracks

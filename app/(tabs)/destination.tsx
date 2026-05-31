@@ -17,6 +17,7 @@ import { getUserPlaylists } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
 import { AppModal } from '@/components/AppModal';
 import { useSessionStore } from '@/stores/sessionStore';
+import { useSwipeStore } from '@/stores/swipeStore';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
@@ -107,15 +108,21 @@ export default function DestinationPickerScreen() {
       setShowFilterModeModal(true);
       return;
     }
+    const destIds = Array.from(selectedIds);
     setFilterMode(false);
-    setDestinations(Array.from(selectedIds));
+    useSwipeStore.getState().setIsFilterMode(false);
+    useSwipeStore.getState().setActiveDestinations(destIds);
+    setDestinations(destIds);
     router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
   };
 
   const handleFilterModeConfirm = () => {
     setShowFilterModeModal(false);
+    const destIds = Array.from(selectedIds);
     setFilterMode(true);
-    setDestinations(Array.from(selectedIds));
+    useSwipeStore.getState().setIsFilterMode(true);
+    useSwipeStore.getState().setActiveDestinations(destIds);
+    setDestinations(destIds);
     router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
   };
 

@@ -203,13 +203,16 @@ export function SwipeEngine({
       recordSwipe(currentTrack, status, effectiveDestinations, effectiveDestNames);
 
       if (isFilterMode) {
-        // Filter mode: left swipe (skipped) = delete from source playlist; right/up = keep (no-op).
+        // Filter mode: left = delete from source; up = save to Liked Songs; right = keep (no-op).
         if (status === 'skipped' && sourcePlaylistId) {
           void adapter.removeFromPlaylist(sourcePlaylistId, currentTrack.id).catch((err: unknown) => {
             console.warn('[SwipeEngine] filter mode removeFromPlaylist failed:', err);
           });
+        } else if (status === 'super_liked') {
+          // No destination playlists in filter mode — save to Liked Songs only.
+          playlistWriter.superLike(currentTrack.id, []);
         }
-        // Right/up swipes are intentional no-ops in filter mode — track stays in the playlist.
+        // Right swipe = keep, no-op.
       } else {
         if (status === 'liked') {
           playlistWriter.write(currentTrack.id, effectiveDestinations);
@@ -268,11 +271,16 @@ export function SwipeEngine({
     if (!record) return;
 
     if (isFilterMode) {
-      // Filter mode undo: a skipped (deleted) track needs to be re-added to the source.
-      // Liked/super_liked tracks were never removed — nothing to re-add.
       if (record.status === 'skipped' && sourcePlaylistId) {
-        playlistWriter.write(record.track.id, [sourcePlaylistId]);
+        // Call adapter directly to bypass PlaylistWriter's writtenPairs deduplication,
+        // which would silently skip re-adding tracks previously liked to this playlist.
+        void adapter.addToPlaylist(sourcePlaylistId, record.track.id).catch((err: unknown) => {
+          console.warn('[SwipeEngine] filter mode undo addToPlaylist failed:', err);
+        });
+      } else if (record.status === 'super_liked') {
+        playlistWriter.undoSuperLike(record.track.id, []);
       }
+      // liked = keep (no-op), nothing to reverse
     } else {
       if (record.status === 'liked') {
         playlistWriter.undoWrite(record.track.id, record.destinationPlaylistIds);
@@ -281,7 +289,7 @@ export function SwipeEngine({
       }
     }
 
-  }, [undo, playlistWriter, isFilterMode, sourcePlaylistId]);
+  }, [undo, playlistWriter, isFilterMode, sourcePlaylistId, adapter]);
 
   const hapticCallback = hapticFeedback
     ? () => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }
