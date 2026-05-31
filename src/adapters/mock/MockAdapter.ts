@@ -103,6 +103,9 @@ export class MockAdapter implements MusicPlatformAdapter {
     openPlaylistInApp: [],
   };
 
+  /** Tracks which tracks are in each playlist after add/remove calls. Keyed by playlistId. */
+  readonly playlistContents = new Map<string, Set<string>>();
+
   /** Directly inspectable fixture state for tests. */
   readonly fixtures: Required<MockFixtures> & { tracks: Track[]; playlists: Playlist[]; likedTrackIds: Set<string> };
 
@@ -206,6 +209,9 @@ export class MockAdapter implements MusicPlatformAdapter {
       throw new PlatformError(PlatformErrorCode.NOT_FOUND, `Playlist not found: ${playlistId}`);
     }
     this.calls.addToPlaylist.push({ playlistId, trackId });
+    const set = this.playlistContents.get(playlistId) ?? new Set<string>();
+    set.add(trackId);
+    this.playlistContents.set(playlistId, set);
   }
 
   async removeFromPlaylist(playlistId: string, trackId: string): Promise<void> {
@@ -215,6 +221,7 @@ export class MockAdapter implements MusicPlatformAdapter {
       return;
     }
     this.calls.removeFromPlaylist.push({ playlistId, trackId });
+    this.playlistContents.get(playlistId)?.delete(trackId);
   }
 
   async saveToLibrary(trackId: string): Promise<void> {
@@ -224,10 +231,12 @@ export class MockAdapter implements MusicPlatformAdapter {
         'saveToLibrary not supported by this adapter',
       );
     }
+    this.fixtures.likedTrackIds.add(trackId);
     this.calls.saveToLibrary.push(trackId);
   }
 
   async removeFromLibrary(trackId: string): Promise<void> {
+    this.fixtures.likedTrackIds.delete(trackId);
     this.calls.removeFromLibrary.push(trackId);
   }
 

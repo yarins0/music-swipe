@@ -83,6 +83,28 @@ Tables: `users`, `playlists`, `tracks`, `matches`. Backend is a single Express m
 4. **SegmentNavigator interface**: Keep the seek abstraction behind `SegmentNavigator`; the interface exists to support a future AI-segment upgrade without changing callers.
 5. **MockAdapter must stay complete**: `MockAdapter` must implement every method of `MusicPlatformAdapter`. Any new adapter method needs a mock implementation before the PR merges.
 
+## Testing
+
+### Test architecture
+
+Three layers together guarantee that if the Spotify endpoints are correct, every desired behavior is confirmed:
+
+| Layer | File | What it proves |
+|---|---|---|
+| **Adapter contract** | `src/adapters/__tests__/adapter-contract.test.ts` | `MockAdapter` and `SpotifyAdapter` implement the interface identically — call parity |
+| **Unit (call-level)** | `src/services/__tests__/PlaylistWriter.test.ts` | The right adapter methods are called at the right times; deduplication, queue persistence, backoff |
+| **Sequences (end-state)** | `src/services/__tests__/PlaylistWriter.sequences.test.ts` | Playlist and library state is correct after action chains: like → undo → re-like, pre-existing liked-song guard, filter mode, super like, end-screen delete |
+
+`MockAdapter` is the bridge. Its `playlistContents` map and `fixtures.likedTrackIds` set reflect real state mutations, mirroring what the Spotify API would do. Sequence tests assert on those, not on call counts.
+
+### Rules for new behaviors
+
+6. **New PlaylistWriter behavior → add a sequence test**: If you add or change any write, undo, super-like, or filter-mode logic in `PlaylistWriter.ts`, add at least one sequence test in `PlaylistWriter.sequences.test.ts` that verifies the final state, not just which methods were called. Call-level coverage in `PlaylistWriter.test.ts` is also required.
+
+7. **New adapter method → update MockAdapter + adapter-contract**: Any new method on `MusicPlatformAdapter` must have a stateful implementation in `MockAdapter` (mutate `playlistContents` or `fixtures` as appropriate) and a parity assertion in `adapter-contract.test.ts` before the PR merges.
+
+8. **Sequence tests use `MockAdapter` directly** (not `jest.Mocked<>`). Use `jest.useFakeTimers()` + `await jest.runAllTimersAsync()` to drain fire-and-forget writes. Use `mock-playlist-1` and `mock-playlist-2` as destination IDs — they exist in `MockAdapter`'s DEFAULT_PLAYLISTS and won't throw `NOT_FOUND`.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
