@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   StyleSheet,
@@ -41,6 +42,10 @@ function computeSeekStepMs(durationMs: number): number {
   return Math.max(SEEK_MIN_STEP_MS, Math.round(durationMs / 8));
 }
 
+// How many cards ahead of the loaded queue end to request the next lazy page. A buffer
+// this size means the fetch almost always resolves before the user reaches the gap.
+const PREFETCH_AHEAD = 10;
+
 interface SwipeEngineProps {
   trackPlayer: TrackPlayer;
   playlistWriter: PlaylistWriter;
@@ -53,6 +58,11 @@ interface SwipeEngineProps {
   /** Total tracks in the source playlist (from the API, not the loaded slice). */
   totalTracks: number;
   onSessionEnd: () => void;
+  /**
+   * Called when the loaded queue is running low and more source-playlist pages remain.
+   * The screen owns the fetch + appendFreshTracks; the engine only signals "buffer low".
+   */
+  onNeedMoreTracks?: () => void;
   /** When provided, replaces the internal entire-session handler. */
   onEntireSession?: (added: string[], removed: string[], confirmedRemove: boolean) => void;
 }
@@ -66,18 +76,24 @@ export function SwipeEngine({
   availablePlaylists,
   totalTracks,
   onSessionEnd,
+  onNeedMoreTracks,
   onEntireSession: onEntireSessionProp,
 }: SwipeEngineProps): React.ReactElement {
   const {
     queue,
     currentIndex,
     absoluteIndex,
+    nextPageOffset,
     activeDestinationIds,
     undoStack,
     recordSwipe,
     undo,
     setActiveDestinations,
   } = useSwipeStore();
+
+  // More source-playlist pages remain to lazily load when the paging cursor hasn't
+  // reached the reported total. Drives both the prefetch trigger and the session-end guard.
+  const hasMoreTracks = nextPageOffset < totalTracks;
 
   // Playback strategy for current track — determines isSeekEnabled on SwipeCard
   const [isSeekEnabled, setIsSeekEnabled] = useState(false);
@@ -184,12 +200,22 @@ export function SwipeEngine({
     }
   }, [currentIndex, currentTrack, playTrackAt]);
 
-  // Session end when queue is exhausted
+  // Request the next lazy page once the user is within PREFETCH_AHEAD cards of the
+  // loaded queue end and more pages remain. The screen guards against concurrent fetches,
+  // so firing this repeatedly while a fetch is in flight is harmless.
   useEffect(() => {
-    if (queue.length > 0 && currentIndex >= queue.length) {
+    if (hasMoreTracks && currentIndex >= queue.length - PREFETCH_AHEAD) {
+      onNeedMoreTracks?.();
+    }
+  }, [currentIndex, queue.length, hasMoreTracks, onNeedMoreTracks]);
+
+  // Session end when the queue is exhausted AND no more pages remain to load.
+  // The hasMoreTracks guard prevents ending early at a page boundary.
+  useEffect(() => {
+    if (queue.length > 0 && currentIndex >= queue.length && !hasMoreTracks) {
       onSessionEnd();
     }
-  }, [currentIndex, queue.length, onSessionEnd]);
+  }, [currentIndex, queue.length, hasMoreTracks, onSessionEnd]);
 
   // Preload upcoming tracks' album art so back-card image swaps don't flicker.
   // When the back card's track prop swaps in place (D → E), expo-image must
@@ -358,11 +384,17 @@ export function SwipeEngine({
   );
 
   if (!currentTrack) {
+    // hasMoreTracks means the user out-ran an in-flight lazy page; show a loader rather
+    // than "No more tracks" so the queue doesn't look prematurely empty.
     return (
       <View style={styles.screen}>
         <TabHeader title="Discover" subtitle={headerSubtitle} />
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No more tracks</Text>
+          {hasMoreTracks ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <Text style={styles.emptyText}>No more tracks</Text>
+          )}
         </View>
       </View>
     );

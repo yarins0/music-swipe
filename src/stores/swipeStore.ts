@@ -41,6 +41,18 @@ interface SwipeState {
   // Not persisted — re-set on each initSession call.
   pendingTracksCount: number;
 
+  // Number of fresh source-playlist tracks loaded into the queue so far (initial page
+  // plus lazy appends). Only swipes inside the fresh band — queue positions
+  // [pendingTracksCount, pendingTracksCount + freshTracksCount) — advance absoluteIndex;
+  // the carried-over pending prefix and any future second-pass suffix must not.
+  // Not persisted — re-derived on resume.
+  freshTracksCount: number;
+
+  // Raw source-playlist offset the next lazy page should fetch from. The consumer
+  // derives "are there more pages" as nextPageOffset < totalTracks.
+  // Not persisted — re-derived on resume.
+  nextPageOffset: number;
+
   // Decide later — tracks re-queued for a second pass within this session
   decideQueue: Track[];
 
@@ -87,7 +99,16 @@ interface SwipeActions {
     pendingTracks: Track[],
     destinationIds: string[],
     isResuming?: boolean,
+    nextPageOffset?: number,
   ) => void;
+
+  /**
+   * Append a lazily-fetched page of fresh source-playlist tracks to the end of the
+   * queue. Grows freshTracksCount (so the new tracks fall inside the band that advances
+   * absoluteIndex) and updates the paging cursor. Leaves currentIndex and absoluteIndex
+   * untouched so the progress bar stays stable across a page load.
+   */
+  appendFreshTracks: (tracks: Track[], nextPageOffset: number) => void;
 
   /**
    * Record a committed swipe. Updates currentIndex, absoluteIndex, undoStack,
@@ -152,6 +173,8 @@ const INITIAL_STATE: SwipeState = {
   currentIndex: 0,
   absoluteIndex: 0,
   pendingTracksCount: 0,
+  freshTracksCount: 0,
+  nextPageOffset: 0,
   decideQueue: [],
   undoStack: [],
   activeDestinationIds: [],
@@ -163,12 +186,28 @@ const INITIAL_STATE: SwipeState = {
   availablePlaylists: [],
 };
 
+/**
+ * Whether a queue position holds a fresh source-playlist track (the only band that
+ * advances absoluteIndex). The queue is laid out as three contiguous bands:
+ *   [0, pendingTracksCount)                                  carried-over pending
+ *   [pendingTracksCount, pendingTracksCount + freshTracksCount)  fresh playlist
+ *   [pendingTracksCount + freshTracksCount, queue.length)    second-pass re-shows
+ * Only the middle band represents new source-playlist consumption.
+ */
+function isFreshPlaylistPosition(
+  index: number,
+  pendingTracksCount: number,
+  freshTracksCount: number,
+): boolean {
+  return index >= pendingTracksCount && index < pendingTracksCount + freshTracksCount;
+}
+
 export const useSwipeStore = create<SwipeState & SwipeActions>()(
   persist(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      initSession: (sessionId, sourcePlaylistId, queue, pendingTracks, destinationIds, isResuming = false) =>
+      initSession: (sessionId, sourcePlaylistId, queue, pendingTracks, destinationIds, isResuming = false, nextPageOffset = 0) =>
         set((state) => ({
           sessionId,
           sourcePlaylistId,
@@ -179,12 +218,22 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           // On new session: reset to 0.
           absoluteIndex: isResuming ? state.absoluteIndex : 0,
           pendingTracksCount: pendingTracks.length,
+          // The passed queue is the fresh playlist page; pendingTracks are the prefix.
+          freshTracksCount: queue.length,
+          nextPageOffset,
           decideQueue: [],
           undoStack: [],
           activeDestinationIds: destinationIds,
           // On resume: preserve history so the History tab stays populated.
           // On new session: start fresh.
           pendingSyncSwipes: isResuming ? state.pendingSyncSwipes : [],
+        })),
+
+      appendFreshTracks: (tracks, nextPageOffset) =>
+        set((state) => ({
+          queue: [...state.queue, ...tracks],
+          freshTracksCount: state.freshTracksCount + tracks.length,
+          nextPageOffset,
         })),
 
       recordSwipe: (track, status, destinationIds, destinationNames) => {
@@ -200,12 +249,16 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         const isLiked = status === 'liked' || status === 'super_liked';
         set((state) => ({
           currentIndex: state.currentIndex + 1,
-          // Only advance the playlist offset when consuming a regular (non-pending) track.
-          // Queue positions 0..(pendingTracksCount-1) are pending tracks.
-          absoluteIndex:
-            state.currentIndex < state.pendingTracksCount
-              ? state.absoluteIndex
-              : state.absoluteIndex + 1,
+          // Advance the source-playlist offset only when the swiped card is a fresh
+          // playlist track — never a carried-over pending (prefix) or second-pass re-show
+          // (suffix). state.currentIndex is the position of the card being swiped.
+          absoluteIndex: isFreshPlaylistPosition(
+            state.currentIndex,
+            state.pendingTracksCount,
+            state.freshTracksCount,
+          )
+            ? state.absoluteIndex + 1
+            : state.absoluteIndex,
           undoStack: [record], // keep only the last 1 swipe for undo
           pendingSyncSwipes: [...state.pendingSyncSwipes, record],
           likedHistory: isLiked
@@ -224,12 +277,16 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
         const [last] = undoStack;
         set((state) => ({
           currentIndex: Math.max(0, state.currentIndex - 1),
-          // The undone swipe was at queue position (currentIndex - 1).
-          // Only reverse absoluteIndex when that position was a regular track.
-          absoluteIndex:
-            state.currentIndex > state.pendingTracksCount
-              ? state.absoluteIndex - 1
-              : state.absoluteIndex,
+          // The undone swipe was at queue position (currentIndex - 1). Reverse the
+          // offset only when that position was a fresh playlist track — mirrors the
+          // banded advance rule in recordSwipe.
+          absoluteIndex: isFreshPlaylistPosition(
+            state.currentIndex - 1,
+            state.pendingTracksCount,
+            state.freshTracksCount,
+          )
+            ? state.absoluteIndex - 1
+            : state.absoluteIndex,
           undoStack: [],
           pendingSyncSwipes: state.pendingSyncSwipes.filter(
             (s) => s.swipedAt !== last.swipedAt,
@@ -288,9 +345,10 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
     {
       name: 'swipe-store',
       storage: createJSONStorage(() => AsyncStorage),
-      // queue, decideQueue, and pendingTracksCount are excluded: tracks are large and
-      // re-fetched on resume. absoluteIndex replaces currentIndex as the resume offset —
-      // it is an absolute playlist position, never reset on resume.
+      // queue, decideQueue, pendingTracksCount, freshTracksCount, and nextPageOffset are
+      // excluded: tracks are large and re-fetched on resume, and the band/paging counters
+      // are re-derived from that fetch. absoluteIndex replaces currentIndex as the resume
+      // offset — it is an absolute playlist position, never reset on resume.
       partialize: (state) => ({
         sessionId: state.sessionId,
         sourcePlaylistId: state.sourcePlaylistId,

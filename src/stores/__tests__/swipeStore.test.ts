@@ -44,6 +44,8 @@ beforeEach(() => {
     currentIndex: 0,
     absoluteIndex: 0,
     pendingTracksCount: 0,
+    freshTracksCount: 0,
+    nextPageOffset: 0,
     decideQueue: [],
     undoStack: [],
     activeDestinationIds: [],
@@ -310,6 +312,88 @@ describe('undo', () => {
     // TRACK_B's pending entry should remain
     expect(useSwipeStore.getState().decideQueue).toHaveLength(1);
     expect(useSwipeStore.getState().decideQueue[0].id).toBe('b');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// appendFreshTracks (lazy paging)
+// ---------------------------------------------------------------------------
+
+describe('appendFreshTracks', () => {
+  beforeEach(() => {
+    // Fresh session: one loaded page of 2 tracks, paging cursor at offset 2.
+    useSwipeStore
+      .getState()
+      .initSession('sess-1', 'src', [TRACK_A, TRACK_B], [], DEST_IDS, false, 2);
+  });
+
+  it('appends tracks to the end of the queue', () => {
+    useSwipeStore.getState().appendFreshTracks([TRACK_C], 4);
+    expect(useSwipeStore.getState().queue.map((t) => t.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('advances the paging cursor and grows the fresh band', () => {
+    useSwipeStore.getState().appendFreshTracks([TRACK_C], 4);
+    const state = useSwipeStore.getState();
+    expect(state.nextPageOffset).toBe(4);
+    expect(state.freshTracksCount).toBe(3);
+  });
+
+  it('does NOT move currentIndex or absoluteIndex (stable progress bar)', () => {
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
+    expect(useSwipeStore.getState().currentIndex).toBe(1);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(1);
+
+    useSwipeStore.getState().appendFreshTracks([TRACK_C], 4);
+
+    expect(useSwipeStore.getState().currentIndex).toBe(1);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(1);
+  });
+
+  it('advances absoluteIndex when a lazily-appended track is later swiped', () => {
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
+    useSwipeStore.getState().recordSwipe(TRACK_B, 'skipped', []);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(2);
+
+    // The appended track lands inside the fresh band, so swiping it advances the offset.
+    useSwipeStore.getState().appendFreshTracks([TRACK_C], 4);
+    useSwipeStore.getState().recordSwipe(TRACK_C, 'liked', DEST_IDS);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// absoluteIndex banding — second-pass readiness (Phase 2)
+// ---------------------------------------------------------------------------
+
+describe('absoluteIndex banding', () => {
+  const TRACK_D = makeTrack('d');
+
+  // Queue layout: 1 carried-over pending + 2 fresh + 1 second-pass re-show.
+  // The suffix track (position 3) is a re-show; swiping it must not change the offset.
+  function seedThreeBandQueue(): void {
+    useSwipeStore.setState({
+      queue: [TRACK_A, TRACK_B, TRACK_C, TRACK_D],
+      pendingTracksCount: 1,
+      freshTracksCount: 2,
+      currentIndex: 3,
+      absoluteIndex: 2,
+      undoStack: [],
+    });
+  }
+
+  it('does NOT advance absoluteIndex for a swipe past the fresh band', () => {
+    seedThreeBandQueue();
+    useSwipeStore.getState().recordSwipe(TRACK_D, 'liked', DEST_IDS);
+    expect(useSwipeStore.getState().absoluteIndex).toBe(2);
+    expect(useSwipeStore.getState().currentIndex).toBe(4);
+  });
+
+  it('does NOT reverse absoluteIndex when undoing a second-pass swipe', () => {
+    seedThreeBandQueue();
+    useSwipeStore.getState().recordSwipe(TRACK_D, 'liked', DEST_IDS);
+    useSwipeStore.getState().undo();
+    expect(useSwipeStore.getState().absoluteIndex).toBe(2);
   });
 });
 

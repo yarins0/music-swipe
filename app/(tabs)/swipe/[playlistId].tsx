@@ -18,6 +18,17 @@ import { usePrefsStore } from '@/stores/prefsStore';
 import { colors } from '@/theme';
 import { BACKEND_URL } from '@/config';
 
+// Spotify caps a single page at 100 items for playlists and 50 for the saved-tracks
+// ("Liked Songs") endpoint; SpotifyAdapter silently clamps anything larger. Paging by
+// the platform maximum keeps the offset we walk aligned with the raw item count the API reads.
+const PLAYLIST_PAGE_SIZE = 100;
+const LIKED_SONGS_PAGE_SIZE = 50;
+
+/** Page size for a given source — the saved-tracks endpoint caps lower than playlists. */
+function getPageSize(playlistId: string): number {
+  return playlistId === LIKED_SONGS_PLAYLIST_ID ? LIKED_SONGS_PAGE_SIZE : PLAYLIST_PAGE_SIZE;
+}
+
 type InitPhase =
   | 'hydrating'
   | 'flushing'
@@ -337,13 +348,20 @@ export default function SwipeScreen(): React.ReactElement {
         const isResuming =
           store.sessionId !== null && store.sourcePlaylistId === playlistId;
 
-        // Fetch all tracks — paginate if needed (simple single-page fetch for now)
-        const { tracks, total } = await adapter.getPlaylistTracks(playlistId, 0, 100);
+        // Lazy paging (approach 1): load only the first page now; the rest stream in via
+        // loadMoreTracks as the stack drains. On resume, fetch from the stored playlist
+        // offset so queue[0] is the resume track and currentIndex restarts at 0 — no
+        // slicing, which is what previously restarted resume at 0 once absoluteIndex
+        // passed the loaded slice. startOffset == absoluteIndex because both count
+        // source-playlist tracks (see docs/code-review H3 / approach 1).
+        const pageSize = getPageSize(playlistId);
+        const startOffset = isResuming ? storedAbsoluteIndex : 0;
+        const { tracks, total } = await adapter.getPlaylistTracks(playlistId, startOffset, pageSize);
         setTotalTracksState(total);
         useSwipeStore.getState().setTotalTracks(total);
 
-        const sliced = isResuming ? tracks.slice(storedAbsoluteIndex) : tracks;
-        const queueTracks = sliced.length > 0 ? sliced : tracks;
+        // Cursor for the next lazy page; handed to the store in phase 5's initSession call.
+        initialNextOffsetRef.current = startOffset + pageSize;
 
         // Fetch available playlists for the destination editor and subtitle
         const playlists = await adapter.getUserPlaylists();
@@ -367,10 +385,11 @@ export default function SwipeScreen(): React.ReactElement {
           useSessionStore.getState().setFilterMode(store.isFilterMode);
         }
 
-        // Stash full track list (unsliced) so phase 5 can enrich pending tracks
-        // whose position may be before currentIndex and therefore not in queueTracks.
+        // Stash the loaded page so phase 5 can enrich any pending (decide-later) stubs
+        // that happen to fall within it; pending tracks already carry backend metadata
+        // for the rest. The queue starts at the resume position, so no slicing is needed.
         fullTracksRef.current = tracks;
-        queueTracksRef.current = queueTracks;
+        queueTracksRef.current = tracks;
         setPhase('opening_session');
       } catch (err) {
         console.error('[SwipeScreen] fetchQueue failed:', err);
@@ -398,6 +417,11 @@ export default function SwipeScreen(): React.ReactElement {
   const queueTracksRef = useRef<Track[]>([]);
   // Full unsliced playlist — used to enrich pending tracks with complete metadata
   const fullTracksRef = useRef<Track[]>([]);
+  // Raw playlist offset for the next lazy page; set during the initial fetch (phase 4)
+  // and handed to the store when the session opens (phase 5).
+  const initialNextOffsetRef = useRef<number>(0);
+  // Guards against overlapping lazy page fetches while one is already in flight.
+  const isLoadingPageRef = useRef(false);
   // True total track count from the API (not the loaded slice size).
   // Must be state (not a ref) so changes propagate as a prop update to SwipeEngine.
   const [totalTracks, setTotalTracksState] = useState<number>(0);
@@ -450,6 +474,7 @@ export default function SwipeScreen(): React.ReactElement {
           enrichedPending,
           destinationPlaylistIds,
           isResuming,
+          initialNextOffsetRef.current,
         );
 
         setSessionId(sid);
@@ -572,6 +597,33 @@ export default function SwipeScreen(): React.ReactElement {
   );
 
   // -------------------------------------------------------------------------
+  // Lazy paging — fetch the next page when SwipeEngine signals the buffer is low.
+  // The in-flight guard stops overlapping triggers from double-fetching; the store's
+  // appendFreshTracks grows the queue without touching currentIndex/absoluteIndex, so
+  // the progress bar stays stable across the load. On failure the cursor is left
+  // unchanged, so the next buffer-low trigger retries the same page.
+  // -------------------------------------------------------------------------
+  const loadMoreTracks = useCallback(async (): Promise<void> => {
+    if (isLoadingPageRef.current) return;
+    const adapter = adapterRef.current;
+    if (!adapter) return;
+
+    const { nextPageOffset, totalTracks: storeTotal } = useSwipeStore.getState();
+    if (nextPageOffset >= storeTotal) return; // every page already loaded
+
+    isLoadingPageRef.current = true;
+    try {
+      const pageSize = getPageSize(playlistId);
+      const { tracks } = await adapter.getPlaylistTracks(playlistId, nextPageOffset, pageSize);
+      useSwipeStore.getState().appendFreshTracks(tracks, nextPageOffset + pageSize);
+    } catch (err) {
+      console.warn('[SwipeScreen] loadMoreTracks failed; will retry on next trigger', err);
+    } finally {
+      isLoadingPageRef.current = false;
+    }
+  }, [playlistId]);
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
   if (phase === 'error') {
@@ -614,6 +666,7 @@ export default function SwipeScreen(): React.ReactElement {
       availablePlaylists={availablePlaylists}
       totalTracks={totalTracks}
       onSessionEnd={handleSessionEnd}
+      onNeedMoreTracks={() => void loadMoreTracks()}
       onEntireSession={handleEntireSession}
     />
   );
