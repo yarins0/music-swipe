@@ -56,13 +56,35 @@ describe('PlaylistWriter – stateful action sequences', () => {
       expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(false);
     });
 
-    it('like → undo → re-like: track back in playlist (undo cleared writtenPairs)', async () => {
+    it('like → undo → re-like: track back in playlist (no cross-session dedup blocks the re-add)', async () => {
       const { adapter, writer } = setup();
       writer.write('t1', [DEST1]);
       await flush();
       writer.undoWrite('t1', [DEST1]);
       await flush();
       writer.write('t1', [DEST1]);
+      await flush();
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+    });
+
+    it('between sessions: a fresh writer re-adds the same pair after the playlist was edited', async () => {
+      // Reproduces the reported bug: the user likes a track, removes it from the
+      // destination playlist in Spotify between sessions, then re-likes it. With the
+      // old cross-session writtenPairs dedup the re-like was silently skipped; now it
+      // must land again. Shared storage simulates the persisted state across sessions.
+      const adapter = new MockAdapter();
+      const storage = buildMockStorage();
+
+      const session1 = new PlaylistWriter(adapter, storage);
+      session1.write('t1', [DEST1]);
+      await flush();
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+
+      // User removes the track from the playlist between sessions.
+      adapter.playlistContents.get(DEST1)!.delete('t1');
+
+      const session2 = new PlaylistWriter(adapter, storage);
+      session2.write('t1', [DEST1]);
       await flush();
       expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
     });
@@ -161,6 +183,27 @@ describe('PlaylistWriter – stateful action sequences', () => {
       await flush();
       await writer.undoWriteAsync('t1', [LIKED_SONGS_PLAYLIST_ID]);
       expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(false);
+    });
+
+    it('between sessions: a fresh writer re-saves to library after the user un-liked the track', async () => {
+      // The stale libraryWrittenIds skip persisted across sessions and would block
+      // the re-save even though the user removed the track from Liked Songs. The live
+      // isInLibrary check now decides every time, so the re-like must re-save.
+      const adapter = new MockAdapter();
+      const storage = buildMockStorage();
+
+      const session1 = new PlaylistWriter(adapter, storage);
+      session1.write('t1', [LIKED_SONGS_PLAYLIST_ID]);
+      await flush();
+      expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(true);
+
+      // User removes the track from Liked Songs between sessions.
+      adapter.fixtures.likedTrackIds.delete('t1');
+
+      const session2 = new PlaylistWriter(adapter, storage);
+      session2.write('t1', [LIKED_SONGS_PLAYLIST_ID]);
+      await flush();
+      expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(true);
     });
 
     it('pre-existing: write skips library, undo is a no-op', async () => {

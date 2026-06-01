@@ -25,14 +25,11 @@ export interface WriteErrorContext {
 }
 
 const QUEUE_KEY = '@music-swipe/playlist-write-queue';
-const WRITTEN_PAIRS_KEY = '@music-swipe/written-pairs';
 const LIBRARY_WRITTEN_IDS_KEY = '@music-swipe/library-written-ids';
 
 export class PlaylistWriter {
   private readonly adapter: MusicPlatformAdapter;
   private readonly storage: StorageInterface;
-  private readonly writtenPairs = new Set<string>();
-  private writtenPairsLoaded = false;
   private readonly libraryWrittenIds = new Set<string>();
   private libraryWrittenIdsLoaded = false;
   private readonly onLibraryWritten?: (trackId: string) => void;
@@ -61,32 +58,6 @@ export class PlaylistWriter {
       error,
     );
     this.onWriteError?.(error, context);
-  }
-
-  private pairKey(trackId: string, playlistId: string): string {
-    return `${trackId}::${playlistId}`;
-  }
-
-  private async ensureWrittenPairsLoaded(): Promise<void> {
-    if (this.writtenPairsLoaded) return;
-    try {
-      const raw = await this.storage.getItem(WRITTEN_PAIRS_KEY);
-      if (raw) {
-        const pairs = JSON.parse(raw) as string[];
-        for (const pair of pairs) this.writtenPairs.add(pair);
-      }
-    } catch {
-      // start fresh on parse error
-    }
-    this.writtenPairsLoaded = true;
-  }
-
-  private async persistWrittenPairs(): Promise<void> {
-    try {
-      await this.storage.setItem(WRITTEN_PAIRS_KEY, JSON.stringify([...this.writtenPairs]));
-    } catch (err) {
-      console.warn('[PlaylistWriter] persistWrittenPairs failed:', err);
-    }
   }
 
   private async ensureLibraryWrittenIdsLoaded(): Promise<void> {
@@ -178,20 +149,19 @@ export class PlaylistWriter {
   // Fires addToPlaylist for each destination in parallel — fire-and-forget (no await at call site).
   // Persists each entry to AsyncStorage before the network call so that a crash
   // between write() and the API response can be recovered via drainStoredQueue.
-  // Skips destinations where the track was already successfully written (cross-session deduplication).
+  // No cross-session write deduplication: a like always re-attempts the add, so a
+  // destination playlist the user edited between sessions is corrected. Regular
+  // playlists may accumulate duplicates (Spotify permits them); the optional
+  // post-session dedup scan removes any extras. Liked Songs cannot duplicate
+  // (the library is a set) and is additionally guarded by the live isInLibrary check.
   write(trackId: string, destinationIds: string[]): void {
     const writes = destinationIds.map(async (playlistId) => {
-      await this.ensureWrittenPairsLoaded();
-
-      if (this.writtenPairs.has(this.pairKey(trackId, playlistId))) {
-        return;
-      }
-
       // Liked Songs requires a pre-existing check: only record as "ours to remove"
-      // if the track was not already in the library before this swipe.
+      // if the track was not already in the library before this swipe. The live
+      // isInLibrary check runs on every like (no stale skip), so a track the user
+      // removed from their library between sessions is re-saved.
       if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
         await this.ensureLibraryWrittenIdsLoaded();
-        if (this.libraryWrittenIds.has(trackId)) return; // already added by us this session
 
         // Conservative default: if the check throws, assume pre-existing so undo
         // never accidentally removes a track the user already had liked.
@@ -230,10 +200,8 @@ export class PlaylistWriter {
       }, { trackId, playlistId });
 
       if (succeeded) {
-        // 3a. Success — remove from durable queue and record so future swipes skip this pair.
+        // 3a. Success — remove from the durable queue.
         await this.removeFromQueue(trackId, playlistId);
-        this.writtenPairs.add(this.pairKey(trackId, playlistId));
-        void this.persistWrittenPairs();
       } else {
         // 3b. All retries exhausted or non-retryable error — leave entry in queue for
         //     next-launch recovery via drainStoredQueue.
@@ -268,10 +236,7 @@ export class PlaylistWriter {
         continue;
       }
 
-      this.adapter.removeFromPlaylist(playlistId, trackId).then(() => {
-        this.writtenPairs.delete(this.pairKey(trackId, playlistId));
-        void this.persistWrittenPairs();
-      }).catch((err: unknown) => {
+      this.adapter.removeFromPlaylist(playlistId, trackId).catch((err: unknown) => {
         console.warn(`[PlaylistWriter] undoWrite failed for trackId=${trackId} playlistId=${playlistId}:`, err);
       });
     }
@@ -293,10 +258,7 @@ export class PlaylistWriter {
         continue;
       }
 
-      await this.ensureWrittenPairsLoaded();
       await this.adapter.removeFromPlaylist(playlistId, trackId);
-      this.writtenPairs.delete(this.pairKey(trackId, playlistId));
-      void this.persistWrittenPairs();
     }
   }
 
@@ -314,9 +276,8 @@ export class PlaylistWriter {
     this.write(trackId, destinationIds);
     void (async () => {
       await this.ensureLibraryWrittenIdsLoaded();
-      if (this.libraryWrittenIds.has(trackId)) {
-        return; // Already added by us — skip (deduplication, same as writtenPairs for playlists)
-      }
+      // No stale skip: the live isInLibrary check below decides every time, so a
+      // track removed from the library between sessions is re-saved.
       let preExisting = true;
       try {
         preExisting = await this.adapter.isInLibrary(trackId);

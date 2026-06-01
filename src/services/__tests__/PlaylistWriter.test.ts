@@ -45,6 +45,7 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     removeFromLibrary: jest.fn().mockResolvedValue(undefined),
     isInLibrary: jest.fn().mockResolvedValue(false),
     createPlaylist: jest.fn().mockResolvedValue('new-playlist-id'),
+    removeDuplicatesFromPlaylist: jest.fn().mockResolvedValue(0),
     openPlatformDeepLink: jest.fn().mockResolvedValue(undefined),
     openPlaylistInApp: jest.fn().mockResolvedValue(undefined),
   };
@@ -147,25 +148,27 @@ describe('PlaylistWriter', () => {
       expect(entry).toBeUndefined();
     });
 
-    it('skips addToPlaylist for a (trackId, playlistId) pair already in written-pairs', async () => {
+    it('re-attempts addToPlaylist for the same pair on a repeat write (no cross-session dedup)', async () => {
       const adapter = buildMockAdapter();
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
-      // First write — should go through
+      // First write — goes through
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
       expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
 
       adapter.addToPlaylist.mockClear();
 
-      // Second write of the same pair — should be skipped
+      // Second write of the same pair — must re-attempt. The cross-session dedup
+      // skip was removed so a destination edited between sessions is corrected;
+      // any resulting duplicates are cleaned by the optional post-session scan.
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
-      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
     });
 
-    it('re-adds after undoWrite clears the pair from written-pairs', async () => {
+    it('re-attempts addToPlaylist on a write that follows an undoWrite', async () => {
       const adapter = buildMockAdapter();
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
@@ -179,7 +182,7 @@ describe('PlaylistWriter', () => {
 
       adapter.addToPlaylist.mockClear();
 
-      // After undo the pair is cleared — write should go through again
+      // Write again after undo — goes through.
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
       expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
@@ -298,8 +301,11 @@ describe('PlaylistWriter', () => {
       expect(adapter.saveToLibrary).toHaveBeenCalledWith('track-1');
     });
 
-    it('skips saveToLibrary when track was already super-liked by us', async () => {
-      const adapter = buildMockAdapter();
+    it('skips saveToLibrary on a repeat super-like once the track is in the library', async () => {
+      // isInLibrary reflects state: false before the first save, true afterwards.
+      const adapter = buildMockAdapter({
+        isInLibrary: jest.fn().mockResolvedValueOnce(false).mockResolvedValue(true),
+      });
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
@@ -308,13 +314,14 @@ describe('PlaylistWriter', () => {
       expect(adapter.saveToLibrary).toHaveBeenCalledTimes(1);
 
       adapter.saveToLibrary.mockClear();
-      adapter.isInLibrary.mockClear();
 
-      // Second super-like — deduplication should skip saveToLibrary
+      // Second super-like — the live isInLibrary check now reports the track is
+      // already saved, so saveToLibrary is skipped. No stale-skip shortcut: the
+      // check runs every time, so a track un-liked between sessions would re-save.
       writer.superLike('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
+      expect(adapter.isInLibrary).toHaveBeenCalledTimes(2);
       expect(adapter.saveToLibrary).not.toHaveBeenCalled();
-      expect(adapter.isInLibrary).not.toHaveBeenCalled();
     });
 
     it('skips saveToLibrary entirely when track is already in library', async () => {
@@ -497,24 +504,28 @@ describe('PlaylistWriter', () => {
       expect(adapter.addToPlaylist).not.toHaveBeenCalled();
     });
 
-    it('skips addToPlaylist when track was already added by us this session', async () => {
-      const adapter = buildMockAdapter({ isInLibrary: jest.fn().mockResolvedValue(false) });
+    it('skips addToPlaylist on a repeat write once the track is in the library', async () => {
+      // isInLibrary reflects state: false before the first add, true afterwards.
+      const adapter = buildMockAdapter({
+        isInLibrary: jest.fn().mockResolvedValueOnce(false).mockResolvedValue(true),
+      });
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
-      // First write records in libraryWrittenIds
+      // First write — track not in library yet, so it is added.
       writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
       await jest.runAllTimersAsync();
       expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
 
       adapter.addToPlaylist.mockClear();
-      adapter.isInLibrary.mockClear();
 
-      // Second write is blocked by in-session deduplication
+      // Second write — the live isInLibrary check now reports the track is present,
+      // so the add is skipped (no duplicate). The check runs every time, so a track
+      // removed from the library between sessions would be re-added.
       writer.write('track-1', [LIKED_SONGS_PLAYLIST_ID]);
       await jest.runAllTimersAsync();
+      expect(adapter.isInLibrary).toHaveBeenCalledTimes(2);
       expect(adapter.addToPlaylist).not.toHaveBeenCalled();
-      expect(adapter.isInLibrary).not.toHaveBeenCalled();
     });
 
     it('fires onLibraryWritten callback with the trackId after a successful add', async () => {
