@@ -88,6 +88,13 @@ export interface MusicPlatformAdapter {
   isInLibrary(trackId: string): Promise<boolean>;
   createPlaylist(name: string): Promise<string>;
 
+  /**
+   * Removes duplicate entries from a playlist, keeping the first occurrence of each
+   * track. Returns the number of duplicate entries removed. A no-op returning 0 for
+   * the Liked Songs library, which is a set and cannot contain duplicates.
+   */
+  removeDuplicatesFromPlaylist(playlistId: string): Promise<number>;
+
   openPlatformDeepLink(uri: string): Promise<void>;
   openPlaylistInApp(playlistId: string): Promise<void>;
 }

@@ -88,10 +88,12 @@ export default function SettingsScreen(): React.ReactElement {
   const autoPlayPreviews = usePrefsStore((s) => s.autoPlayPreviews);
   const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
   const weeklyReminders = usePrefsStore((s) => s.weeklyReminders);
+  const autoRemoveDuplicates = usePrefsStore((s) => s.autoRemoveDuplicates);
   const setShowAlbumArt = usePrefsStore((s) => s.setShowAlbumArt);
   const setAutoPlayPreviews = usePrefsStore((s) => s.setAutoPlayPreviews);
   const setHapticFeedback = usePrefsStore((s) => s.setHapticFeedback);
   const setWeeklyReminders = usePrefsStore((s) => s.setWeeklyReminders);
+  const setAutoRemoveDuplicates = usePrefsStore((s) => s.setAutoRemoveDuplicates);
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
@@ -179,6 +181,13 @@ export default function SettingsScreen(): React.ReactElement {
             label="Haptic Feedback on Swipe"
             value={hapticFeedback}
             onValueChange={setHapticFeedback}
+          />
+          <View style={styles.divider} />
+          <ToggleRow
+            label="Auto-remove Duplicates"
+            subtitle="After each session, clean duplicate tracks from your destination playlists"
+            value={autoRemoveDuplicates}
+            onValueChange={setAutoRemoveDuplicates}
           />
         </Section>
 

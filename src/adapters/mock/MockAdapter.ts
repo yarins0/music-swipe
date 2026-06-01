@@ -83,6 +83,7 @@ export interface MockCalls {
   removeFromLibrary: string[];
   isInLibrary: string[];
   createPlaylist: string[];
+  removeDuplicatesFromPlaylist: string[];
   openPlatformDeepLink: string[];
   openPlaylistInApp: string[];
 }
@@ -99,6 +100,7 @@ export class MockAdapter implements MusicPlatformAdapter {
     removeFromLibrary: [],
     isInLibrary: [],
     createPlaylist: [],
+    removeDuplicatesFromPlaylist: [],
     openPlatformDeepLink: [],
     openPlaylistInApp: [],
   };
@@ -263,6 +265,14 @@ export class MockAdapter implements MusicPlatformAdapter {
     });
     this.calls.createPlaylist.push(name);
     return id;
+  }
+
+  async removeDuplicatesFromPlaylist(playlistId: string): Promise<number> {
+    this.calls.removeDuplicatesFromPlaylist.push(playlistId);
+    // playlistContents is a Set, so a mock playlist can never hold duplicate tracks.
+    // There is nothing to remove — mirrors the real adapter's contract (returns the
+    // number of duplicates removed) with a count of 0.
+    return 0;
   }
 
   async openPlatformDeepLink(uri: string): Promise<void> {

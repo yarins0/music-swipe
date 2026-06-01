@@ -229,6 +229,115 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(options.body).toBeUndefined();
   });
 
+  // --- removeDuplicatesFromPlaylist ---
+
+  it('removeDuplicatesFromPlaylist() removes every copy of a duplicated track and re-adds exactly one', async () => {
+    // t1 appears twice, t2 once. Spotify's DELETE removes all copies by URI, so the
+    // adapter removes all of t1 then adds one back.
+    mockSpotifyFetch
+      .mockResolvedValueOnce({
+        items: [makeTrackItem('t1'), makeTrackItem('t2'), makeTrackItem('t1')],
+        next: null,
+        total: 3,
+      })
+      .mockResolvedValueOnce({}) // DELETE all copies of t1
+      .mockResolvedValueOnce({}); // POST one t1 back
+
+    const removed = await adapter.removeDuplicatesFromPlaylist('pl-1');
+
+    expect(removed).toBe(1);
+    const deleteCall = mockSpotifyFetch.mock.calls.find((c) => c[1]?.method === 'DELETE');
+    const addCall = mockSpotifyFetch.mock.calls.find((c) => c[1]?.method === 'POST');
+    expect(deleteCall![0]).toBe('/playlists/pl-1/items');
+    expect(JSON.parse(deleteCall![1].body as string)).toEqual({ items: [{ uri: 'spotify:track:t1' }] });
+    expect(addCall![0]).toBe('/playlists/pl-1/items');
+    expect(JSON.parse(addCall![1].body as string)).toEqual({ uris: ['spotify:track:t1'] });
+    // t2 was unique — never touched.
+    const bodies = mockSpotifyFetch.mock.calls.map((c) => String(c[1]?.body ?? ''));
+    expect(bodies.some((b) => b.includes('t2'))).toBe(false);
+  });
+
+  it('removeDuplicatesFromPlaylist() uses the stored URI for a relinked track', async () => {
+    // A relinked track: its playable `uri` differs from the URI stored in the playlist,
+    // which lives in `linked_from`. Both the remove and the re-add must use the stored one.
+    const relinked = (id: string, storedUri: string) => ({
+      track: {
+        id,
+        uri: `spotify:track:${id}-playable`,
+        name: `Track ${id}`,
+        type: 'track',
+        artists: [{ id: 'a1', name: 'Artist One' }],
+        album: { name: 'Album', images: [] },
+        duration_ms: 180000,
+        preview_url: null,
+        linked_from: { uri: storedUri },
+      },
+    });
+
+    mockSpotifyFetch
+      .mockResolvedValueOnce({
+        items: [relinked('t1', 'spotify:track:STORED'), makeTrackItem('t2'), relinked('t1', 'spotify:track:STORED')],
+        next: null,
+        total: 3,
+      })
+      .mockResolvedValueOnce({}) // DELETE
+      .mockResolvedValueOnce({}); // POST
+
+    await adapter.removeDuplicatesFromPlaylist('pl-1');
+
+    const deleteCall = mockSpotifyFetch.mock.calls.find((c) => c[1]?.method === 'DELETE');
+    const addCall = mockSpotifyFetch.mock.calls.find((c) => c[1]?.method === 'POST');
+    expect(JSON.parse(deleteCall![1].body as string)).toEqual({ items: [{ uri: 'spotify:track:STORED' }] });
+    expect(JSON.parse(addCall![1].body as string)).toEqual({ uris: ['spotify:track:STORED'] });
+  });
+
+  it('removeDuplicatesFromPlaylist() skips local files — never removes them', async () => {
+    const localItem = {
+      is_local: true,
+      track: {
+        id: 'loc',
+        uri: 'spotify:local:Artist:Album:Title:180',
+        name: 'Local Track',
+        type: 'track',
+        artists: [{ id: 'a1', name: 'Artist One' }],
+        album: { name: 'Album', images: [] },
+        duration_ms: 180000,
+        preview_url: null,
+      },
+    };
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [localItem, makeTrackItem('t2'), localItem],
+      next: null,
+      total: 3,
+    });
+
+    const removed = await adapter.removeDuplicatesFromPlaylist('pl-1');
+
+    expect(removed).toBe(0);
+    // Scan only — no destructive DELETE for the duplicated local file.
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeDuplicatesFromPlaylist() makes no DELETE call when there are no duplicates', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [makeTrackItem('t1'), makeTrackItem('t2')],
+      next: null,
+      total: 2,
+    });
+
+    const removed = await adapter.removeDuplicatesFromPlaylist('pl-1');
+
+    expect(removed).toBe(0);
+    // Only the single read call — no destructive DELETE.
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID) returns 0 without any API call', async () => {
+    const removed = await adapter.removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID);
+    expect(removed).toBe(0);
+    expect(mockSpotifyFetch).not.toHaveBeenCalled();
+  });
+
   // --- createPlaylist ---
 
   it('createPlaylist() calls POST /me/playlists and returns new playlist id', async () => {

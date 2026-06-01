@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 import { useSwipeStore } from '@/stores/swipeStore';
 import { useSessionStore } from '@/stores/sessionStore';
+import { usePrefsStore } from '@/stores/prefsStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
@@ -116,6 +117,7 @@ export default function SessionEndScreen(): React.ReactElement {
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const isFilterMode = useSessionStore((s) => s.isFilterMode);
   const { destinationPlaylistIds } = useSessionStore();
+  const autoRemoveDuplicates = usePrefsStore((s) => s.autoRemoveDuplicates);
 
   const pendingSyncSwipes = useSwipeStore((s) => s.pendingSyncSwipes);
   const clearSession = useSwipeStore((s) => s.clearSession);
@@ -125,6 +127,17 @@ export default function SessionEndScreen(): React.ReactElement {
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);
+
+  // Post-session duplicate cleanup. Auto-runs once on mount when the pref is on;
+  // otherwise the user triggers it with the "Remove Duplicates" button. Liked Songs
+  // is excluded — the library is a set and cannot duplicate.
+  const [dedupPhase, setDedupPhase] = useState<'idle' | 'running' | 'done'>('idle');
+  const [dedupRemoved, setDedupRemoved] = useState(0);
+  const dedupStartedRef = useRef(false);
+  const regularDestinationIds = destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
+  // Dedup only makes sense in normal mode with real destination playlists. In filter
+  // mode the source IS the playlist and there are no separate destinations to clean.
+  const canDedup = !isFilterMode && regularDestinationIds.length > 0;
 
   const likedTracks = pendingSyncSwipes.filter((r) => r.status === 'liked' || r.status === 'super_liked');
 
@@ -155,6 +168,33 @@ export default function SessionEndScreen(): React.ReactElement {
   }, [sessionId, supabaseToken]);
 
   useEffect(() => { return () => { clearSession(); }; }, [clearSession]);
+
+  // Scan each destination playlist and remove duplicate tracks. Guarded by a ref so a
+  // re-render (or the auto-run effect plus a manual tap) can never start it twice.
+  const runDedup = useCallback(async (): Promise<void> => {
+    if (dedupStartedRef.current) return;
+    dedupStartedRef.current = true;
+    setDedupPhase('running');
+    let removed = 0;
+    try {
+      const adapter = getAdapter();
+      for (const playlistId of regularDestinationIds) {
+        removed += await adapter.removeDuplicatesFromPlaylist(playlistId);
+      }
+    } catch (err) {
+      console.warn('[SessionEnd] removeDuplicates failed:', err);
+    } finally {
+      setDedupRemoved(removed);
+      setDedupPhase('done');
+    }
+  }, [regularDestinationIds]);
+
+  // Auto-run once on mount when the setting is on. When off, the user starts it
+  // manually via the button rendered below.
+  useEffect(() => {
+    if (autoRemoveDuplicates && canDedup) void runDedup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRemoveTrack = useCallback(async (trackId: string): Promise<void> => {
     setRemovingIds((prev) => new Set([...prev, trackId]));
@@ -270,6 +310,28 @@ export default function SessionEndScreen(): React.ReactElement {
           </View>
         )}
 
+        {/* Duplicate cleanup — auto-runs when the setting is on, manual button when off */}
+        {canDedup && (
+          <View style={styles.dedupSection}>
+            {dedupPhase === 'running' ? (
+              <View style={styles.dedupStatusRow}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.dedupStatusText}>Tidying playlists…</Text>
+              </View>
+            ) : dedupPhase === 'done' ? (
+              <Text style={styles.dedupStatusText}>
+                {dedupRemoved > 0
+                  ? `Removed ${dedupRemoved} duplicate${dedupRemoved === 1 ? '' : 's'} from your playlists`
+                  : 'No duplicates found in your playlists'}
+              </Text>
+            ) : (
+              <Pressable style={styles.dedupButton} onPress={() => void runDedup()}>
+                <Text style={styles.dedupButtonText}>Remove Duplicates</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         {/* CTAs */}
         <View style={styles.ctas}>
           {/* Save as Playlist is only meaningful in normal mode — in filter mode the source IS the playlist. */}
@@ -334,6 +396,14 @@ const styles = StyleSheet.create({
   statsRow: { gap: spacing.sm, marginBottom: spacing.xl },
   tracksSection: { marginBottom: spacing.xl },
   tracksSectionTitle: { fontSize: 16, fontFamily: 'Outfit_700Bold', color: colors.onSurface, marginBottom: spacing.md },
+  dedupSection: { marginBottom: spacing.xl, alignItems: 'center' },
+  dedupStatusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  dedupStatusText: { fontSize: 13, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, textAlign: 'center' },
+  dedupButton: {
+    paddingVertical: 12, paddingHorizontal: spacing.lg, borderRadius: radius.full,
+    borderWidth: 1.5, borderColor: colors.outlineVariant, alignItems: 'center',
+  },
+  dedupButtonText: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurface },
   ctas: { gap: spacing.sm },
   ctaPrimary: {
     backgroundColor: colors.primary, paddingVertical: 16,

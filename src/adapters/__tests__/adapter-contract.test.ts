@@ -246,6 +246,26 @@ describe('adapter contract — MockAdapter', () => {
     });
   });
 
+  describe('deduplication', () => {
+    it('removeDuplicatesFromPlaylist() returns a number and records the call', async () => {
+      const adapter = new MockAdapter();
+      const removed = await adapter.removeDuplicatesFromPlaylist('mock-playlist-1');
+      expect(typeof removed).toBe('number');
+      expect(adapter.calls.removeDuplicatesFromPlaylist).toContain('mock-playlist-1');
+    });
+
+    it('removeDuplicatesFromPlaylist() returns 0 for a playlist with no duplicates', async () => {
+      const adapter = new MockAdapter();
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
+      expect(await adapter.removeDuplicatesFromPlaylist('mock-playlist-1')).toBe(0);
+    });
+
+    it('removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID) is a no-op returning 0', async () => {
+      const adapter = new MockAdapter();
+      expect(await adapter.removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID)).toBe(0);
+    });
+  });
+
   describe('deep link', () => {
     it('openPlatformDeepLink() resolves and records the uri', async () => {
       const adapter = new MockAdapter();

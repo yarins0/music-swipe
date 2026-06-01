@@ -25,6 +25,9 @@ interface SpotifyTrackObject {
   album: SpotifyAlbum | null;
   duration_ms: number;
   preview_url: string | null;
+  // Present for relinked tracks: holds the URI as originally stored in the playlist
+  // (the playable `uri` above can differ by market). Removal must target this one.
+  linked_from?: { uri: string } | null;
 }
 
 export interface SpotifyTrackItem {

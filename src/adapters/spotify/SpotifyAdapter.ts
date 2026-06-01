@@ -354,6 +354,73 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     return data.id;
   }
 
+  /**
+   * Removes duplicate tracks from a playlist, keeping the first occurrence of each.
+   * Returns the number of duplicate entries removed.
+   *
+   * Liked Songs is a set and can never duplicate, so it is a no-op there.
+   *
+   * Spotify's playlist-items DELETE removes EVERY copy of a URI and does not reliably
+   * honour a `positions` field, so this does not attempt position-surgical removal.
+   * Instead, for each duplicated track it removes all copies and then adds exactly one
+   * back — deterministic regardless of how many copies exist or how Spotify treats
+   * positions. The restored copy lands at the end of the playlist. Local files are
+   * skipped entirely: the API cannot reliably re-add them, so removing their duplicates
+   * would risk losing the track. Done per-track so a failed re-add can lose at most one
+   * track rather than a whole batch.
+   */
+  async removeDuplicatesFromPlaylist(playlistId: string): Promise<number> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) return 0;
+
+    // 1. Scan once, counting occurrences per stored URI.
+    const PAGE = 100;
+    const countByUri = new Map<string, number>();
+    let offset = 0;
+    let total = 0;
+    do {
+      const page = await spotifyFetch<SpotifyPaginatedResponse<SpotifyTrackItem>>(
+        `/playlists/${playlistId}/items?offset=${offset}&limit=${PAGE}`,
+        {},
+        this.auth,
+      );
+      total = page.total ?? 0;
+      const items = page.items ?? [];
+      for (const item of items) {
+        const track = item?.item ?? item?.track;
+        // Skip non-tracks and local files. linked_from.uri is the URI as stored in the
+        // playlist for relinked tracks (its playable `uri` can differ by market).
+        if (!track || track.type !== 'track' || !track.uri || item?.is_local) continue;
+        const uri = track.linked_from?.uri ?? track.uri;
+        countByUri.set(uri, (countByUri.get(uri) ?? 0) + 1);
+      }
+      if (items.length === 0) break; // guard against an inflated total
+      offset += PAGE;
+    } while (offset < total);
+
+    // 2. For each duplicated URI: remove every copy, then add exactly one back.
+    let removed = 0;
+    for (const [uri, count] of countByUri) {
+      if (count <= 1) continue;
+      try {
+        await spotifyFetch(
+          `/playlists/${playlistId}/items`,
+          { method: 'DELETE', body: JSON.stringify({ items: [{ uri }] }) },
+          this.auth,
+        );
+        await spotifyFetch(
+          `/playlists/${playlistId}/items`,
+          { method: 'POST', body: JSON.stringify({ uris: [uri] }) },
+          this.auth,
+        );
+        removed += count - 1;
+      } catch (err) {
+        console.warn(`[SpotifyAdapter] removeDuplicatesFromPlaylist failed for ${uri}:`, err);
+      }
+    }
+
+    return removed;
+  }
+
   async openPlatformDeepLink(uri: string): Promise<void> {
     console.log('[SpotifyAdapter] NO_ACTIVE_DEVICE — triggering deep link:', uri);
     await openPlatformDeepLink(uri);
