@@ -26,6 +26,8 @@ import type { MusicPlatformAdapter, Playlist } from '@/adapters/interface';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { useSessionStore } from '@/stores/sessionStore';
 import { usePrefsStore } from '@/stores/prefsStore';
+import { useUiStore } from '@/stores/uiStore';
+import { useRouter } from 'expo-router';
 import type { SwipeDirection } from '@/swipe/useSwipeGesture';
 
 // DEBUG: visual aids for the swipe-card flicker investigation.
@@ -109,6 +111,16 @@ export function SwipeEngine({
   // User preferences that affect swipe-card rendering and gesture behaviour
   const showAlbumArt = usePrefsStore((s) => s.showAlbumArt);
   const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
+
+  const router = useRouter();
+
+  // The "No full preview" badge means there is no active Spotify device, so playback fell
+  // back to a 30s preview. Tapping it routes to the Auto-play Previews setting (and its new
+  // "Sync Spotify" button) and asks that row to flash so the fix is obvious.
+  const handleNoPreviewPress = useCallback((): void => {
+    useUiStore.getState().requestAutoPlayHighlight();
+    router.navigate('/(tabs)/settings');
+  }, [router]);
 
   // Build a human-readable subtitle: "Source Name  →  Dest1, Dest2"
   const headerSubtitle = React.useMemo(() => {
@@ -457,6 +469,7 @@ export function SwipeEngine({
           onSeekForward={handleSeekForward}
           isSeekEnabled={isSeekEnabled}
           showAlbumArt={showAlbumArt}
+          onNoPreviewPress={handleNoPreviewPress}
           debug={DEBUG_FLICKER}
         />
       </View>

@@ -15,6 +15,8 @@ interface SwipeFrontCardProps {
   onSeekForward: () => void;
   isSeekEnabled: boolean;
   showAlbumArt: boolean;
+  /** Tapped when the "No full preview" badge is pressed — routes to the playback setting. */
+  onNoPreviewPress?: () => void;
   /** Optional debug border + label for the swipe-flicker investigation. */
   debug?: boolean;
 }
@@ -42,6 +44,7 @@ export function SwipeFrontCard({
   onSeekForward,
   isSeekEnabled,
   showAlbumArt,
+  onNoPreviewPress,
   debug = false,
 }: SwipeFrontCardProps): React.ReactElement {
   const { gesture, animatedStyle, resetCard } = useSwipeGesture({ onSwipe, onHaptic });
@@ -66,6 +69,7 @@ export function SwipeFrontCard({
           onSeekForward={onSeekForward}
           isSeekEnabled={isSeekEnabled}
           showAlbumArt={showAlbumArt}
+          onNoPreviewPress={onNoPreviewPress}
         />
         {debug && (
           <View style={styles.debugLabel} pointerEvents="none">

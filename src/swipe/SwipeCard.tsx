@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Track } from '@/adapters/interface';
@@ -13,6 +13,12 @@ interface SwipeCardProps {
   isSeekEnabled: boolean;
   /** When false, replaces the album art image with a solid background and a musical-note icon. */
   showAlbumArt?: boolean;
+  /**
+   * When provided, the "No full preview" badge becomes tappable and calls this — used by
+   * the front card to send the user to the Auto-play Previews setting. Omitted on the back
+   * card so it stays non-interactive.
+   */
+  onNoPreviewPress?: () => void;
 }
 
 export function SwipeCard({
@@ -21,6 +27,7 @@ export function SwipeCard({
   onSeekForward,
   isSeekEnabled,
   showAlbumArt = true,
+  onNoPreviewPress,
 }: SwipeCardProps): React.ReactElement {
   return (
     <View style={styles.card}>
@@ -55,9 +62,23 @@ export function SwipeCard({
       </View>
 
       {!isSeekEnabled && (
-        <View style={styles.noPreviewBadge} pointerEvents="none">
-          <Text style={styles.noPreviewText}>No full preview</Text>
-        </View>
+        onNoPreviewPress ? (
+          // Tappable on the front card: routes to the Auto-play Previews setting. A corner
+          // tap won't trigger the swipe pan (which only activates on movement).
+          <Pressable
+            style={styles.noPreviewBadge}
+            onPress={onNoPreviewPress}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="No full preview — open playback settings"
+          >
+            <Text style={styles.noPreviewText}>No full preview</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.noPreviewBadge} pointerEvents="none">
+            <Text style={styles.noPreviewText}>No full preview</Text>
+          </View>
+        )
       )}
     </View>
   );
