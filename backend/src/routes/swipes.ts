@@ -6,6 +6,107 @@ import { supabase } from '../db/client';
 const router = Router();
 
 const VALID_STATUSES = new Set(['liked', 'super_liked', 'skipped', 'pending']);
+const DECIDED_STATUSES = new Set(['liked', 'super_liked', 'skipped']);
+
+interface ReconcileResult {
+  ok: boolean;
+  status?: number;
+  error?: string;
+}
+
+/**
+ * Resolve dangling 'pending' rows after a decision.
+ *
+ * A track deferred (status='pending') in one session and later decided (liked/super_liked/
+ * skipped) in another session keeps its original session-scoped pending row, because POST
+ * upserts by (sessionId, trackId). That stale row would wrongly resurface in a later
+ * session's decide-later fetch. This deletes any pending row for the same (user, track)
+ * that belongs to another session of the SAME source playlist — pending rows for other
+ * playlists are left untouched.
+ *
+ * @param userId authenticated user id
+ * @param swipes the batch being written
+ * @param sessionPlaylistMap sessionId → source_playlist_id for the batch's sessions
+ */
+async function reconcilePendingDecisions(
+  userId: string,
+  swipes: SwipeInput[],
+  sessionPlaylistMap: Map<string, string>,
+): Promise<ReconcileResult> {
+  // Group decided track ids by the playlist they were decided in.
+  const decidedTracksByPlaylist = new Map<string, Set<string>>();
+  for (const swipe of swipes) {
+    if (!DECIDED_STATUSES.has(swipe.status as string)) continue;
+    const playlistId = sessionPlaylistMap.get(swipe.sessionId as string);
+    if (!playlistId) continue;
+    const tracks = decidedTracksByPlaylist.get(playlistId) ?? new Set<string>();
+    tracks.add(swipe.spotifyTrackId as string);
+    decidedTracksByPlaylist.set(playlistId, tracks);
+  }
+
+  if (decidedTracksByPlaylist.size === 0) return { ok: true };
+
+  const playlistIds = [...decidedTracksByPlaylist.keys()];
+  const decidedTrackIds = [
+    ...new Set([...decidedTracksByPlaylist.values()].flatMap((set) => [...set])),
+  ];
+
+  // All of this user's sessions for the affected playlists — used to scope the cleanup.
+  const sessionsResult = await supabase
+    .from('sessions')
+    .select('id, source_playlist_id')
+    .eq('user_id', userId)
+    .in('source_playlist_id', playlistIds);
+
+  if (sessionsResult.error) {
+    console.error('POST /swipes reconciliation session lookup error:', sessionsResult.error);
+    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
+  }
+
+  const sessionToPlaylist = new Map<string, string>(
+    ((sessionsResult.data ?? []) as Array<{ id: string; source_playlist_id: string }>).map((s) => [
+      s.id,
+      s.source_playlist_id,
+    ]),
+  );
+  if (sessionToPlaylist.size === 0) return { ok: true };
+
+  // Find dangling pending rows for the decided tracks, then keep only those whose session
+  // belongs to a playlist where that specific track was decided.
+  const pendingResult = await supabase
+    .from('swipes')
+    .select('id, session_id, spotify_track_id')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .in('spotify_track_id', decidedTrackIds);
+
+  if (pendingResult.error) {
+    console.error('POST /swipes reconciliation pending lookup error:', pendingResult.error);
+    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
+  }
+
+  const danglingIds = ((pendingResult.data ?? []) as Array<{
+    id: string;
+    session_id: string;
+    spotify_track_id: string;
+  }>)
+    .filter((row) => {
+      const playlistId = sessionToPlaylist.get(row.session_id);
+      return playlistId !== undefined && decidedTracksByPlaylist.get(playlistId)?.has(row.spotify_track_id);
+    })
+    .map((row) => row.id);
+
+  if (danglingIds.length === 0) return { ok: true };
+
+  const deleteResult = await supabase.from('swipes').delete().in('id', danglingIds);
+
+  if (deleteResult.error) {
+    console.error('POST /swipes reconciliation delete error:', deleteResult.error);
+    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
+  }
+
+  return { ok: true };
+}
 
 interface SwipeInput {
   sessionId?: unknown;
@@ -71,10 +172,12 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
   // Collect unique session IDs referenced in the batch
   const sessionIds = [...new Set((swipes as SwipeInput[]).map((s) => s.sessionId as string))];
 
-  // Verify that all referenced sessions belong to the authenticated user
+  // Verify that all referenced sessions belong to the authenticated user.
+  // source_playlist_id is fetched alongside ownership so the post-write reconciliation
+  // can scope dangling-pending cleanup to the right playlist (see below).
   const sessionOwnershipResult = await supabase
     .from('sessions')
-    .select('id, user_id')
+    .select('id, user_id, source_playlist_id')
     .in('id', sessionIds);
 
   if (sessionOwnershipResult.error) {
@@ -83,11 +186,17 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  const sessionMap = new Map<string, string>(
-    ((sessionOwnershipResult.data ?? []) as Array<{ id: string; user_id: string }>).map((s) => [
-      s.id,
-      s.user_id,
-    ]),
+  const sessionRows = (sessionOwnershipResult.data ?? []) as Array<{
+    id: string;
+    user_id: string;
+    source_playlist_id?: string;
+  }>;
+  const sessionMap = new Map<string, string>(sessionRows.map((s) => [s.id, s.user_id]));
+  // sessionId → source_playlist_id, used by the reconciliation step after writes.
+  const sessionPlaylistMap = new Map<string, string>(
+    sessionRows
+      .filter((s) => typeof s.source_playlist_id === 'string')
+      .map((s) => [s.id, s.source_playlist_id as string]),
   );
 
   for (const sessionId of sessionIds) {
@@ -229,6 +338,17 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     }
   }
 
+  // Clean up any pending rows now superseded by a decision in this batch.
+  const reconcile = await reconcilePendingDecisions(
+    req.userId as string,
+    swipes as SwipeInput[],
+    sessionPlaylistMap,
+  );
+  if (!reconcile.ok) {
+    res.status(reconcile.status ?? 500).json({ error: reconcile.error });
+    return;
+  }
+
   res.json({ inserted, updated });
 });
 
@@ -308,7 +428,41 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
   }
 
   const rows = (swipesResult.data ?? []) as unknown as SwipeRowWithSession[];
-  const swipeIds = rows.map((s) => s.id);
+
+  // Dedupe safety net for the decide-later fetch: a pending row can dangle across sessions
+  // (see reconcilePendingDecisions). When listing pending tracks for a playlist, exclude any
+  // track that already has a decision in that playlist and collapse duplicate pending rows
+  // to one per track, so a decided or repeated track never resurfaces.
+  let resultRows = rows;
+  if (status === 'pending' && source_playlist_id) {
+    const decidedResult = await supabase
+      .from('swipes')
+      .select('spotify_track_id, sessions!inner(source_playlist_id)')
+      .match({ user_id: req.userId as string, 'sessions.source_playlist_id': source_playlist_id })
+      .in('status', [...DECIDED_STATUSES]);
+
+    if (decidedResult.error) {
+      console.error('GET /swipes decided-tracks fetch error:', decidedResult.error);
+      res.status(500).json({ error: 'Failed to fetch swipes' });
+      return;
+    }
+
+    const decidedTrackIds = new Set(
+      ((decidedResult.data ?? []) as Array<{ spotify_track_id: string }>).map(
+        (r) => r.spotify_track_id,
+      ),
+    );
+
+    const seenTrackIds = new Set<string>();
+    resultRows = rows.filter((row) => {
+      if (decidedTrackIds.has(row.spotify_track_id)) return false;
+      if (seenTrackIds.has(row.spotify_track_id)) return false;
+      seenTrackIds.add(row.spotify_track_id);
+      return true;
+    });
+  }
+
+  const swipeIds = resultRows.map((s) => s.id);
 
   // Fetch all destination playlist IDs for these swipes in one query
   const destinationsBySwipe = new Map<string, string[]>();
@@ -335,7 +489,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     }
   }
 
-  const result = rows.map((s) => ({
+  const result = resultRows.map((s) => ({
     id: s.id,
     sessionId: s.session_id,
     spotifyTrackId: s.spotify_track_id,

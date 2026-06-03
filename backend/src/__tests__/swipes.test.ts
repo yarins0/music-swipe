@@ -434,6 +434,169 @@ describe('POST /swipes', () => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /swipes — dangling-pending reconciliation (Phase 3)
+// ---------------------------------------------------------------------------
+describe('POST /swipes pending reconciliation', () => {
+  const SESSION_B = 'session-uuid-bbb';
+  const SESSION_OLD = 'session-uuid-old';
+  const SESSION_OTHER_PLAYLIST = 'session-uuid-other';
+  const DANGLING_ID = 'swipe-dangling-001';
+
+  it('deletes a dangling pending row when the track is decided in another session of the same playlist', async () => {
+    authenticateAs();
+
+    // 1: ownership — session B belongs to the user and targets playlist A
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    // 2: existing swipes — none in session B
+    const existingMock = makeQueryMock({ data: [], error: null });
+    // 3: insert the liked swipe
+    const insertMock = makeInsertSelectMock({
+      data: [{ id: SWIPE_ID_1, session_id: SESSION_B, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+    // 4: reconcile — all sessions for playlist A (an older one + B)
+    const reconcileSessionsMock = makeQueryMock({
+      data: [
+        { id: SESSION_OLD, source_playlist_id: PLAYLIST_A },
+        { id: SESSION_B, source_playlist_id: PLAYLIST_A },
+      ],
+      error: null,
+    });
+    // 5: reconcile — a dangling pending row for the decided track, in the older session
+    const pendingRowsMock = makeQueryMock({
+      data: [{ id: DANGLING_ID, session_id: SESSION_OLD, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+    // 6: reconcile — delete the dangling rows
+    const deleteMock = makeQueryMock({ data: null, error: null });
+
+    mockFrom
+      .mockReturnValueOnce(sessionMock)
+      .mockReturnValueOnce(existingMock)
+      .mockReturnValueOnce(insertMock)
+      .mockReturnValueOnce(reconcileSessionsMock)
+      .mockReturnValueOnce(pendingRowsMock)
+      .mockReturnValueOnce(deleteMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ inserted: 1, updated: 0 });
+    expect(deleteMock['delete']).toHaveBeenCalled();
+    expect(deleteMock['in']).toHaveBeenCalledWith('id', [DANGLING_ID]);
+  });
+
+  it('does not delete a pending row for the same track in a different playlist', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const existingMock = makeQueryMock({ data: [], error: null });
+    const insertMock = makeInsertSelectMock({
+      data: [{ id: SWIPE_ID_1, session_id: SESSION_B, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+    // Reconcile sessions for playlist A only — the other playlist's session is absent.
+    const reconcileSessionsMock = makeQueryMock({
+      data: [{ id: SESSION_B, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    // The dangling pending row lives under a session that belongs to a DIFFERENT playlist,
+    // so it is not in the playlist-A session set and must be left alone.
+    const pendingRowsMock = makeQueryMock({
+      data: [{ id: DANGLING_ID, session_id: SESSION_OTHER_PLAYLIST, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+
+    mockFrom
+      .mockReturnValueOnce(sessionMock)
+      .mockReturnValueOnce(existingMock)
+      .mockReturnValueOnce(insertMock)
+      .mockReturnValueOnce(reconcileSessionsMock)
+      .mockReturnValueOnce(pendingRowsMock);
+    // No delete mock is queued: if the route attempted a delete, from() would return
+    // undefined and the request would 500. A 200 proves no delete ran.
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ inserted: 1, updated: 0 });
+  });
+
+  it('skips reconciliation entirely when the batch is all pending', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const existingMock = makeQueryMock({ data: [], error: null });
+    const insertMock = makeInsertSelectMock({
+      data: [{ id: SWIPE_ID_1, session_id: SESSION_B, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+    // No reconciliation mocks: a pending-only batch has no decision to reconcile.
+
+    mockFrom
+      .mockReturnValueOnce(sessionMock)
+      .mockReturnValueOnce(existingMock)
+      .mockReturnValueOnce(insertMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'pending' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ inserted: 1, updated: 0 });
+  });
+
+  it('returns 500 when the reconciliation session lookup fails', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const existingMock = makeQueryMock({ data: [], error: null });
+    const insertMock = makeInsertSelectMock({
+      data: [{ id: SWIPE_ID_1, session_id: SESSION_B, spotify_track_id: TRACK_ID_1 }],
+      error: null,
+    });
+    const reconcileFailMock = makeQueryMock({ data: null, error: new Error('DB error') });
+
+    mockFrom
+      .mockReturnValueOnce(sessionMock)
+      .mockReturnValueOnce(existingMock)
+      .mockReturnValueOnce(insertMock)
+      .mockReturnValueOnce(reconcileFailMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/reconcile pending swipes/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET /swipes
 // ---------------------------------------------------------------------------
 describe('GET /swipes', () => {
@@ -582,6 +745,103 @@ describe('GET /swipes', () => {
       status: 'liked',
       'sessions.source_playlist_id': PLAYLIST_A,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /swipes?status=pending — dedupe safety net (Phase 3)
+// ---------------------------------------------------------------------------
+describe('GET /swipes?status=pending dedupe', () => {
+  function pendingRow(swipeId: string, sessionId: string, trackId: string, ts: string) {
+    return {
+      id: swipeId,
+      session_id: sessionId,
+      spotify_track_id: trackId,
+      status: 'pending',
+      swiped_at: ts,
+      sessions: { source_playlist_id: PLAYLIST_A },
+    };
+  }
+
+  it('excludes a track that has already been decided in the playlist', async () => {
+    authenticateAs();
+
+    // 1: main pending query (no session_id) — match() is terminal
+    const pendingMock = makeQueryMock({
+      data: [
+        pendingRow(SWIPE_ID_1, SESSION_ID, TRACK_ID_1, 'ts-1'),
+        pendingRow(SWIPE_ID_2, SESSION_ID, TRACK_ID_2, 'ts-2'),
+      ],
+      error: null,
+    });
+    // 2: decided-tracks query — uses .select().match().in(), so match must be chainable
+    const decidedMock = makeMatchEqMock({ data: [{ spotify_track_id: TRACK_ID_1 }], error: null });
+    // 3: destinations for the surviving swipe — none
+    const destMock = makeQueryMock({ data: [], error: null });
+
+    mockFrom
+      .mockReturnValueOnce(pendingMock)
+      .mockReturnValueOnce(decidedMock)
+      .mockReturnValueOnce(destMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?status=pending&source_playlist_id=${PLAYLIST_A}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body.swipes).toHaveLength(1);
+    expect(res.body.swipes[0].spotifyTrackId).toBe(TRACK_ID_2);
+  });
+
+  it('collapses duplicate pending rows for the same track to one', async () => {
+    authenticateAs();
+
+    const pendingMock = makeQueryMock({
+      data: [
+        pendingRow(SWIPE_ID_1, SESSION_ID, TRACK_ID_1, 'ts-1'),
+        pendingRow(SWIPE_ID_2, 'session-2', TRACK_ID_1, 'ts-2'),
+      ],
+      error: null,
+    });
+    const decidedMock = makeMatchEqMock({ data: [], error: null });
+    const destMock = makeQueryMock({ data: [], error: null });
+
+    mockFrom
+      .mockReturnValueOnce(pendingMock)
+      .mockReturnValueOnce(decidedMock)
+      .mockReturnValueOnce(destMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?status=pending&source_playlist_id=${PLAYLIST_A}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body.swipes).toHaveLength(1);
+    expect(res.body.swipes[0].spotifyTrackId).toBe(TRACK_ID_1);
+  });
+
+  it('returns 500 when the decided-tracks dedupe query fails', async () => {
+    authenticateAs();
+
+    const pendingMock = makeQueryMock({
+      data: [pendingRow(SWIPE_ID_1, SESSION_ID, TRACK_ID_1, 'ts-1')],
+      error: null,
+    });
+    const decidedMock = makeMatchEqMock({ data: null, error: new Error('DB error') });
+
+    mockFrom
+      .mockReturnValueOnce(pendingMock)
+      .mockReturnValueOnce(decidedMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?status=pending&source_playlist_id=${PLAYLIST_A}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to fetch swipes/);
   });
 });
 

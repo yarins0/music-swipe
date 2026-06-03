@@ -18,19 +18,23 @@ interface UseMatchesStoreResult {
 }
 
 export function useMatchesStore(): UseMatchesStoreResult {
-  const likedHistory = useSwipeStore((state) => state.likedHistory);
+  const sessions = useSwipeStore((state) => state.sessions);
 
-  // Most-recent-first — reverse without mutating the original array.
-  const matches: MatchRecord[] = [...likedHistory].reverse().map((record) => ({
-    track: record.track,
-    status: record.status as 'liked' | 'super_liked',
-    destinationPlaylistIds: record.destinationPlaylistIds,
-    destinationPlaylistNames: record.destinationPlaylistNames,
-    swipedAt: record.swipedAt,
-    sessionId: record.sessionId,
-    sourcePlaylistName: record.sourcePlaylistName,
-    likedSongsWrittenByUs: record.likedSongsWrittenByUs,
-  }));
+  // Flatten liked tracks across every session, most-recent session + most-recent track first.
+  const matches: MatchRecord[] = [...sessions]
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .flatMap((session) =>
+      [...session.likedSwipes].reverse().map((record) => ({
+        track: record.track,
+        status: record.status as 'liked' | 'super_liked',
+        destinationPlaylistIds: record.destinationPlaylistIds,
+        destinationPlaylistNames: record.destinationPlaylistNames,
+        swipedAt: record.swipedAt,
+        sessionId: record.sessionId,
+        sourcePlaylistName: record.sourcePlaylistName,
+        likedSongsWrittenByUs: record.likedSongsWrittenByUs,
+      })),
+    );
 
   return { matches, isLoading: false };
 }

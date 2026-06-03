@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
-import { useSwipeStore } from '@/stores/swipeStore';
+import { useSwipeStore, type SessionEntry } from '@/stores/swipeStore';
 import { SwipeEngine } from '@/swipe/SwipeEngine';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { TrackPlayer } from '@/player/TrackPlayer';
@@ -49,17 +49,18 @@ export default function SwipeScreen(): React.ReactElement {
   const { destinationPlaylistIds } = useSessionStore();
 
   const swipeStore = useSwipeStore();
-  const { initSession, clearSession } = swipeStore;
+  const { initSession } = swipeStore;
   // Reactive currentIndex — used to detect when a swipe advances the queue
   const currentIndex = useSwipeStore((s) => s.currentIndex);
 
-  // Clear the suspended flag whenever this screen gains focus — covers both initial
-  // mount and returning from another tab via navigate (which doesn't remount the screen).
-  useFocusEffect(
-    useCallback(() => {
-      useSwipeStore.getState().resumeSession();
-    }, []),
-  );
+  // The active session entry iff it is the session for THIS screen's playlist — i.e. we are
+  // resuming it rather than starting a fresh session for this source. Returns null when the
+  // open session is for a different playlist (or none is open), which routes to a fresh start.
+  const getResumeTarget = useCallback((): SessionEntry | null => {
+    const { sessions, activeSessionId } = useSwipeStore.getState();
+    const active = sessions.find((e) => e.sessionId === activeSessionId) ?? null;
+    return active && active.sourcePlaylistId === playlistId ? active : null;
+  }, [playlistId]);
 
   // Service refs — stable across re-renders, never re-instantiated after mount
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
@@ -112,9 +113,6 @@ export default function SwipeScreen(): React.ReactElement {
   // Ensures the "couldn't save" alert is shown at most once per session, so a
   // burst of failed writes doesn't spam the user with dialogs.
   const writeErrorShownRef = useRef(false);
-  // Mirrors sessionId state in a ref so the unmount cleanup always sees the latest value
-  // without needing sessionId in the cleanup effect's dependency array.
-  const sessionIdRef = useRef<string | null>(null);
 
   // -------------------------------------------------------------------------
   // Service factory — runs once after auth tokens are available
@@ -186,8 +184,11 @@ export default function SwipeScreen(): React.ReactElement {
     // then drain any playlist write operations that were interrupted mid-flight.
     const flush = async (): Promise<void> => {
       const store = useSwipeStore.getState();
-      const isResuming = store.sessionId !== null && store.sourcePlaylistId === playlistId;
-      const hasInMemoryQueue = isResuming && store.queue.length > 0;
+      const resume = getResumeTarget();
+      // The live queue can only be reused when it actually belongs to the session we're
+      // resuming (liveSessionId guards against reusing a previous session's queue after a switch).
+      const hasInMemoryQueue =
+        resume !== null && store.queue.length > 0 && store.liveSessionId === resume.sessionId;
 
       if (hasInMemoryQueue) {
         // Queue and session state are intact in the Zustand singleton — skip all
@@ -202,23 +203,19 @@ export default function SwipeScreen(): React.ReactElement {
 
         // Restore component state from store (no API calls)
         setAvailablePlaylists(store.availablePlaylists);
-        setTotalTracksState(store.totalTracks);
+        setTotalTracksState(resume.totalTracks);
 
-        // sessionStore is in-memory only — repopulate from the persisted store values
-        // so the subtitle and destination IDs are correct if the app was restarted.
+        // sessionStore is in-memory only — repopulate from the durable session entry so the
+        // subtitle and destination IDs are correct after a tab-away or app restart.
         if (useSessionStore.getState().destinationPlaylistIds.length === 0) {
-          const srcName =
-            playlistId === LIKED_SONGS_PLAYLIST_ID
-              ? 'Liked Songs'
-              : (store.availablePlaylists.find((p) => p.id === playlistId)?.name ?? null);
-          if (srcName) useSessionStore.getState().setSource(playlistId, srcName);
-          if (store.activeDestinationIds.length > 0) {
-            useSessionStore.getState().setDestinations(store.activeDestinationIds);
+          if (resume.sourcePlaylistName) {
+            useSessionStore.getState().setSource(playlistId, resume.sourcePlaylistName);
+          }
+          if (resume.destinationPlaylistIds.length > 0) {
+            useSessionStore.getState().setDestinations(resume.destinationPlaylistIds);
           }
         }
-        // Always restore filter mode from the persisted store — sessionStore is in-memory
-        // and may have been overwritten if the user briefly visited destination.tsx.
-        useSessionStore.getState().setFilterMode(store.isFilterMode);
+        useSessionStore.getState().setFilterMode(resume.isFilterMode);
 
         setPhase('opening_session');
         return;
@@ -226,9 +223,8 @@ export default function SwipeScreen(): React.ReactElement {
 
       // Normal path: await flush before fetching tracks.
       // flushPending() drains BackendSync's own in-memory queue (records from postSwipe
-      // calls during this session). We intentionally do NOT call markSynced here:
-      // pendingSyncSwipes is the source of truth for the history tab and must stay
-      // intact until clearSession() is called at natural session end.
+      // calls during this session). The session's liked tracks live durably on its
+      // SessionEntry, so no store-level swipe buffer needs preserving here.
       await backendSyncRef.current!.flushPending().catch((err: unknown) => {
         console.warn('[SwipeScreen] flushPending failed; will retry on reconnect', err);
       });
@@ -245,7 +241,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void flush();
-  }, [phase, buildServices]);
+  }, [phase, buildServices, getResumeTarget]);
 
   // ---------------------------------------------------------------------------
   // Token refresh helper — re-registers with backend using current Spotify token
@@ -342,20 +338,15 @@ export default function SwipeScreen(): React.ReactElement {
     const fetchQueue = async (): Promise<void> => {
       try {
         const adapter = adapterRef.current!;
-        const store = useSwipeStore.getState();
-        // absoluteIndex is the true playlist offset — never reset on resume, unlike currentIndex
-        const storedAbsoluteIndex = store.absoluteIndex ?? 0;
-        const isResuming =
-          store.sessionId !== null && store.sourcePlaylistId === playlistId;
+        const resume = getResumeTarget();
+        const isResuming = resume !== null;
 
         // Lazy paging (approach 1): load only the first page now; the rest stream in via
-        // loadMoreTracks as the stack drains. On resume, fetch from the stored playlist
-        // offset so queue[0] is the resume track and currentIndex restarts at 0 — no
-        // slicing, which is what previously restarted resume at 0 once absoluteIndex
-        // passed the loaded slice. startOffset == absoluteIndex because both count
-        // source-playlist tracks (see docs/code-review H3 / approach 1).
+        // loadMoreTracks as the stack drains. On resume, fetch from the session entry's
+        // stored resumeOffset so queue[0] is the resume track and currentIndex restarts at 0 —
+        // no slicing. resumeOffset counts source-playlist tracks (see docs/code-review H3).
         const pageSize = getPageSize(playlistId);
-        const startOffset = isResuming ? storedAbsoluteIndex : 0;
+        const startOffset = resume ? resume.resumeOffset : 0;
         const { tracks, total } = await adapter.getPlaylistTracks(playlistId, startOffset, pageSize);
         setTotalTracksState(total);
         useSwipeStore.getState().setTotalTracks(total);
@@ -372,17 +363,17 @@ export default function SwipeScreen(): React.ReactElement {
         // sessionStore has no persist middleware so it is always empty on app restart.
         // When resuming from AsyncStorage (queue not in memory), repopulate it so the
         // Discover subtitle renders and phase 5 passes the correct destination IDs.
-        if (isResuming) {
+        if (resume) {
           const srcName =
             playlistId === LIKED_SONGS_PLAYLIST_ID
               ? 'Liked Songs'
-              : (playlists.find((p) => p.id === playlistId)?.name ?? null);
+              : (playlists.find((p) => p.id === playlistId)?.name ?? resume.sourcePlaylistName ?? null);
           if (srcName) useSessionStore.getState().setSource(playlistId, srcName);
-          const storedDestIds = store.activeDestinationIds;
-          if (storedDestIds.length > 0 && useSessionStore.getState().destinationPlaylistIds.length === 0) {
-            useSessionStore.getState().setDestinations(storedDestIds);
-          }
-          useSessionStore.getState().setFilterMode(store.isFilterMode);
+          // The session entry is the source of truth on resume — overwrite any stale
+          // sessionStore values left from a previously-open session (switching sessions does
+          // not reset sessionStore) so writes target THIS session's destinations.
+          useSessionStore.getState().setDestinations(resume.destinationPlaylistIds);
+          useSessionStore.getState().setFilterMode(resume.isFilterMode);
         }
 
         // Stash the loaded page so phase 5 can enrich any pending (decide-later) stubs
@@ -412,7 +403,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void fetchQueue();
-  }, [phase, playlistId]);
+  }, [phase, playlistId, getResumeTarget]);
 
   const queueTracksRef = useRef<Track[]>([]);
   // Full unsliced playlist — used to enrich pending tracks with complete metadata
@@ -433,32 +424,60 @@ export default function SwipeScreen(): React.ReactElement {
     const openOrResume = async (): Promise<void> => {
       try {
         const store = useSwipeStore.getState();
-        const isResuming =
-          store.sessionId !== null && store.sourcePlaylistId === playlistId;
+        const resume = getResumeTarget();
+        const isResuming = resume !== null;
 
-        // Queue is still in memory from the previous mount — skip re-initializing the
-        // session store to avoid resetting currentIndex back to 0.
-        if (isResuming && store.queue.length > 0) {
-          setSessionId(store.sessionId!);
+        // Queue is still in memory from the previous mount AND belongs to this session —
+        // skip re-initializing to avoid resetting currentIndex back to 0.
+        if (resume && store.queue.length > 0 && store.liveSessionId === resume.sessionId) {
+          setSessionId(resume.sessionId);
           setPhase('ready');
           return;
         }
 
+        const playlists = useSwipeStore.getState().availablePlaylists;
+        const total = useSwipeStore.getState().totalTracks;
+        const resolveName = (id: string): string =>
+          id === LIKED_SONGS_PLAYLIST_ID ? 'Liked Songs' : (playlists.find((p) => p.id === id)?.name ?? id);
+        const sourceName = resolveName(playlistId);
+
         let sid: string;
-        if (isResuming) {
-          sid = store.sessionId!;
+        let resumeOffset = 0;
+        // Destinations driving this session's live writes. On resume the entry is the source
+        // of truth (sessionStore may still hold a previously-open session's destinations); on a
+        // fresh start they come from the destination picker via sessionStore.
+        let sessionDestIds: string[];
+        if (resume) {
+          sid = resume.sessionId;
+          resumeOffset = resume.resumeOffset;
+          sessionDestIds = resume.destinationPlaylistIds;
+          useSwipeStore.getState().setActiveSession(sid);
+          // Refresh only volatile metadata — never overwrite the entry's own destinations/filter.
+          useSwipeStore.getState().updateActiveSession({ totalTracks: total, sourcePlaylistName: sourceName });
         } else {
+          sessionDestIds = destinationPlaylistIds;
+          const filterMode = useSessionStore.getState().isFilterMode;
           try {
-            sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
+            sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds);
           } catch (err) {
             // Supabase JWT expired — refresh it once and retry
             if (err instanceof Error && err.message.includes('401')) {
               await refreshSupabaseToken();
-              sid = await sessionTrackerRef.current!.openSession(playlistId, destinationPlaylistIds);
+              sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds);
             } else {
               throw err;
             }
           }
+          // Push the new session onto the History stack and make it active.
+          useSwipeStore.getState().createSession({
+            sessionId: sid,
+            sourcePlaylistId: playlistId,
+            sourcePlaylistName: sourceName,
+            destinationPlaylistIds: sessionDestIds,
+            destinationPlaylistNames: sessionDestIds.map(resolveName),
+            isFilterMode: filterMode,
+            totalTracks: total,
+          });
         }
 
         // Replace any incomplete pending-track stubs (title = track ID, no art) with
@@ -472,9 +491,10 @@ export default function SwipeScreen(): React.ReactElement {
           playlistId,
           queueTracksRef.current,
           enrichedPending,
-          destinationPlaylistIds,
+          sessionDestIds,
           isResuming,
           initialNextOffsetRef.current,
+          resumeOffset,
         );
 
         setSessionId(sid);
@@ -487,7 +507,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void openOrResume();
-  }, [phase, playlistId, destinationPlaylistIds, initSession, refreshSupabaseToken]);
+  }, [phase, playlistId, destinationPlaylistIds, initSession, refreshSupabaseToken, getResumeTarget]);
 
   // -------------------------------------------------------------------------
   // AppState listener — flush pending swipes on foreground reconnect
@@ -505,48 +525,33 @@ export default function SwipeScreen(): React.ReactElement {
     return () => sub.remove();
   }, []);
 
-  // Keep the ref in sync so the unmount cleanup always has the latest sessionId.
-  useEffect(() => {
-    sessionIdRef.current = sessionId;
-  }, [sessionId]);
-
   // -------------------------------------------------------------------------
-  // Unmount: close session + clear store (unless session-end screen took ownership)
+  // Unmount: PRESERVE the session — no teardown here.
   // -------------------------------------------------------------------------
-  // Empty deps — intentionally runs only on unmount. sessionIdRef gives the cleanup
-  // access to the latest sessionId without putting sessionId in the deps array,
-  // which would fire this cleanup on every sessionId transition (including the
-  // null → realId transition after initSession, which would wipe the queue).
-  useEffect(() => {
-    return () => {
-      // When the user tabs away mid-session, the store's isSuspended flag is set by BottomNavBar.
-      // In that case, leave all session state intact so the resume flow picks up where it left off.
-      if (useSwipeStore.getState().isSuspended) return;
-
-      if (!sessionClosedRef.current && sessionIdRef.current && sessionTrackerRef.current) {
-        sessionClosedRef.current = true;
-        sessionTrackerRef.current.closeSession(sessionIdRef.current);
-      }
-      if (!navigatedToSessionEndRef.current) {
-        clearSession();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Leaving the swipe screen by ANY means (tabbing away, the no-preview badge →
+  // Settings, the hardware back button, Fast Refresh) must keep the in-progress
+  // session intact so returning to Discover resumes it. A previous version cleared
+  // the session on unmount unless the BottomNavBar had set an isSuspended flag first;
+  // every other exit (e.g. the no-preview badge) fell through to clearSession() and
+  // silently destroyed the session — the cause of "the session is gone after leaving
+  // Discover".
+  //
+  // The session is torn down only at genuine end-points, both handled elsewhere:
+  //   • natural end — handleSessionEnd closes the backend session, then the session-end
+  //     screen owns clearSession() on its own unmount;
+  //   • logout — resetAll() wipes everything.
+  // Starting a different source overwrites the session via initSession(isResuming=false).
 
   // -------------------------------------------------------------------------
   // Session end callback (queue exhausted) — navigate to session-end screen.
-  // clearSession() is intentionally deferred: the session-end screen needs
-  // pendingSyncSwipes to be intact when it mounts. It calls clearSession on unmount.
+  // The session entry stays 'active' here; the session-end screen marks it completed
+  // (completeActiveSession) on its own unmount, after reading its stats/liked tracks.
   // -------------------------------------------------------------------------
-  const navigatedToSessionEndRef = useRef(false);
-
   const handleSessionEnd = useCallback((): void => {
     if (!sessionClosedRef.current && sessionId && sessionTrackerRef.current) {
       sessionClosedRef.current = true;
       sessionTrackerRef.current.closeSession(sessionId);
     }
-    navigatedToSessionEndRef.current = true;
     router.replace({
       pathname: '/(tabs)/session-end' as const,
       params: sessionId ? { sessionId } : {},
@@ -563,9 +568,8 @@ export default function SwipeScreen(): React.ReactElement {
       if (!confirmedRemove && removed.length > 0) return;
 
       const store = useSwipeStore.getState();
-      const likedTrackIds = store.pendingSyncSwipes
-        .filter((r) => r.status === 'liked' || r.status === 'super_liked')
-        .map((r) => r.track.id);
+      const activeEntry = store.sessions.find((e) => e.sessionId === store.activeSessionId);
+      const likedTrackIds = (activeEntry?.likedSwipes ?? []).map((r) => r.track.id);
 
       // Adds are fire-and-forget via PlaylistWriter
       for (const pid of added) {

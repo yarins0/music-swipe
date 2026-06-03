@@ -17,7 +17,7 @@ import { getUserPlaylists } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
 import { AppModal } from '@/components/AppModal';
 import { useSessionStore } from '@/stores/sessionStore';
-import { useSwipeStore } from '@/stores/swipeStore';
+import { useSwipeStore, isResumable, type SessionEntry } from '@/stores/swipeStore';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
@@ -41,6 +41,9 @@ export default function DestinationPickerScreen() {
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [showFilterModeModal, setShowFilterModeModal] = useState(false);
+  // Set when an in-progress session already exists for this source — drives the
+  // Resume vs Start-Over dedupe modal before a new session is created.
+  const [existingSession, setExistingSession] = useState<SessionEntry | null>(null);
 
   useEffect(() => {
     if (playlistId && playlistName) setSource(playlistId, playlistName);
@@ -101,7 +104,24 @@ export default function DestinationPickerScreen() {
     }
   };
 
+  // The in-progress session for this source, if one exists in the History stack.
+  const findExistingSession = (): SessionEntry | null => {
+    const { sessions } = useSwipeStore.getState();
+    return sessions.find((e) => e.sourcePlaylistId === playlistId && isResumable(e)) ?? null;
+  };
+
   const handleConfirm = () => {
+    // If a session for this source is already in progress, ask before starting fresh.
+    const existing = findExistingSession();
+    if (existing) {
+      setExistingSession(existing);
+      return;
+    }
+    proceedToSwipe();
+  };
+
+  // Set up sessionStore and navigate to the swipe screen, which creates the session entry.
+  const proceedToSwipe = () => {
     if (playlistId && selectedIds.has(playlistId) && selectedIds.size === 1) {
       // Source selected as the sole destination — require explicit confirmation before
       // entering filter mode because left swipes are permanently destructive.
@@ -110,8 +130,6 @@ export default function DestinationPickerScreen() {
     }
     const destIds = Array.from(selectedIds);
     setFilterMode(false);
-    useSwipeStore.getState().setIsFilterMode(false);
-    useSwipeStore.getState().setActiveDestinations(destIds);
     setDestinations(destIds);
     router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
   };
@@ -120,14 +138,28 @@ export default function DestinationPickerScreen() {
     setShowFilterModeModal(false);
     const destIds = Array.from(selectedIds);
     setFilterMode(true);
-    useSwipeStore.getState().setIsFilterMode(true);
-    useSwipeStore.getState().setActiveDestinations(destIds);
     setDestinations(destIds);
     router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
   };
 
   const handleFilterModeCancel = () => {
     setShowFilterModeModal(false);
+  };
+
+  // Resume the existing session as-is (its own destinations apply — the picker selection is ignored).
+  const handleResumeExisting = () => {
+    if (!existingSession) return;
+    useSwipeStore.getState().setActiveSession(existingSession.sessionId);
+    setExistingSession(null);
+    router.push({ pathname: '/(tabs)/swipe/[playlistId]' as const, params: { playlistId: playlistId ?? '' } });
+  };
+
+  // Discard the old session and start fresh with the newly-picked destinations.
+  const handleStartOver = () => {
+    if (!existingSession) return;
+    useSwipeStore.getState().deleteSession(existingSession.sessionId);
+    setExistingSession(null);
+    proceedToSwipe();
   };
 
   // True when the source playlist is the only selected destination — indicates filter mode intent.
@@ -224,6 +256,25 @@ export default function DestinationPickerScreen() {
         cancelLabel="Cancel"
         onConfirm={handleFilterModeConfirm}
         onCancel={handleFilterModeCancel}
+      />
+
+      {/* Resume vs Start-Over dedupe modal — shown when a session for this source is in progress.
+          Resume is the safe default (also the backdrop dismiss); Start Over is the explicit
+          destructive action that deletes the saved session before starting fresh. */}
+      <AppModal
+        visible={existingSession !== null}
+        title="Resume your session?"
+        message={
+          existingSession
+            ? `You have an in-progress session for "${existingSession.sourcePlaylistName}" with ${Math.max(0, existingSession.totalTracks - existingSession.resumeOffset)} tracks left. Resume where you left off, or start over.`
+            : ''
+        }
+        warning="Starting over deletes the saved session from your History."
+        confirmLabel="Start Over"
+        confirmDestructive
+        cancelLabel="Resume"
+        onConfirm={handleStartOver}
+        onCancel={handleResumeExisting}
       />
 
       {/* New Playlist Modal */}

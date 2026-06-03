@@ -14,6 +14,7 @@ import { AppModal } from '@/components/AppModal';
 import { Image } from 'expo-image';
 import { useAuthStore } from '@/stores/authStore';
 import { usePrefsStore } from '@/stores/prefsStore';
+import { useSwipeStore } from '@/stores/swipeStore';
 import { useUiStore } from '@/stores/uiStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
@@ -86,6 +87,7 @@ function Section({ title, children }: SectionProps): React.ReactElement {
 export default function SettingsScreen(): React.ReactElement {
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const clearAllSessions = useSwipeStore((s) => s.clearAllSessions);
 
   const showAlbumArt = usePrefsStore((s) => s.showAlbumArt);
   const autoPlayPreviews = usePrefsStore((s) => s.autoPlayPreviews);
@@ -99,6 +101,7 @@ export default function SettingsScreen(): React.ReactElement {
   const setAutoRemoveDuplicates = usePrefsStore((s) => s.setAutoRemoveDuplicates);
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [clearHistoryModalVisible, setClearHistoryModalVisible] = useState(false);
 
   const [profile, setProfile] = useState<UserProfile & { isLoading: boolean }>({
     spotifyId: '',
@@ -294,6 +297,19 @@ export default function SettingsScreen(): React.ReactElement {
           />
         </Section>
 
+        {/* Data */}
+        <Section title="DATA">
+          <TouchableOpacity
+            style={styles.clearHistoryButton}
+            onPress={() => setClearHistoryModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Clear history — delete all saved sessions from this device"
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.nope} />
+            <Text style={styles.clearHistoryText}>Clear History</Text>
+          </TouchableOpacity>
+        </Section>
+
         {/* About */}
         <Section title="ABOUT">
           <LinkRow
@@ -333,6 +349,20 @@ export default function SettingsScreen(): React.ReactElement {
           void clearAuth();
         }}
         onCancel={() => setLogoutModalVisible(false)}
+      />
+
+      <AppModal
+        visible={clearHistoryModalVisible}
+        title="Clear History?"
+        message="This deletes every saved session and its liked-track history from this device, including any in-progress sessions you could resume."
+        warning="Tracks already added to your Spotify playlists are not affected. This cannot be undone."
+        confirmLabel="Clear History"
+        confirmDestructive
+        onConfirm={() => {
+          setClearHistoryModalVisible(false);
+          clearAllSessions();
+        }}
+        onCancel={() => setClearHistoryModalVisible(false)}
       />
     </View>
   );
@@ -469,6 +499,18 @@ const styles = StyleSheet.create({
     borderTopColor: colors.surfaceContainerHigh,
   },
   logoutText: {
+    fontSize: 15,
+    fontFamily: 'Outfit_600SemiBold',
+    color: colors.nope,
+  },
+  clearHistoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  clearHistoryText: {
     fontSize: 15,
     fontFamily: 'Outfit_600SemiBold',
     color: colors.nope,

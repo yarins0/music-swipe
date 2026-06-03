@@ -11,7 +11,7 @@ import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors } from '@/theme';
-import { useSwipeStore } from '@/stores/swipeStore';
+import { useSwipeStore, getMostRecentResumableSession } from '@/stores/swipeStore';
 
 type TabItem = {
   label: string;
@@ -72,9 +72,6 @@ export function BottomNavBar(): React.ReactElement {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const sessionId = useSwipeStore((s) => s.sessionId);
-  const sourcePlaylistId = useSwipeStore((s) => s.sourcePlaylistId);
-  const suspendSession = useSwipeStore((s) => s.suspendSession);
 
   const tabWidth = screenWidth / TAB_COUNT;
   const activeIndex = resolveActiveIndex(pathname);
@@ -95,12 +92,16 @@ export function BottomNavBar(): React.ReactElement {
         // Already on swipe screen — no-op
         if (pathname.startsWith('/swipe')) return;
 
-        if (sessionId && sourcePlaylistId) {
+        // Resume the most-recently-touched in-progress session ("pop the stack"), leaving it
+        // in History. setActiveSession makes it the open session so the swipe screen resumes it.
+        const resumable = getMostRecentResumableSession();
+        if (resumable) {
+          useSwipeStore.getState().setActiveSession(resumable.sessionId);
           // Use navigate (not push) so Expo Router pops back to the existing swipe
           // screen in the stack instead of mounting a brand-new instance.
           router.navigate({
             pathname: '/(tabs)/swipe/[playlistId]',
-            params: { playlistId: sourcePlaylistId },
+            params: { playlistId: resumable.sourcePlaylistId },
           });
         } else {
           // Slide indicator right to Playlists, then open source picker
@@ -112,15 +113,13 @@ export function BottomNavBar(): React.ReactElement {
           }).start(() => router.navigate('/(tabs)'));
         }
       } else {
-        // Suspend the swipe session instead of ending it when tabbing away
-        if (pathname.startsWith('/swipe')) {
-          suspendSession();
-        }
-        // Use navigate (not push) to avoid stacking duplicate tab screens
+        // Leaving the swipe screen preserves the session (no suspend flag needed) — the
+        // unmount cleanup is non-destructive and the session lives on the History stack.
+        // Use navigate (not push) to avoid stacking duplicate tab screens.
         router.navigate(item.route);
       }
     },
-    [sessionId, sourcePlaylistId, pathname, suspendSession, router, indicatorAnim, tabWidth],
+    [pathname, router, indicatorAnim, tabWidth],
   );
 
   return (

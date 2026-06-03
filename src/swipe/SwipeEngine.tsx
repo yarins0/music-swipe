@@ -86,16 +86,24 @@ export function SwipeEngine({
     currentIndex,
     absoluteIndex,
     nextPageOffset,
+    decideQueue,
+    secondPassInjected,
     activeDestinationIds,
     undoStack,
     recordSwipe,
     undo,
+    injectSecondPass,
     setActiveDestinations,
   } = useSwipeStore();
 
   // More source-playlist pages remain to lazily load when the paging cursor hasn't
   // reached the reported total. Drives both the prefetch trigger and the session-end guard.
   const hasMoreTracks = nextPageOffset < totalTracks;
+
+  // A decide-later second pass is still owed: tracks were deferred and the re-show band
+  // has not been appended yet. Keeps the session alive (and the empty-state showing a
+  // loader, not "No more tracks") until injectSecondPass runs.
+  const hasPendingSecondPass = !secondPassInjected && decideQueue.length > 0;
 
   // Playback strategy for current track — determines isSeekEnabled on SwipeCard
   const [isSeekEnabled, setIsSeekEnabled] = useState(false);
@@ -221,13 +229,29 @@ export function SwipeEngine({
     }
   }, [currentIndex, queue.length, hasMoreTracks, onNeedMoreTracks]);
 
-  // Session end when the queue is exhausted AND no more pages remain to load.
-  // The hasMoreTracks guard prevents ending early at a page boundary.
+  // Once the fresh queue is exhausted and no more pages remain, append the decide-later
+  // tracks for a within-session second pass. Runs before the session-end effect so the
+  // session does not end while re-shows are still owed; injectSecondPass is a one-shot
+  // (guarded by secondPassInjected), so this can't loop.
   useEffect(() => {
-    if (queue.length > 0 && currentIndex >= queue.length && !hasMoreTracks) {
+    if (currentIndex >= queue.length && !hasMoreTracks && hasPendingSecondPass) {
+      injectSecondPass();
+    }
+  }, [currentIndex, queue.length, hasMoreTracks, hasPendingSecondPass, injectSecondPass]);
+
+  // Session end when the queue is exhausted, no more pages remain, AND no second pass is
+  // still owed. The hasMoreTracks guard prevents ending early at a page boundary; the
+  // hasPendingSecondPass guard prevents ending before the decide-later re-shows are injected.
+  useEffect(() => {
+    if (
+      queue.length > 0 &&
+      currentIndex >= queue.length &&
+      !hasMoreTracks &&
+      !hasPendingSecondPass
+    ) {
       onSessionEnd();
     }
-  }, [currentIndex, queue.length, hasMoreTracks, onSessionEnd]);
+  }, [currentIndex, queue.length, hasMoreTracks, hasPendingSecondPass, onSessionEnd]);
 
   // Preload upcoming tracks' album art so back-card image swaps don't flicker.
   // When the back card's track prop swaps in place (D → E), expo-image must
@@ -396,13 +420,14 @@ export function SwipeEngine({
   );
 
   if (!currentTrack) {
-    // hasMoreTracks means the user out-ran an in-flight lazy page; show a loader rather
-    // than "No more tracks" so the queue doesn't look prematurely empty.
+    // hasMoreTracks means the user out-ran an in-flight lazy page; hasPendingSecondPass
+    // means the decide-later re-shows are about to be appended. In either case show a
+    // loader rather than "No more tracks" so the queue doesn't look prematurely empty.
     return (
       <View style={styles.screen}>
         <TabHeader title="Discover" subtitle={headerSubtitle} />
         <View style={styles.empty}>
-          {hasMoreTracks ? (
+          {hasMoreTracks || hasPendingSecondPass ? (
             <ActivityIndicator size="large" color={colors.primary} />
           ) : (
             <Text style={styles.emptyText}>No more tracks</Text>

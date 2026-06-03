@@ -31,7 +31,6 @@ function makeTrack(id: string): Track {
 
 const TRACK_A = makeTrack('a');
 const TRACK_B = makeTrack('b');
-const TRACK_C = makeTrack('c');
 const DEST_IDS = ['playlist-1'];
 
 // ---------------------------------------------------------------------------
@@ -39,8 +38,31 @@ const DEST_IDS = ['playlist-1'];
 // ---------------------------------------------------------------------------
 
 function setSwipes(swipes: ReturnType<typeof makeSwipeRecord>[]) {
-  // useMatchesStore reads from likedHistory (persisted cross-session history)
-  useSwipeStore.setState({ likedHistory: swipes });
+  // useMatchesStore flattens likedSwipes across the session stack — seed a single session.
+  const liked = swipes.filter((s) => s.status === 'liked');
+  const superLiked = swipes.filter((s) => s.status === 'super_liked');
+  useSwipeStore.setState({
+    sessions: [
+      {
+        sessionId: 's1',
+        sourcePlaylistId: 'src',
+        sourcePlaylistName: 'Source',
+        destinationPlaylistIds: DEST_IDS,
+        destinationPlaylistNames: [],
+        isFilterMode: false,
+        resumeOffset: 0,
+        totalTracks: 100,
+        status: 'active',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        swipedCount: swipes.length,
+        likedCount: liked.length,
+        superLikedCount: superLiked.length,
+        likedSwipes: swipes,
+      },
+    ],
+    activeSessionId: 's1',
+  });
 }
 
 function makeSwipeRecord(
@@ -57,17 +79,7 @@ function makeSwipeRecord(
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  useSwipeStore.setState({
-    sessionId: null,
-    sourcePlaylistId: null,
-    queue: [],
-    currentIndex: 0,
-    decideQueue: [],
-    undoStack: [],
-    activeDestinationIds: [],
-    pendingSyncSwipes: [],
-    likedHistory: [],
-  });
+  useSwipeStore.getState().resetAll();
 });
 
 // ---------------------------------------------------------------------------

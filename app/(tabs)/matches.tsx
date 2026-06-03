@@ -1,175 +1,77 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Animated, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Swipeable } from 'react-native-gesture-handler';
 import { colors, spacing, radius } from '@/theme';
-import { Image } from 'expo-image';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
-import { useMatchesStore, type MatchRecord } from '@/matches/useMatchesStore';
 import { useSwipeStore } from '@/stores/swipeStore';
+import type { SessionEntry } from '@/stores/swipeStore';
 import type { MusicPlatformAdapter } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
 import { TabHeader } from '@/components/TabHeader';
+import { SessionCard } from '@/components/SessionCard';
+import { AppModal } from '@/components/AppModal';
 
-// ---------------------------------------------------------------------------
-// Session grouping helpers
-// ---------------------------------------------------------------------------
-
-interface SessionHeader {
-  type: 'header';
-  key: string;
-  sessionId: string | undefined;
-  sourcePlaylistName: string | undefined;
-  destinationNames: string[] | undefined;
-  date: string;
-}
-
-interface TrackItem {
-  type: 'track';
-  key: string;
-  record: MatchRecord;
-}
-
-type ListItem = SessionHeader | TrackItem;
-
-function buildSessionGroups(matches: MatchRecord[]): ListItem[] {
-  const items: ListItem[] = [];
-  let lastSessionId: string | undefined = undefined;
-
-  for (const record of matches) {
-    const sid = record.sessionId ?? '__legacy__';
-
-    if (sid !== lastSessionId) {
-      lastSessionId = sid;
-      const date = new Date(record.swipedAt).toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric', year: 'numeric',
-      });
-      items.push({
-        type: 'header',
-        key: `header-${sid}-${record.swipedAt}`,
-        sessionId: record.sessionId,
-        sourcePlaylistName: record.sourcePlaylistName,
-        destinationNames: record.destinationPlaylistNames,
-        date,
-      });
-    }
-
-    items.push({ type: 'track', key: record.swipedAt, record });
-  }
-
-  return items;
-}
-
-function SessionDivider({ item }: { item: SessionHeader }): React.ReactElement {
-  const title = item.sourcePlaylistName ?? 'Session';
-  const destLabel = item.destinationNames && item.destinationNames.length > 0
-    ? item.destinationNames.join(', ')
-    : null;
-
-  return (
-    <View style={dividerStyles.container}>
-      <View style={dividerStyles.line} />
-      <View style={dividerStyles.pill}>
-        <Text style={dividerStyles.source} numberOfLines={1}>{title}</Text>
-        {destLabel ? (
-          <Text style={dividerStyles.dest} numberOfLines={1}>→ {destLabel}</Text>
-        ) : null}
-        <Text style={dividerStyles.date}>{item.date}</Text>
-      </View>
-      <View style={dividerStyles.line} />
-    </View>
-  );
-}
-
-function StatusBadge({ status }: { status: MatchRecord['status'] }): React.ReactElement {
-  const isSuperLiked = status === 'super_liked';
-  return (
-    <View style={[styles.badge, isSuperLiked ? styles.badgeSuperLiked : styles.badgeLiked]}>
-      <Text style={styles.badgeIcon}>{isSuperLiked ? '⭐' : '❤️'}</Text>
-    </View>
-  );
-}
-
-interface TrackRowProps {
-  item: MatchRecord;
-  isRemoving: boolean;
-  onRemove: (record: MatchRecord) => void;
-}
-
-function TrackRow({ item, isRemoving, onRemove }: TrackRowProps): React.ReactElement {
-  return (
-    <View style={styles.row}>
-      <Image
-        source={{ uri: item.track.albumArtUrl }}
-        style={styles.thumbnail}
-        contentFit="cover"
-      />
-      <View style={styles.trackInfo}>
-        <Text style={styles.trackTitle} numberOfLines={1}>
-          {item.track.title}
-        </Text>
-        <Text style={styles.trackArtist} numberOfLines={1}>
-          {item.track.artist}
-        </Text>
-      </View>
-      <StatusBadge status={item.status} />
-      {isRemoving ? (
-        <View style={styles.removeButton}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      ) : (
-        <Pressable style={styles.removeButton} onPress={() => onRemove(item)}>
-          <Text style={styles.removeText}>Cancel</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
+/**
+ * History tab — a stack of the user's recent swipe sessions. Each card shows the session's
+ * source/destinations, progress and counts, with a Resume action (in-progress sessions) and
+ * an expandable list of its liked tracks (removable). Swiping a card left reveals a Delete
+ * action that removes the session (and its cached likes) from History after confirmation.
+ */
 export default function MatchesScreen(): React.ReactElement {
-  const { matches } = useMatchesStore();
-  const removeFromHistory = useSwipeStore((s) => s.removeFromHistory);
-  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const router = useRouter();
+  const sessions = useSwipeStore((s) => s.sessions);
+  const setActiveSession = useSwipeStore((s) => s.setActiveSession);
+  const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
+  const deleteSession = useSwipeStore((s) => s.deleteSession);
 
-  const listData = useMemo(() => buildSessionGroups(matches), [matches]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  // Session awaiting delete confirmation (set by the swipe-to-reveal Delete action).
+  const [pendingDelete, setPendingDelete] = useState<SessionEntry | null>(null);
 
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
   const getAdapter = (): MusicPlatformAdapter => {
-    if (!adapterRef.current) {
-      adapterRef.current = createSpotifyAdapter();
-    }
+    if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
     return adapterRef.current;
   };
 
-  const handleRemove = useCallback(
-    async (record: MatchRecord): Promise<void> => {
-      const { swipedAt } = record;
-      const trackId = record.track.id;
+  // Most-recently-touched session first.
+  const ordered = useMemo(
+    () => [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [sessions],
+  );
+
+  const handleResume = useCallback(
+    (session: SessionEntry): void => {
+      setActiveSession(session.sessionId);
+      router.navigate({
+        pathname: '/(tabs)/swipe/[playlistId]',
+        params: { playlistId: session.sourcePlaylistId },
+      });
+    },
+    [setActiveSession, router],
+  );
+
+  const handleRemoveTrack = useCallback(
+    async (session: SessionEntry, swipedAt: string): Promise<void> => {
+      const record = session.likedSwipes.find((r) => r.swipedAt === swipedAt);
+      if (!record) return;
       setRemovingIds((prev) => new Set(prev).add(swipedAt));
-
       try {
-        const adapter = getAdapter();
-        const writer = new PlaylistWriter(adapter);
-
-        // Remove from regular playlists — this gates the UI update.
+        const writer = new PlaylistWriter(getAdapter());
+        // Remove from regular playlists first — this gates the history update.
         const regularIds = record.destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
-        await writer.undoWriteAsync(trackId, regularIds);
+        await writer.undoWriteAsync(record.track.id, regularIds);
 
-        // Remove from persistent history — only reached if regular undo succeeded.
-        removeFromHistory(swipedAt);
+        removeSwipeFromSession(session.sessionId, swipedAt);
 
         // Best-effort: also remove from Liked Songs if we added it this session.
-        // Runs after UI update so a failure here never aborts the visible removal.
         if (record.likedSongsWrittenByUs === true) {
-          writer.undoWriteAsync(trackId, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
-            console.warn('[Matches] removeFromLikedSongs failed:', err);
+          writer.undoWriteAsync(record.track.id, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
+            console.warn('[History] removeFromLikedSongs failed:', err);
           });
         }
       } catch {
@@ -182,164 +84,114 @@ export default function MatchesScreen(): React.ReactElement {
         });
       }
     },
-    [removeFromHistory],
+    [removeSwipeFromSession],
+  );
+
+  // Red Delete action revealed by swiping a card left. Closes the row, then opens the
+  // confirmation modal (the actual delete happens on confirm). Uses the classic (Animated-
+  // based) Swipeable — ReanimatedSwipeable in this RNGH version reads shared values during
+  // render, which warns and freezes the JS thread when a row is removed mid-animation.
+  const renderRightActions = useCallback(
+    (session: SessionEntry) =>
+      // This is a Swipeable render-prop callback, not a React component definition.
+      // eslint-disable-next-line react/display-name
+      (
+        _progress: Animated.AnimatedInterpolation<number>,
+        _drag: Animated.AnimatedInterpolation<number>,
+        swipeable: Swipeable,
+      ): React.ReactElement => (
+        <Pressable
+          style={styles.deleteAction}
+          onPress={() => {
+            swipeable.close();
+            setPendingDelete(session);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Delete session"
+        >
+          <Ionicons name="trash-outline" size={22} color="#fff" />
+          <Text style={styles.deleteActionText}>Delete</Text>
+        </Pressable>
+      ),
+    [],
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ListItem }) => {
-      if (item.type === 'header') return <SessionDivider item={item} />;
-      return (
-        <TrackRow
-          item={item.record}
-          isRemoving={removingIds.has(item.record.swipedAt)}
-          onRemove={(record) => void handleRemove(record)}
+    ({ item }: { item: SessionEntry }) => (
+      <Swipeable
+        renderRightActions={renderRightActions(item)}
+        rightThreshold={40}
+        friction={2}
+        overshootRight={false}
+      >
+        <SessionCard
+          session={item}
+          isExpanded={expandedId === item.sessionId}
+          onToggleExpand={() =>
+            setExpandedId((prev) => (prev === item.sessionId ? null : item.sessionId))
+          }
+          onResume={() => handleResume(item)}
+          onRemoveTrack={(swipedAt) => void handleRemoveTrack(item, swipedAt)}
+          removingIds={removingIds}
         />
-      );
-    },
-    [removingIds, handleRemove],
+      </Swipeable>
+    ),
+    [expandedId, removingIds, handleResume, handleRemoveTrack, renderRightActions],
   );
-
-  const keyExtractor = useCallback((item: ListItem) => item.key, []);
 
   return (
     <View style={styles.container}>
       <TabHeader title="History" />
-
       <FlatList
-        data={listData}
-        keyExtractor={keyExtractor}
+        data={ordered}
+        keyExtractor={(item) => item.sessionId}
         renderItem={renderItem}
-        contentContainerStyle={
-          matches.length === 0 ? styles.emptyContainer : styles.listContent
-        }
+        contentContainerStyle={ordered.length === 0 ? styles.emptyContainer : styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No liked tracks yet</Text>
+            <Text style={styles.emptyText}>No sessions yet</Text>
           </View>
         }
+      />
+
+      <AppModal
+        visible={pendingDelete !== null}
+        title="Delete this session?"
+        message={
+          pendingDelete
+            ? `This removes the "${pendingDelete.sourcePlaylistName}" session and its ${pendingDelete.likedSwipes.length} saved like${pendingDelete.likedSwipes.length === 1 ? '' : 's'} from your History on this device.`
+            : ''
+        }
+        warning="Tracks already added to your Spotify playlists are not affected."
+        confirmLabel="Delete"
+        confirmDestructive
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          if (pendingDelete) deleteSession(pendingDelete.sessionId);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
       />
     </View>
   );
 }
 
-const dividerStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  line: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  pill: {
-    alignItems: 'center',
-    gap: 2,
-    maxWidth: '70%',
-  },
-  source: {
-    fontSize: 12,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurface,
-    textAlign: 'center',
-  },
-  dest: {
-    fontSize: 11,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  date: {
-    fontSize: 10,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.outlineVariant,
-    textAlign: 'center',
-    marginTop: 1,
-  },
-});
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingVertical: spacing.sm,
-  },
-  emptyContainer: {
-    flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
+  container: { flex: 1, backgroundColor: colors.background },
+  listContent: { paddingVertical: spacing.sm },
+  emptyContainer: { flex: 1 },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  emptyText: { color: colors.onSurfaceVariant, fontSize: 16, fontFamily: 'Outfit_400Regular' },
+  // Aligned to the card's right inset + bottom gap so the red action matches the card.
+  deleteAction: {
+    backgroundColor: colors.nope,
     justifyContent: 'center',
-    paddingTop: 80,
-  },
-  emptyText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 16,
-    fontFamily: 'Outfit_400Regular',
-  },
-  row: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  thumbnail: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  trackInfo: {
-    flex: 1,
     gap: 4,
+    width: 84,
+    marginRight: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: radius.lg,
   },
-  trackTitle: {
-    color: colors.onSurface,
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-  },
-  trackArtist: {
-    color: colors.onSurfaceVariant,
-    fontSize: 13,
-    fontFamily: 'Outfit_400Regular',
-  },
-  badge: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeLiked: {
-    backgroundColor: 'rgba(253,41,123,0.12)',
-  },
-  badgeSuperLiked: {
-    backgroundColor: 'rgba(245,211,0,0.15)',
-  },
-  badgeIcon: {
-    fontSize: 16,
-  },
-  removeButton: {
-    backgroundColor: colors.surfaceContainerHigh,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radius.full,
-    minWidth: 72,
-    alignItems: 'center',
-  },
-  removeText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 13,
-    fontFamily: 'Outfit_600SemiBold',
-  },
+  deleteActionText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 12 },
 });

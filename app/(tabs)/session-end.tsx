@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
-import { useSwipeStore } from '@/stores/swipeStore';
+import { useSwipeStore, useActiveSession, type SessionEntry } from '@/stores/swipeStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { usePrefsStore } from '@/stores/prefsStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
@@ -29,12 +29,12 @@ interface SessionStats {
   topArtist: string;
 }
 
-function computeOptimisticStats(
-  pendingSyncSwipes: ReturnType<typeof useSwipeStore.getState>['pendingSyncSwipes'],
-): SessionStats {
-  const likedRecords = pendingSyncSwipes.filter((r) => r.status === 'liked' || r.status === 'super_liked');
+function computeOptimisticStats(session: SessionEntry | null): SessionStats {
+  if (!session) {
+    return { swipedCount: 0, likedCount: 0, superLikedCount: 0, topArtist: '' };
+  }
   const artistFreq: Record<string, number> = {};
-  for (const r of likedRecords) {
+  for (const r of session.likedSwipes) {
     const artist = r.track.artists[0] ?? r.track.artist ?? '';
     if (artist) artistFreq[artist] = (artistFreq[artist] ?? 0) + 1;
   }
@@ -44,9 +44,9 @@ function computeOptimisticStats(
     if (count > topCount) { topArtist = artist; topCount = count; }
   }
   return {
-    swipedCount: pendingSyncSwipes.length,
-    likedCount: pendingSyncSwipes.filter((r) => r.status === 'liked').length,
-    superLikedCount: pendingSyncSwipes.filter((r) => r.status === 'super_liked').length,
+    swipedCount: session.swipedCount,
+    likedCount: session.likedCount,
+    superLikedCount: session.superLikedCount,
     topArtist,
   };
 }
@@ -119,11 +119,11 @@ export default function SessionEndScreen(): React.ReactElement {
   const { destinationPlaylistIds } = useSessionStore();
   const autoRemoveDuplicates = usePrefsStore((s) => s.autoRemoveDuplicates);
 
-  const pendingSyncSwipes = useSwipeStore((s) => s.pendingSyncSwipes);
-  const clearSession = useSwipeStore((s) => s.clearSession);
-  const removeFromHistory = useSwipeStore((s) => s.removeFromHistory);
+  const activeSession = useActiveSession();
+  const completeActiveSession = useSwipeStore((s) => s.completeActiveSession);
+  const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
 
-  const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(pendingSyncSwipes));
+  const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(activeSession));
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);
@@ -139,7 +139,7 @@ export default function SessionEndScreen(): React.ReactElement {
   // mode the source IS the playlist and there are no separate destinations to clean.
   const canDedup = !isFilterMode && regularDestinationIds.length > 0;
 
-  const likedTracks = pendingSyncSwipes.filter((r) => r.status === 'liked' || r.status === 'super_liked');
+  const likedTracks = useMemo(() => activeSession?.likedSwipes ?? [], [activeSession]);
 
   const adapterRef = useRef<MusicPlatformAdapter | null>(null);
   const getAdapter = (): MusicPlatformAdapter => {
@@ -167,7 +167,9 @@ export default function SessionEndScreen(): React.ReactElement {
     void fetchStats();
   }, [sessionId, supabaseToken]);
 
-  useEffect(() => { return () => { clearSession(); }; }, [clearSession]);
+  // On leaving the session-end screen, mark the just-finished session completed (it stays in
+  // History as a read-only card) and clear the open-session live state.
+  useEffect(() => { return () => { completeActiveSession(); }; }, [completeActiveSession]);
 
   // Scan each destination playlist and remove duplicate tracks. Guarded by a ref so a
   // re-render (or the auto-run effect plus a manual tap) can never start it twice.
@@ -201,14 +203,14 @@ export default function SessionEndScreen(): React.ReactElement {
     try {
       const adapter = getAdapter();
       const writer = new PlaylistWriter(adapter);
-      const record = pendingSyncSwipes.find((r) => r.track.id === trackId);
+      const record = likedTracks.find((r) => r.track.id === trackId);
 
       // Remove from regular playlists — this gates the UI update.
       const regularIds = destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
       await writer.undoWriteAsync(trackId, regularIds);
 
-      // Removes from both session-end and History tab simultaneously.
-      if (record) removeFromHistory(record.swipedAt);
+      // Removes from both session-end and the History tab simultaneously (same SessionEntry).
+      if (record && activeSession) removeSwipeFromSession(activeSession.sessionId, record.swipedAt);
 
       // Best-effort: also remove from Liked Songs if we added it this session.
       if (record?.likedSongsWrittenByUs === true) {
@@ -221,8 +223,7 @@ export default function SessionEndScreen(): React.ReactElement {
     } finally {
       setRemovingIds((prev) => { const next = new Set(prev); next.delete(trackId); return next; });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destinationPlaylistIds, pendingSyncSwipes, removeFromHistory]);
+  }, [destinationPlaylistIds, likedTracks, activeSession, removeSwipeFromSession]);
 
   const handleSaveAsPlaylist = useCallback(async (): Promise<void> => {
     if (isSaving || savedPlaylistId) return;
@@ -240,7 +241,6 @@ export default function SessionEndScreen(): React.ReactElement {
     } finally {
       setIsSaving(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSaving, savedPlaylistId, sourcePlaylistName, likedTracks]);
 
   const handleSwipeAnother = useCallback(() => { router.replace('/(tabs)'); }, [router]);
