@@ -130,35 +130,25 @@ Three frontend defaults across two ports, and the backend defaults to 3000. With
 `POST /swipes` enforces idempotency by SELECT-then-INSERT (`swipes.ts:102-135`), which is racy with no DB constraint to back it. Under the app's fire-and-forget + flush model (M1), two concurrent requests for the same `(sessionId, trackId)` can both find nothing and both insert, creating duplicate swipe rows — and a real `ON CONFLICT` upsert is impossible without the constraint.
 **Fix:** add `UNIQUE (session_id, spotify_track_id)` and switch to an upsert.
 
-### M3 — Every playlist reports `trackCount: 0`
-**File:** `src/adapters/spotify/mappers.ts:77` (and the fictional `items?: { total }` type at `:47`) · **Lens:** A / C
-
-```ts
-trackCount: item.items?.total ?? 0,   // ← Spotify exposes track count at tracks.total
-```
-
-Spotify playlist objects carry the count under `tracks.total`; there is no `items` field on the object. So `mapSpotifyPlaylist` always falls back to `0`, and every playlist row / source picker shows "0 tracks". The CRUD test fixture fakes `items: { total: 10 }`, masking the field-name mismatch.
-**Fix:** read `item.tracks?.total ?? 0` and fix the `SpotifyPlaylistItem` type.
-
-### M4 — Session "Songs Sorted" stat is wrong
+### M5 — Session "Songs Sorted" stat is wrong
 **Files:** `src/services/SessionTracker.ts:63-71`, `src/swipe/SwipeEngine.tsx:224-228, 266` · **Lens:** C
 
 `incrementCounts` maps `skipped → swipedCount`, `liked → likedCount`, `superLiked → superLikedCount` — so a **liked or super-liked swipe never increments `swiped_count`**, while **decide-later increments it** (`handleDecideLater` sends `{ skipped: 1 }`, line 266). The backend `swiped_count` therefore equals *skipped + decide-later*, not total swipes. `session-end.tsx` then overwrites its correct optimistic total (`pendingSyncSwipes.length`) with this backend value, so "SONGS SORTED" under-reports (e.g. 10 swiped → shows 5) and the derived "DISCARDED" is wrong.
 **Fix:** increment `swiped_count` for every swipe (or compute it as liked+superLiked+skipped server-side) and stop counting decide-later as a skip.
 
-### M5 — Per-track destination override leaks after Decide-Later
+### M6 — Per-track destination override leaks after Decide-Later
 **File:** `src/swipe/SwipeEngine.tsx:256-267` · **Lens:** A / B
 
 `handleSwipe` clears the per-track override (`setPerTrackOverrideIds(null)`, line 239) after each swipe; `handleDecideLater` does not. If the user sets a "this track only" destination in the editor and then taps Decide Later instead of liking, the override survives onto the next card, so liking the *next* track writes it to the previous card's override destinations instead of the session default.
 **Fix:** clear `perTrackOverrideIds` in `handleDecideLater` too.
 
-### M6 — Matches read only local history, never the server
+### M7 — Matches read only local history, never the server
 **Files:** `src/matches/useMatchesStore.ts:20-36`, `app/(tabs)/matches.tsx` · **Lens:** E
 
 `useMatchesStore` derives matches solely from Zustand `likedHistory`; the History tab never reconciles with the backend, violating the documented "server is the source of truth; local cache is stale-while-revalidate only" invariant. On a new device or after `clearAuth` wipes local history, History shows nothing though the server has the data. The `fetchFromBackend` reconciler is only called by tests — and it requests `?status=liked,super_liked`, a comma value the backend's single-status validator (`swipes.ts:242`) rejects with 400, so it would not work if wired.
 **Fix:** fetch from `/swipes` on focus and merge with the optimistic cache; fix the `status` query to the backend's supported form.
 
-### M7 — Batch swipe writes are not transactional
+### M8 — Batch swipe writes are not transactional
 **File:** `backend/src/routes/swipes.ts:142-184` · **Lens:** B / E
 
 A batch inserts `swipes`, then loops inserting `swipe_destinations` per row. A failure partway (e.g. a bad destination id, see L2) returns 500 after some swipe rows and only some destinations are committed, leaving partial state that relies on the client retrying to self-heal. Supabase-js can't do multi-statement transactions inline — this needs a Postgres function/RPC.

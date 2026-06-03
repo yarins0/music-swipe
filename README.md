@@ -11,7 +11,7 @@ MusicSwipe uses the Spotify Web API. While the app is in **development mode** (n
 **To add a tester:**
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) → your app → **Settings** → **User Management**
 2. Add the user's Spotify email address
-3. Limit: **25 users** in development mode (Spotify's quota)
+3. Limit: **5 users** in development mode (Spotify's quota)
 
 Additionally, the Spotify API **only returns playlists owned by the authenticated user** (or those they follow). Playlists owned by other users cannot be accessed as a source or destination unless the authenticated user follows them. This is a Spotify platform constraint, not a bug.
 
