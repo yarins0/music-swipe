@@ -1,7 +1,7 @@
 /**
  * SessionTracker manages the lifecycle of a swipe session against the backend API.
  * openSession creates the session and returns its id.
- * closeSession and incrementCounts are fire-and-forget — they do not block the swipe UI.
+ * closeSession is fire-and-forget — it does not block the swipe UI.
  */
 export class SessionTracker {
   constructor(
@@ -49,40 +49,4 @@ export class SessionTracker {
     });
   }
 
-  /**
-   * Increments swipe-count fields for a session.
-   * Only fields with a non-zero delta value are included in the PATCH body.
-   * Fire-and-forget — errors are only logged.
-   */
-  incrementCounts(
-    sessionId: string,
-    delta: { liked?: number; skipped?: number; superLiked?: number },
-  ): void {
-    const body: Record<string, number> = {};
-
-    if (delta.liked) {
-      body['likedCount'] = delta.liked;
-    }
-    if (delta.skipped) {
-      body['swipedCount'] = delta.skipped;
-    }
-    if (delta.superLiked) {
-      body['superLikedCount'] = delta.superLiked;
-    }
-
-    if (Object.keys(body).length === 0) {
-      return;
-    }
-
-    fetch(`${this.backendUrl}/sessions/${sessionId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.getToken()}`,
-      },
-      body: JSON.stringify(body),
-    }).catch((err: unknown) => {
-      console.warn('SessionTracker.incrementCounts failed:', err);
-    });
-  }
 }

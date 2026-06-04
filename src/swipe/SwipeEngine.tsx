@@ -19,7 +19,6 @@ import { ButtonBar } from '@/swipe/ButtonBar';
 import { DestinationEditor } from '@/swipe/DestinationEditor';
 import type { TrackPlayer } from '@/player/TrackPlayer';
 import type { PlaylistWriter } from '@/services/PlaylistWriter';
-import type { SessionTracker } from '@/services/SessionTracker';
 import type { BackendSync } from '@/services/BackendSync';
 import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { MusicPlatformAdapter, Playlist } from '@/adapters/interface';
@@ -51,7 +50,6 @@ const PREFETCH_AHEAD = 10;
 interface SwipeEngineProps {
   trackPlayer: TrackPlayer;
   playlistWriter: PlaylistWriter;
-  sessionTracker: SessionTracker;
   backendSync: BackendSync;
   /** Adapter instance — required for filter mode destructive removes. */
   adapter: MusicPlatformAdapter;
@@ -71,7 +69,6 @@ interface SwipeEngineProps {
 export function SwipeEngine({
   trackPlayer,
   playlistWriter,
-  sessionTracker,
   backendSync,
   adapter,
   sessionId,
@@ -300,12 +297,6 @@ export function SwipeEngine({
         }
       }
 
-      sessionTracker.incrementCounts(sessionId, {
-        liked: status === 'liked' ? 1 : undefined,
-        superLiked: status === 'super_liked' ? 1 : undefined,
-        skipped: status === 'skipped' ? 1 : undefined,
-      });
-
       backendSync.postSwipe({
         sessionId,
         trackId: currentTrack.id,
@@ -323,7 +314,6 @@ export function SwipeEngine({
       resolveDestNames,
       recordSwipe,
       playlistWriter,
-      sessionTracker,
       sessionId,
       backendSync,
       isFilterMode,
@@ -342,8 +332,8 @@ export function SwipeEngine({
       destinationPlaylistIds: [],
       timestamp: new Date().toISOString(),
     });
-    sessionTracker.incrementCounts(sessionId, { skipped: 1 });
-  }, [currentTrack, recordSwipe, backendSync, sessionId, sessionTracker]);
+    setPerTrackOverrideIds(null);
+  }, [currentTrack, recordSwipe, backendSync, sessionId]);
 
   const handleUndo = useCallback((): void => {
     const record = undo();

@@ -386,7 +386,10 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
               ...e,
               resumeOffset: newAbsolute,
               updatedAt: record.swipedAt,
-              swipedCount: e.swipedCount + 1,
+              // Decide-later (pending) is a deferral, not a sorted swipe, so it must not count
+              // toward swipedCount — mirrors the server-side computed stat in GET /sessions, which
+              // counts only decided (liked/super_liked/skipped) swipes.
+              swipedCount: status === 'pending' ? e.swipedCount : e.swipedCount + 1,
               likedCount: status === 'liked' ? e.likedCount + 1 : e.likedCount,
               superLikedCount: status === 'super_liked' ? e.superLikedCount + 1 : e.superLikedCount,
               likedSwipes: isLiked ? [...e.likedSwipes, record] : e.likedSwipes,
@@ -420,7 +423,9 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
             sessions: patchActiveEntry(state.sessions, state.activeSessionId, (e) => ({
               ...e,
               resumeOffset: newAbsolute,
-              swipedCount: Math.max(0, e.swipedCount - 1),
+              // Mirror recordSwipe: a pending swipe never incremented swipedCount, so undoing it
+              // must not decrement it either.
+              swipedCount: last.status === 'pending' ? e.swipedCount : Math.max(0, e.swipedCount - 1),
               likedCount: last.status === 'liked' ? Math.max(0, e.likedCount - 1) : e.likedCount,
               superLikedCount:
                 last.status === 'super_liked' ? Math.max(0, e.superLikedCount - 1) : e.superLikedCount,

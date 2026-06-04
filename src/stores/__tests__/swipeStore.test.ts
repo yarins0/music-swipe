@@ -198,6 +198,15 @@ describe('recordSwipe', () => {
     useSwipeStore.getState().recordSwipe(TRACK_C, 'liked', DEST_IDS); // fresh track
     expect(useSwipeStore.getState().absoluteIndex).toBe(1);
   });
+
+  it('does not count a pending (decide-later) swipe toward swipedCount, and undo of pending leaves it unchanged', () => {
+    useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
+    useSwipeStore.getState().recordSwipe(TRACK_B, 'pending', []);
+    // Only the decided (liked) swipe counts; the decide-later deferral does not.
+    expect(activeEntry().swipedCount).toBe(1);
+    useSwipeStore.getState().undo(); // undo the pending swipe
+    expect(activeEntry().swipedCount).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -663,7 +663,6 @@ export default function SwipeScreen(): React.ReactElement {
     <SwipeEngine
       trackPlayer={trackPlayerRef.current!}
       playlistWriter={playlistWriterRef.current!}
-      sessionTracker={sessionTrackerRef.current!}
       backendSync={backendSyncRef.current!}
       adapter={adapterRef.current!}
       sessionId={sessionId}

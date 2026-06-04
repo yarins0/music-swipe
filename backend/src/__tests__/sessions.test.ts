@@ -163,10 +163,11 @@ describe('GET /sessions/:id', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 200 with camelCase session stats for own session', async () => {
+  it('returns 200 with computed counts from swipes table for own session', async () => {
     authenticateAs();
 
-    const mockSelectChain = {
+    // First from() call: session ownership check
+    const mockSessionChain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
@@ -176,14 +177,36 @@ describe('GET /sessions/:id', () => {
           source_playlist_id: PLAYLIST_ID,
           started_at: '2026-01-01T10:00:00Z',
           ended_at: '2026-01-01T10:30:00Z',
-          swiped_count: 20,
-          liked_count: 12,
-          super_liked_count: 3,
         },
         error: null,
       }),
     };
-    mockFrom.mockReturnValue(mockSelectChain);
+
+    // Second from() call: swipes status query.
+    // Mix: 5 liked, 2 super_liked, 3 skipped, 1 pending.
+    // Expected: swipedCount = 10 (liked+super_liked+skipped), likedCount = 5,
+    //           superLikedCount = 2. Pending is excluded.
+    const mockSwipesChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockResolvedValue({
+        data: [
+          { status: 'liked' },
+          { status: 'liked' },
+          { status: 'liked' },
+          { status: 'liked' },
+          { status: 'liked' },
+          { status: 'super_liked' },
+          { status: 'super_liked' },
+          { status: 'skipped' },
+          { status: 'skipped' },
+          { status: 'skipped' },
+          { status: 'pending' }, // must NOT be counted
+        ],
+        error: null,
+      }),
+    };
+
+    mockFrom.mockReturnValueOnce(mockSessionChain).mockReturnValueOnce(mockSwipesChain);
 
     const app = buildApp();
     const res = await request(app)
@@ -196,9 +219,51 @@ describe('GET /sessions/:id', () => {
       sourcePlaylistId: PLAYLIST_ID,
       startedAt: '2026-01-01T10:00:00Z',
       endedAt: '2026-01-01T10:30:00Z',
-      swipedCount: 20,
-      likedCount: 12,
-      superLikedCount: 3,
+      swipedCount: 10,
+      likedCount: 5,
+      superLikedCount: 2,
+    });
+  });
+
+  it('returns 200 with all-zero counts when there are no decided swipes', async () => {
+    authenticateAs();
+
+    const mockSessionChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          id: SESSION_ID,
+          user_id: VALID_USER_ID,
+          source_playlist_id: PLAYLIST_ID,
+          started_at: '2026-01-01T10:00:00Z',
+          ended_at: null,
+        },
+        error: null,
+      }),
+    };
+
+    // Only pending swipes — all counts must be 0
+    const mockSwipesChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockResolvedValue({
+        data: [{ status: 'pending' }, { status: 'pending' }],
+        error: null,
+      }),
+    };
+
+    mockFrom.mockReturnValueOnce(mockSessionChain).mockReturnValueOnce(mockSwipesChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      swipedCount: 0,
+      likedCount: 0,
+      superLikedCount: 0,
     });
   });
 
@@ -246,7 +311,7 @@ describe('GET /sessions/:id', () => {
     expect(res.body).toMatchObject({ error: 'Session not found' });
   });
 
-  it('returns 500 when the database fetch fails', async () => {
+  it('returns 500 when the session database fetch fails', async () => {
     authenticateAs();
 
     const mockSelectChain = {
@@ -266,6 +331,43 @@ describe('GET /sessions/:id', () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: 'Failed to fetch session' });
+  });
+
+  it('returns 500 when the swipes database fetch fails', async () => {
+    authenticateAs();
+
+    const mockSessionChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          id: SESSION_ID,
+          user_id: VALID_USER_ID,
+          source_playlist_id: PLAYLIST_ID,
+          started_at: '2026-01-01T10:00:00Z',
+          ended_at: null,
+        },
+        error: null,
+      }),
+    };
+
+    const mockSwipesChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockResolvedValue({
+        data: null,
+        error: new Error('Swipes DB error'),
+      }),
+    };
+
+    mockFrom.mockReturnValueOnce(mockSessionChain).mockReturnValueOnce(mockSwipesChain);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/sessions/${SESSION_ID}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toMatchObject({ error: 'Failed to fetch session swipes' });
   });
 });
 
@@ -301,7 +403,7 @@ describe('PATCH /sessions/:id', () => {
     const res = await request(app)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
-      .send({ swipedCount: 10 });
+      .send({ endedAt: new Date().toISOString() });
 
     expect(res.status).toBe(404);
     expect(res.body).toMatchObject({ error: 'Session not found' });
@@ -324,7 +426,7 @@ describe('PATCH /sessions/:id', () => {
     const res = await request(app)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
-      .send({ swipedCount: 10 });
+      .send({ endedAt: new Date().toISOString() });
 
     expect(res.status).toBe(404);
   });
@@ -352,7 +454,7 @@ describe('PATCH /sessions/:id', () => {
     expect(res.body).toMatchObject({ error: 'No updatable fields provided' });
   });
 
-  it('returns 200 { ok: true } when update succeeds', async () => {
+  it('returns 200 { ok: true } when endedAt is provided', async () => {
     authenticateAs();
 
     const endedAt = new Date().toISOString();
@@ -379,47 +481,11 @@ describe('PATCH /sessions/:id', () => {
     const res = await request(app)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
-      .send({ endedAt, swipedCount: 15, likedCount: 8, superLikedCount: 2 });
+      .send({ endedAt });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
-    expect(mockUpdateChain.update).toHaveBeenCalledWith({
-      ended_at: endedAt,
-      swiped_count: 15,
-      liked_count: 8,
-      super_liked_count: 2,
-    });
-  });
-
-  it('returns 200 when only some fields are provided', async () => {
-    authenticateAs();
-
-    const mockSelectChain = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({
-        data: { id: SESSION_ID, user_id: VALID_USER_ID },
-        error: null,
-      }),
-    };
-
-    const mockUpdateChain = {
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({ error: null }),
-    };
-
-    mockFrom.mockReturnValueOnce(mockSelectChain).mockReturnValueOnce(mockUpdateChain);
-
-    const app = buildApp();
-    const res = await request(app)
-      .patch(`/sessions/${SESSION_ID}`)
-      .set('Authorization', VALID_TOKEN)
-      .send({ likedCount: 5 });
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true });
-    // Only liked_count should be in the update payload
-    expect(mockUpdateChain.update).toHaveBeenCalledWith({ liked_count: 5 });
+    expect(mockUpdateChain.update).toHaveBeenCalledWith({ ended_at: endedAt });
   });
 
   it('returns 500 when fetch fails with a database error', async () => {
@@ -439,7 +505,7 @@ describe('PATCH /sessions/:id', () => {
     const res = await request(app)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
-      .send({ swipedCount: 5 });
+      .send({ endedAt: new Date().toISOString() });
 
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: 'Failed to fetch session' });
@@ -468,7 +534,7 @@ describe('PATCH /sessions/:id', () => {
     const res = await request(app)
       .patch(`/sessions/${SESSION_ID}`)
       .set('Authorization', VALID_TOKEN)
-      .send({ swipedCount: 5 });
+      .send({ endedAt: new Date().toISOString() });
 
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: 'Failed to update session' });

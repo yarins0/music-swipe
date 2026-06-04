@@ -11,9 +11,6 @@ interface CreateSessionBody {
 
 interface UpdateSessionBody {
   endedAt?: unknown;
-  swipedCount?: unknown;
-  likedCount?: unknown;
-  superLikedCount?: unknown;
 }
 
 // POST /sessions
@@ -48,12 +45,12 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
 
 // PATCH /sessions/:id
 // Updates an existing session owned by the authenticated user.
-// Body: { endedAt?: string, swipedCount?: number, likedCount?: number, superLikedCount?: number }
+// Body: { endedAt?: string }
 // Returns: 200 { ok: true }
 // Returns 404 if the session does not exist or belongs to a different user.
 router.patch('/:id', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { endedAt, swipedCount, likedCount, superLikedCount } = req.body as UpdateSessionBody;
+  const { endedAt } = req.body as UpdateSessionBody;
 
   // Fetch the session to verify ownership
   const { data: session, error: fetchError } = await supabase
@@ -79,15 +76,6 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response): Promise<v
   if (endedAt !== undefined) {
     updatePayload['ended_at'] = endedAt;
   }
-  if (swipedCount !== undefined) {
-    updatePayload['swiped_count'] = swipedCount;
-  }
-  if (likedCount !== undefined) {
-    updatePayload['liked_count'] = likedCount;
-  }
-  if (superLikedCount !== undefined) {
-    updatePayload['super_liked_count'] = superLikedCount;
-  }
 
   if (Object.keys(updatePayload).length === 0) {
     res.status(400).json({ error: 'No updatable fields provided' });
@@ -110,13 +98,14 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response): Promise<v
 
 // GET /sessions/:id
 // Returns a session owned by the authenticated user including swipe stats.
+// Counts are computed live from the swipes table so they are always accurate.
 // Returns 404 if the session does not exist or belongs to a different user.
 router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const { data: session, error } = await supabase
     .from('sessions')
-    .select('id, user_id, source_playlist_id, started_at, ended_at, swiped_count, liked_count, super_liked_count')
+    .select('id, user_id, source_playlist_id, started_at, ended_at')
     .eq('id', id)
     .maybeSingle();
 
@@ -131,14 +120,44 @@ router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<voi
     return;
   }
 
+  // Compute counts from the swipes table. Only decided statuses (liked, super_liked,
+  // skipped) contribute to swipedCount; pending swipes are excluded because the user
+  // has not yet made a final decision on them.
+  const { data: swipes, error: swipesError } = await supabase
+    .from('swipes')
+    .select('status')
+    .eq('session_id', id);
+
+  if (swipesError) {
+    console.error('GET /sessions/:id swipes fetch error:', swipesError);
+    res.status(500).json({ error: 'Failed to fetch session swipes' });
+    return;
+  }
+
+  let swipedCount = 0;
+  let likedCount = 0;
+  let superLikedCount = 0;
+  for (const swipe of swipes ?? []) {
+    if (swipe.status === 'liked') {
+      swipedCount++;
+      likedCount++;
+    } else if (swipe.status === 'super_liked') {
+      swipedCount++;
+      superLikedCount++;
+    } else if (swipe.status === 'skipped') {
+      swipedCount++;
+    }
+    // 'pending' is intentionally excluded from all counts
+  }
+
   res.json({
     id: session.id,
     sourcePlaylistId: session.source_playlist_id,
     startedAt: session.started_at,
     endedAt: session.ended_at,
-    swipedCount: session.swiped_count,
-    likedCount: session.liked_count,
-    superLikedCount: session.super_liked_count,
+    swipedCount,
+    likedCount,
+    superLikedCount,
   });
 });
 

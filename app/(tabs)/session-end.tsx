@@ -9,9 +9,8 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/stores/authStore';
 import { useSwipeStore, useActiveSession, type SessionEntry } from '@/stores/swipeStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { usePrefsStore } from '@/stores/prefsStore';
@@ -20,7 +19,6 @@ import { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { colors, spacing, radius } from '@/theme';
-import { BACKEND_URL } from '@/config';
 
 interface SessionStats {
   swipedCount: number;
@@ -109,11 +107,9 @@ function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false
 // ---------------------------------------------------------------------------
 
 export default function SessionEndScreen(): React.ReactElement {
-  const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const isFilterMode = useSessionStore((s) => s.isFilterMode);
   const { destinationPlaylistIds } = useSessionStore();
@@ -146,26 +142,6 @@ export default function SessionEndScreen(): React.ReactElement {
     if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
     return adapterRef.current;
   };
-
-  useEffect(() => {
-    if (!sessionId || !supabaseToken) return;
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
-          headers: { Authorization: `Bearer ${supabaseToken}` },
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as { swipe_count?: number; liked_count?: number; super_liked_count?: number };
-        setStats((prev) => ({
-          ...prev,
-          swipedCount: data.swipe_count ?? prev.swipedCount,
-          likedCount: data.liked_count ?? prev.likedCount,
-          superLikedCount: data.super_liked_count ?? prev.superLikedCount,
-        }));
-      } catch { /* keep optimistic counts */ }
-    };
-    void fetchStats();
-  }, [sessionId, supabaseToken]);
 
   // On leaving the session-end screen, mark the just-finished session completed (it stays in
   // History as a read-only card) and clear the open-session live state.
