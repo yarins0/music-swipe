@@ -29,7 +29,15 @@ export class BackendSync {
     this.pending.push(payload);
 
     // Fire-and-forget: kick off a single-element flush immediately.
-    this.sendBatch([payload]).catch((err: unknown) => {
+    // On success, remove the payload from pending so flushPending() does
+    // not re-send it. On failure, leave it in pending so the next
+    // flushPending() retries it.
+    this.sendBatch([payload]).then(() => {
+      const index = this.pending.indexOf(payload);
+      if (index !== -1) {
+        this.pending.splice(index, 1);
+      }
+    }).catch((err: unknown) => {
       console.warn('[BackendSync] postSwipe failed:', err);
     });
   }

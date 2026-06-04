@@ -171,5 +171,47 @@ describe('BackendSync', () => {
       await sync.flushPending();
       expect(fetchMock2).not.toHaveBeenCalled();
     });
+
+    // -------------------------------------------------------------------------
+    // M1 regression: successful postSwipe must NOT be re-sent by flushPending
+    // -------------------------------------------------------------------------
+
+    it('does not re-send a successfully posted swipe on flushPending', async () => {
+      // postSwipe fires and resolves — the payload is removed from pending.
+      global.fetch = mockFetch(200, { inserted: 1, updated: 0 });
+      sync.postSwipe(makePayload({ trackId: 'track-ok' }));
+
+      // Drain microtasks so the .then() cleanup runs and removes the payload.
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // flushPending must be a no-op: nothing left in the queue.
+      const flushMock = jest.fn();
+      global.fetch = flushMock;
+      await sync.flushPending();
+
+      expect(flushMock).not.toHaveBeenCalled();
+    });
+
+    it('retries a failed postSwipe when flushPending is called', async () => {
+      // postSwipe fires and rejects — the payload stays in pending.
+      global.fetch = mockFetch(500, { error: 'server error' });
+      sync.postSwipe(makePayload({ trackId: 'track-fail' }));
+
+      // Drain microtasks so the .catch() runs (payload stays in pending).
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // flushPending must send the still-pending payload.
+      const retryMock = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = retryMock;
+      await sync.flushPending();
+
+      expect(retryMock).toHaveBeenCalledTimes(1);
+      const [, init] = retryMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: unknown[] };
+      expect(body.swipes).toHaveLength(1);
+      expect(body.swipes[0]).toMatchObject({ spotifyTrackId: 'track-fail' });
+    });
   });
 });
