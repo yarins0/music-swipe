@@ -31,6 +31,29 @@ Verification: full suite 325/325 pass; `tsc --noEmit` exits 0; changed files lin
 
 ---
 
+## Fixes applied (2026-06-04)
+
+Second pass — the medium/low items that survived the `de9950e` multi-session refactor, plus M5. All committed on `main`.
+
+- **M1 — `BackendSync` re-sends every swipe** ✅ `postSwipe` removes a payload from the pending queue once its individual send resolves, so `flushPending` no longer re-POSTs already-sent swipes; failed sends stay queued for the next flush. (`src/services/BackendSync.ts`) — `0a8c70e`
+- **M2 — `swipes` has no `UNIQUE(session_id, spotify_track_id)`** ✅ Added the constraint and switched `POST /swipes` to upsert on it (removing the racy SELECT-then-INSERT). (`backend/src/db/schema.sql`, migration `0001`) — `fb81c8b`
+- **M5 — Session "Songs Sorted" stat is wrong** ✅ Root cause ran deeper than first diagnosed: `PATCH /sessions` **SET** each count to the per-swipe delta (so the stored column never accumulated), and `session-end.tsx` read `data.swipe_count` while `GET /sessions` returns `swipedCount` (camelCase) — making the client overwrite already a silent no-op. Fix (chosen approach: compute server-side): `GET /sessions` derives swiped/liked/super-liked counts from the `swipes` table (decided swipes only; `pending` excluded); the client drops `incrementCounts` and trusts the local `SessionEntry`; `swipeStore.recordSwipe`/`undo` stop counting decide-later toward `swipedCount` so local matches the server. (`backend/src/routes/sessions.ts`, `src/services/SessionTracker.ts`, `src/swipe/SwipeEngine.tsx`, `app/(tabs)/swipe/[playlistId].tsx`, `app/(tabs)/session-end.tsx`, `src/stores/swipeStore.ts`) — `66b90c5`
+- **M6 — Per-track destination override leaks after Decide-Later** ✅ `handleDecideLater` now clears `perTrackOverrideIds`, mirroring `handleSwipe`. (`src/swipe/SwipeEngine.tsx`) — `66b90c5`
+- **M8 — Batch swipe writes are not transactional** ✅ `POST /swipes` writes via a single transactional `upsert_swipes` Postgres function; a mid-batch failure can no longer leave partial rows. (`backend/src/routes/swipes.ts`, migration `0001`) — `fb81c8b`
+- **L2 — Backend doesn't validate `destinationPlaylistIds` element types** ✅ Rejects any element that is not a non-empty string. (`backend/src/routes/swipes.ts`) — `fb81c8b`
+- **L3 — Duplicated retry/guard logic + theme-bypassing colors** ✅ Extracted one shared RATE_LIMITED retry helper and one Liked-Songs guard helper in `PlaylistWriter`; re-themed `DestinationEditor` to `theme.ts` tokens (Spotify green → `colors.primary`; dark sheet → `colors.surface`). (`src/services/PlaylistWriter.ts` — `af5a5e1`; `src/swipe/DestinationEditor.tsx` — `b6c175f`)
+
+**Deferred (by decision):**
+
+- **M7 — Matches read only local history, never the server** — intentionally deferred: the `de9950e` refactor made client/AsyncStorage the source of truth for session history this round; server reconciliation is revisited when backend session persistence is built.
+- **L1 — `swipedAt` used as record identity** — deferred pending a decision on the id source + back-compat for records already persisted in AsyncStorage.
+
+**Migration required:** `backend/src/db/migrations/0001_swipes_unique_and_upsert_fn.sql` must be applied on Supabase (pre-dedup → add `UNIQUE` constraint → create `upsert_swipes`) before deploy; unit tests mock the RPC, so they pass without it.
+
+Verification: backend 61/61, mobile 354/354; `tsc --noEmit` exits 0; changed files lint clean.
+
+---
+
 ## Summary
 
 15 findings survived verification: **5 high**, **7 medium**, **3 low/cleanup**. The two highest-impact bugs are both in the swipe hot path: **both segment-seek handlers are broken** (tap-left always restarts the track; tap-right jumps to a fixed 20 s), and **the playlist-write retry queue permanently abandons any write that fails once** (a like silently lost forever). A third class worth verifying against the live Spotify API: the **Liked-Songs / saved-tracks adapter methods call `/me/library?uris=`**, which does not match Spotify's documented saved-tracks API (`/me/tracks?ids=`) — and because `PlaylistWriter` swallows the resulting error, the failure is invisible.
