@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import type { Playlist } from '@/adapters/interface';
+import { colors } from '@/theme';
 
 type Scope = 'this-track' | 'from-now-on' | 'entire-session';
 
@@ -220,7 +221,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
-    backgroundColor: '#1a1a2e',
+    // Bottom sheet is an elevated surface — matches card/modal convention in session-end.tsx
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
@@ -235,7 +237,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#ffffff',
+    color: colors.onSurface,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeIcon: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.onSurfaceVariant,
     fontSize: 18,
   },
   scopeRow: {
@@ -261,23 +263,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: colors.outlineVariant,
     alignItems: 'center',
   },
   scopeButtonActive: {
-    borderColor: '#1db954',
-    backgroundColor: 'rgba(29,185,84,0.12)',
+    borderColor: colors.primary,
+    // Semi-transparent primary tint — no dedicated subtle-primary token exists in theme.ts.
+    // rgba derived directly from colors.primary (#fd297b) at 10% opacity.
+    backgroundColor: 'rgba(253,41,123,0.10)',
   },
   scopeLabel: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.onSurfaceVariant,
     fontSize: 12,
     fontWeight: '500',
   },
   scopeLabelActive: {
-    color: '#1db954',
+    color: colors.primary,
   },
   scopeDescription: {
-    color: 'rgba(255,255,255,0.45)',
+    color: colors.onSurfaceVariant,
     fontSize: 12,
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -302,22 +306,23 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#1db954',
-    borderColor: '#1db954',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   checkmark: {
-    color: '#ffffff',
+    // Text sitting directly on a primary-colored surface — matches ctaPrimaryText convention in session-end.tsx
+    color: '#fff',
     fontSize: 13,
     fontWeight: '700',
   },
   playlistName: {
     flex: 1,
-    color: '#ffffff',
+    color: colors.onSurface,
     fontSize: 15,
   },
   confirmBox: {
@@ -329,7 +334,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   confirmText: {
-    color: '#ffffff',
+    color: colors.onSurface,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -344,10 +349,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surfaceContainerHigh,
   },
   cancelButtonText: {
-    color: '#ffffff',
+    color: colors.onSurface,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -355,20 +360,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,60,60,0.8)',
   },
   removeButtonText: {
-    color: '#ffffff',
+    // Text on a red destructive surface — no semantic token; '#fff' matches convention
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
   confirmPrimary: {
     marginHorizontal: 20,
     marginTop: 16,
-    backgroundColor: '#1db954',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   confirmPrimaryText: {
-    color: '#ffffff',
+    // Text sitting directly on a primary-colored surface — matches ctaPrimaryText convention in session-end.tsx
+    color: '#fff',
     fontSize: 16,
     fontWeight: '700',
   },
