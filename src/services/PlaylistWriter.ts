@@ -109,16 +109,19 @@ export class PlaylistWriter {
     await this.persistQueue(next);
   }
 
-  // Retries fn up to MAX_ATTEMPTS times, only on RATE_LIMITED errors.
-  // Uses exponential backoff with jitter. Never throws to caller.
-  // Returns true when fn succeeded, false when all retries were exhausted or a
-  // non-retryable error was encountered — lets the caller decide what to do with
-  // persisted queue state.
-  private async executeWithBackoff(
+  // Core retry loop shared by executeWithBackoff and drainStoredQueue.
+  // Calls fn on each attempt, starting from startAttempt, retrying only on RATE_LIMITED.
+  // Uses exponential backoff with jitter between attempts.
+  // onNonRetryable is invoked (once) when a non-RATE_LIMITED error terminates the loop.
+  // onExhausted is invoked (once) when MAX_ATTEMPTS is reached without success.
+  // Returns true on success, false on any early exit.
+  private static async retryLoop(
     fn: () => Promise<void>,
-    context: WriteErrorContext,
+    startAttempt: number,
+    onNonRetryable: (error: unknown) => void,
+    onExhausted: (error: unknown) => void,
   ): Promise<boolean> {
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    for (let attempt = startAttempt; attempt < MAX_ATTEMPTS; attempt++) {
       try {
         await fn();
         return true;
@@ -127,14 +130,13 @@ export class PlaylistWriter {
           error instanceof PlatformError && error.code === PlatformErrorCode.RATE_LIMITED;
 
         if (!isRateLimited) {
-          // Non-retryable error — surface it (don't swallow) and exit immediately
-          this.reportWriteError(error, context);
+          onNonRetryable(error);
           return false;
         }
 
         const isLastAttempt = attempt === MAX_ATTEMPTS - 1;
         if (isLastAttempt) {
-          console.warn('[PlaylistWriter] Max retry attempts reached after RATE_LIMITED:', error);
+          onExhausted(error);
           return false;
         }
 
@@ -144,6 +146,40 @@ export class PlaylistWriter {
       }
     }
     return false;
+  }
+
+  // Retries fn up to MAX_ATTEMPTS times, only on RATE_LIMITED errors.
+  // Uses exponential backoff with jitter. Never throws to caller.
+  // Returns true when fn succeeded, false when all retries were exhausted or a
+  // non-retryable error was encountered — lets the caller decide what to do with
+  // persisted queue state.
+  private async executeWithBackoff(
+    fn: () => Promise<void>,
+    context: WriteErrorContext,
+  ): Promise<boolean> {
+    return PlaylistWriter.retryLoop(
+      fn,
+      /* startAttempt */ 0,
+      /* onNonRetryable */ (error) => {
+        // Non-retryable error — surface it (don't swallow) and exit immediately
+        this.reportWriteError(error, context);
+      },
+      /* onExhausted */ (error) => {
+        console.warn('[PlaylistWriter] Max retry attempts reached after RATE_LIMITED:', error);
+      },
+    );
+  }
+
+  // Checks whether the given track already exists in the user's library before any
+  // write attempt. Conservative default: if isInLibrary throws, the result is true
+  // (pre-existing), so an undo can never accidentally remove a track the user already
+  // had liked before this session.
+  // Also ensures libraryWrittenIds is loaded from storage before the check.
+  private async isTrackPreExistingInLibrary(trackId: string): Promise<boolean> {
+    await this.ensureLibraryWrittenIdsLoaded();
+    let preExisting = true;
+    try { preExisting = await this.adapter.isInLibrary(trackId); } catch { /* keep conservative */ }
+    return preExisting;
   }
 
   // Fires addToPlaylist for each destination in parallel — fire-and-forget (no await at call site).
@@ -161,12 +197,11 @@ export class PlaylistWriter {
       // isInLibrary check runs on every like (no stale skip), so a track the user
       // removed from their library between sessions is re-saved.
       if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-        await this.ensureLibraryWrittenIdsLoaded();
-
-        // Conservative default: if the check throws, assume pre-existing so undo
-        // never accidentally removes a track the user already had liked.
-        let preExisting = true;
-        try { preExisting = await this.adapter.isInLibrary(trackId); } catch { /* keep conservative */ }
+        // Conservative default: if the check throws, isTrackPreExistingInLibrary
+        // returns true — undo can never accidentally remove a track the user already
+        // had liked. The live check runs every time, so a track the user removed from
+        // their library between sessions is re-saved.
+        const preExisting = await this.isTrackPreExistingInLibrary(trackId);
 
         // If the track was already in Liked Songs, leave it untouched. We never
         // write it, so libraryWrittenIds never records it, and undo can never remove it.
@@ -275,16 +310,10 @@ export class PlaylistWriter {
   superLike(trackId: string, destinationIds: string[]): void {
     this.write(trackId, destinationIds);
     void (async () => {
-      await this.ensureLibraryWrittenIdsLoaded();
-      // No stale skip: the live isInLibrary check below decides every time, so a
-      // track removed from the library between sessions is re-saved.
-      let preExisting = true;
-      try {
-        preExisting = await this.adapter.isInLibrary(trackId);
-      } catch {
-        // If the check fails, treat as pre-existing — conservative: never risk
-        // removing a track the user already had liked before the super-like.
-      }
+      // No stale skip: the live isInLibrary check inside isTrackPreExistingInLibrary
+      // decides every time, so a track removed from the library between sessions is
+      // re-saved. Conservative default: treat as pre-existing on check failure.
+      const preExisting = await this.isTrackPreExistingInLibrary(trackId);
 
       // If already liked, leave it untouched — same logic as write() for Liked Songs.
       if (preExisting) return;
@@ -323,37 +352,21 @@ export class PlaylistWriter {
     const remaining: PendingWrite[] = [];
 
     for (const entry of queue) {
-      let succeeded = false;
-
-      for (let attempt = entry.attempts; attempt < MAX_ATTEMPTS; attempt++) {
-        try {
-          await adapter.addToPlaylist(entry.playlistId, entry.trackId);
-          succeeded = true;
-          break;
-        } catch (error) {
-          const isRateLimited =
-            error instanceof PlatformError && error.code === PlatformErrorCode.RATE_LIMITED;
-
-          if (!isRateLimited) {
-            console.warn(
-              `[PlaylistWriter] drainStoredQueue non-retryable error for trackId=${entry.trackId}:`,
-              error,
-            );
-            break;
-          }
-
-          const isLastAttempt = attempt === MAX_ATTEMPTS - 1;
-          if (isLastAttempt) {
-            console.warn(
-              `[PlaylistWriter] drainStoredQueue exhausted retries for trackId=${entry.trackId}`,
-            );
-            break;
-          }
-
-          const delay = BASE_DELAY_MS * Math.pow(2, attempt) + Math.random() * 200;
-          await new Promise<void>((resolve) => setTimeout(resolve, delay));
-        }
-      }
+      const succeeded = await PlaylistWriter.retryLoop(
+        () => adapter.addToPlaylist(entry.playlistId, entry.trackId),
+        /* startAttempt */ entry.attempts,
+        /* onNonRetryable */ (error) => {
+          console.warn(
+            `[PlaylistWriter] drainStoredQueue non-retryable error for trackId=${entry.trackId}:`,
+            error,
+          );
+        },
+        /* onExhausted */ (_error) => {
+          console.warn(
+            `[PlaylistWriter] drainStoredQueue exhausted retries for trackId=${entry.trackId}`,
+          );
+        },
+      );
 
       if (!succeeded) {
         // Reset attempts to 0 so the next launch retries this entry from scratch.
