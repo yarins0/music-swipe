@@ -167,6 +167,18 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
       res.status(400).json({ error: `swipes[${i}].destinationPlaylistIds must be an array` });
       return;
     }
+
+    if (
+      Array.isArray(item.destinationPlaylistIds) &&
+      !(item.destinationPlaylistIds as unknown[]).every(
+        (element) => typeof element === 'string' && element.length > 0,
+      )
+    ) {
+      res.status(400).json({
+        error: `swipes[${i}].destinationPlaylistIds must contain only non-empty strings`,
+      });
+      return;
+    }
   }
 
   // Collect unique session IDs referenced in the batch
@@ -207,136 +219,29 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     }
   }
 
-  // Fetch all existing swipes across the batch sessions so we can match by composite key
-  const existingSwipesResult = await supabase
-    .from('swipes')
-    .select('id, session_id, spotify_track_id')
-    .in('session_id', sessionIds);
+  // Build the JSON payload for the Postgres function. The function runs the
+  // entire batch — upsert + destination replacement — in one transaction,
+  // eliminating the racy SELECT-then-INSERT and mid-batch partial-failure
+  // issues present in the previous multi-statement approach.
+  const rpcPayload = (swipes as SwipeInput[]).map((s) => ({
+    sessionId: s.sessionId as string,
+    spotifyTrackId: s.spotifyTrackId as string,
+    status: s.status as string,
+    destinationPlaylistIds: (s.destinationPlaylistIds as string[] | undefined) ?? [],
+  }));
 
-  if (existingSwipesResult.error) {
-    console.error('POST /swipes existing swipe fetch error:', existingSwipesResult.error);
-    res.status(500).json({ error: 'Failed to fetch existing swipes' });
+  const rpcResult = await supabase.rpc('upsert_swipes', {
+    p_user_id: req.userId,
+    p_swipes: rpcPayload,
+  });
+
+  if (rpcResult.error) {
+    console.error('POST /swipes rpc error:', rpcResult.error);
+    res.status(500).json({ error: 'Failed to upsert swipes' });
     return;
   }
 
-  // Build lookup: "sessionId|trackId" → existing swipe id
-  const existingMap = new Map<string, string>(
-    (
-      (existingSwipesResult.data ?? []) as Array<{
-        id: string;
-        session_id: string;
-        spotify_track_id: string;
-      }>
-    ).map((sw) => [`${sw.session_id}|${sw.spotify_track_id}`, sw.id]),
-  );
-
-  const toInsert: SwipeInput[] = [];
-  const toUpdate: Array<{ id: string; swipe: SwipeInput }> = [];
-
-  for (const swipe of swipes as SwipeInput[]) {
-    const key = `${swipe.sessionId}|${swipe.spotifyTrackId}`;
-    const existingId = existingMap.get(key);
-
-    if (existingId) {
-      toUpdate.push({ id: existingId, swipe });
-    } else {
-      toInsert.push(swipe);
-    }
-  }
-
-  let inserted = 0;
-  let updated = 0;
-
-  // Insert new swipes
-  if (toInsert.length > 0) {
-    const insertRows = toInsert.map((s) => ({
-      session_id: s.sessionId as string,
-      user_id: req.userId,
-      spotify_track_id: s.spotifyTrackId as string,
-      status: s.status as string,
-    }));
-
-    const insertResult = await supabase
-      .from('swipes')
-      .insert(insertRows)
-      .select('id, session_id, spotify_track_id');
-
-    if (insertResult.error) {
-      console.error('POST /swipes insert error:', insertResult.error);
-      res.status(500).json({ error: 'Failed to insert swipes' });
-      return;
-    }
-
-    const insertedRows = (insertResult.data ?? []) as Array<{ id: string }>;
-    inserted = insertedRows.length;
-
-    // Write swipe_destinations for newly inserted swipes
-    for (let i = 0; i < toInsert.length; i++) {
-      const swipeInput = toInsert[i];
-      const insertedRow = insertedRows[i];
-      const destIds = swipeInput.destinationPlaylistIds as string[] | undefined;
-
-      if (!insertedRow || !destIds || destIds.length === 0) continue;
-
-      const destRows = destIds.map((pid) => ({
-        swipe_id: insertedRow.id,
-        spotify_playlist_id: pid,
-      }));
-
-      const destInsertResult = await supabase.from('swipe_destinations').insert(destRows);
-
-      if (destInsertResult.error) {
-        console.error('POST /swipes swipe_destinations insert error:', destInsertResult.error);
-        res.status(500).json({ error: 'Failed to insert swipe destinations' });
-        return;
-      }
-    }
-  }
-
-  // Update existing swipes and refresh their destinations
-  for (const { id, swipe } of toUpdate) {
-    const updateResult = await supabase
-      .from('swipes')
-      .update({ status: swipe.status as string })
-      .eq('id', id);
-
-    if (updateResult.error) {
-      console.error('POST /swipes update error:', updateResult.error);
-      res.status(500).json({ error: 'Failed to update swipe' });
-      return;
-    }
-
-    updated++;
-
-    const destIds = swipe.destinationPlaylistIds as string[] | undefined;
-
-    // Delete existing destinations for this swipe, then re-insert
-    const deleteResult = await supabase
-      .from('swipe_destinations')
-      .delete()
-      .eq('swipe_id', id);
-
-    if (deleteResult.error) {
-      console.error('POST /swipes destination delete error:', deleteResult.error);
-      res.status(500).json({ error: 'Failed to refresh swipe destinations' });
-      return;
-    }
-
-    if (destIds && destIds.length > 0) {
-      const destRows = destIds.map((pid) => ({
-        swipe_id: id,
-        spotify_playlist_id: pid,
-      }));
-
-      const destInsertResult = await supabase.from('swipe_destinations').insert(destRows);
-
-      if (destInsertResult.error) {
-        console.error('POST /swipes destination re-insert error:', destInsertResult.error);
-        res.status(500).json({ error: 'Failed to update swipe destinations' });
-        return;
-      }
-    }
-  }
+  const { inserted, updated } = rpcResult.data as { inserted: number; updated: number };
 
   // Clean up any pending rows now superseded by a decision in this batch.
   const reconcile = await reconcilePendingDecisions(
