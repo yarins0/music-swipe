@@ -48,7 +48,7 @@ Second pass — the medium/low items that survived the `de9950e` multi-session r
 - **M7 — Matches read only local history, never the server** — intentionally deferred: the `de9950e` refactor made client/AsyncStorage the source of truth for session history this round; server reconciliation is revisited when backend session persistence is built.
 - **L1 — `swipedAt` used as record identity** — deferred pending a decision on the id source + back-compat for records already persisted in AsyncStorage.
 
-**Migration required:** `backend/src/db/migrations/0001_swipes_unique_and_upsert_fn.sql` must be applied on Supabase (pre-dedup → add `UNIQUE` constraint → create `upsert_swipes`) before deploy; unit tests mock the RPC, so they pass without it.
+**Migration applied (2026-06-04):** `backend/src/db/migrations/0001_swipes_unique_and_upsert_fn.sql` was run on Supabase via the SQL editor in order (pre-dedup → add `UNIQUE` constraint → create `upsert_swipes`); constraint and function verified present in the catalog. `POST /swipes` now works against the real DB. (Unit tests mock the RPC and passed regardless.)
 
 Verification: backend 61/61, mobile 354/354; `tsc --noEmit` exits 0; changed files lint clean.
 
