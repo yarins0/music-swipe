@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   Animated,
+  useColorScheme,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AppModal } from '@/components/AppModal';
@@ -21,18 +22,24 @@ import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import type { MusicPlatformAdapter, UserProfile } from '@/adapters/interface';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TabHeader } from '@/components/TabHeader';
-import { colors, spacing, radius } from '@/theme';
+import { getColors, Colors, spacing, radius } from '@/theme';
+import type { ThemeMode } from '@/stores/prefsStore';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 
-interface SettingRowProps {
+// ReturnType works here because createStyles is a function declaration (hoisted).
+type StylesType = ReturnType<typeof createStyles>;
+
+interface ToggleRowProps {
   label: string;
   subtitle?: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  styles: StylesType;
+  activeColors: Colors;
 }
 
-function ToggleRow({ label, subtitle, value, onValueChange }: SettingRowProps): React.ReactElement {
+function ToggleRow({ label, subtitle, value, onValueChange, styles, activeColors }: ToggleRowProps): React.ReactElement {
   return (
     <View style={styles.row}>
       <View style={styles.rowTextGroup}>
@@ -42,9 +49,9 @@ function ToggleRow({ label, subtitle, value, onValueChange }: SettingRowProps): 
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: colors.surfaceContainerHighest, true: colors.primary }}
-        thumbColor={colors.surface}
-        ios_backgroundColor={colors.surfaceContainerHighest}
+        trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
+        thumbColor={activeColors.surface}
+        ios_backgroundColor={activeColors.surfaceContainerHighest}
       />
     </View>
   );
@@ -54,16 +61,18 @@ interface LinkRowProps {
   label: string;
   value?: string;
   onPress?: () => void;
+  styles: StylesType;
+  activeColors: Colors;
 }
 
-function LinkRow({ label, value, onPress }: LinkRowProps): React.ReactElement {
+function LinkRow({ label, value, onPress, styles, activeColors }: LinkRowProps): React.ReactElement {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress}>
       <Text style={styles.rowLabel}>{label}</Text>
       <View style={styles.rowEnd}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
         {onPress ? (
-          <Ionicons name="chevron-forward" size={18} color={colors.outlineVariant} />
+          <Ionicons name="chevron-forward" size={18} color={activeColors.outlineVariant} />
         ) : null}
       </View>
     </TouchableOpacity>
@@ -73,9 +82,10 @@ function LinkRow({ label, value, onPress }: LinkRowProps): React.ReactElement {
 interface SectionProps {
   title: string;
   children: React.ReactNode;
+  styles: StylesType;
 }
 
-function Section({ title, children }: SectionProps): React.ReactElement {
+function Section({ title, children, styles }: SectionProps): React.ReactElement {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -83,6 +93,78 @@ function Section({ title, children }: SectionProps): React.ReactElement {
     </View>
   );
 }
+
+const THEME_OPTIONS: { key: ThemeMode; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { key: 'light', label: 'Light', icon: 'sunny-outline' },
+  { key: 'dark', label: 'Dark', icon: 'moon-outline' },
+  { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
+];
+
+interface ThemeSegmentedPickerProps {
+  value: ThemeMode;
+  onChange: (value: ThemeMode) => void;
+  activeColors: Colors;
+}
+
+function ThemeSegmentedPicker({ value, onChange, activeColors }: ThemeSegmentedPickerProps): React.ReactElement {
+  return (
+    <View style={[pickerStyles.container, { backgroundColor: activeColors.surfaceContainerHigh }]}>
+      {THEME_OPTIONS.map((option) => {
+        const isSelected = option.key === value;
+        return (
+          <TouchableOpacity
+            key={option.key}
+            style={[
+              pickerStyles.option,
+              isSelected && { backgroundColor: activeColors.primary },
+            ]}
+            onPress={() => onChange(option.key)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: isSelected }}
+          >
+            <Ionicons
+              name={option.icon}
+              size={15}
+              color={isSelected ? '#ffffff' : activeColors.onSurfaceVariant}
+            />
+            <Text
+              style={[
+                pickerStyles.optionLabel,
+                { color: isSelected ? '#ffffff' : activeColors.onSurfaceVariant },
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+// pickerStyles has no color dependencies — safe at module level.
+const pickerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    borderRadius: radius.lg,
+    padding: 3,
+    marginHorizontal: spacing.md,
+    marginVertical: 12,
+  },
+  option: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+  },
+  optionLabel: {
+    fontSize: 13,
+    fontFamily: 'Outfit_600SemiBold',
+  },
+});
 
 export default function SettingsScreen(): React.ReactElement {
   const router = useRouter();
@@ -94,11 +176,19 @@ export default function SettingsScreen(): React.ReactElement {
   const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
   const weeklyReminders = usePrefsStore((s) => s.weeklyReminders);
   const autoRemoveDuplicates = usePrefsStore((s) => s.autoRemoveDuplicates);
+  const themeMode = usePrefsStore((s) => s.themeMode);
   const setShowAlbumArt = usePrefsStore((s) => s.setShowAlbumArt);
   const setAutoPlayPreviews = usePrefsStore((s) => s.setAutoPlayPreviews);
   const setHapticFeedback = usePrefsStore((s) => s.setHapticFeedback);
   const setWeeklyReminders = usePrefsStore((s) => s.setWeeklyReminders);
   const setAutoRemoveDuplicates = usePrefsStore((s) => s.setAutoRemoveDuplicates);
+  const setThemeMode = usePrefsStore((s) => s.setThemeMode);
+
+  const colorScheme = useColorScheme();
+  const isDark =
+    themeMode === 'dark' || (themeMode === 'system' && colorScheme === 'dark');
+  const activeColors = useMemo(() => getColors(isDark), [isDark]);
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [clearHistoryModalVisible, setClearHistoryModalVisible] = useState(false);
@@ -210,13 +300,13 @@ export default function SettingsScreen(): React.ReactElement {
         <View ref={contentTopRef} style={styles.contentTopAnchor} />
 
         {/* Account */}
-        <Section title="ACCOUNT">
+        <Section title="ACCOUNT" styles={styles}>
           <View style={styles.accountRow}>
             {profile.avatarUrl ? (
               <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} contentFit="cover" />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={28} color={colors.onSurfaceVariant} />
+                <Ionicons name="person" size={28} color={activeColors.onSurfaceVariant} />
               </View>
             )}
             <View style={styles.accountInfo}>
@@ -234,12 +324,23 @@ export default function SettingsScreen(): React.ReactElement {
           </TouchableOpacity>
         </Section>
 
+        {/* Appearance */}
+        <Section title="APPEARANCE" styles={styles}>
+          <ThemeSegmentedPicker
+            value={themeMode}
+            onChange={setThemeMode}
+            activeColors={activeColors}
+          />
+        </Section>
+
         {/* Curation Preferences */}
-        <Section title="CURATION PREFERENCES">
+        <Section title="CURATION PREFERENCES" styles={styles}>
           <ToggleRow
             label="Show Album Art"
             value={showAlbumArt}
             onValueChange={setShowAlbumArt}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
           {/* Custom Auto-play Previews row: toggle + a "Sync Spotify" action, with an
@@ -259,16 +360,16 @@ export default function SettingsScreen(): React.ReactElement {
                   accessibilityRole="button"
                   accessibilityLabel="Sync Spotify — open the Spotify app and start playback"
                 >
-                  <Ionicons name="sync" size={14} color={colors.primary} />
+                  <Ionicons name="sync" size={14} color={activeColors.primary} />
                   <Text style={styles.syncButtonText}>Sync Spotify</Text>
                 </TouchableOpacity>
               </View>
               <Switch
                 value={autoPlayPreviews}
                 onValueChange={setAutoPlayPreviews}
-                trackColor={{ false: colors.surfaceContainerHighest, true: colors.primary }}
-                thumbColor={colors.surface}
-                ios_backgroundColor={colors.surfaceContainerHighest}
+                trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
+                thumbColor={activeColors.surface}
+                ios_backgroundColor={activeColors.surfaceContainerHighest}
               />
             </Animated.View>
           </View>
@@ -277,6 +378,8 @@ export default function SettingsScreen(): React.ReactElement {
             label="Haptic Feedback on Swipe"
             value={hapticFeedback}
             onValueChange={setHapticFeedback}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
           <ToggleRow
@@ -284,54 +387,72 @@ export default function SettingsScreen(): React.ReactElement {
             subtitle="After each session, clean duplicate tracks from your destination playlists"
             value={autoRemoveDuplicates}
             onValueChange={setAutoRemoveDuplicates}
+            styles={styles}
+            activeColors={activeColors}
           />
         </Section>
 
         {/* Notifications */}
-        <Section title="NOTIFICATIONS">
+        <Section title="NOTIFICATIONS" styles={styles}>
           <ToggleRow
             label="Weekly Curation Reminders"
             subtitle="Get notified when your pulse playlist is ready"
             value={weeklyReminders}
             onValueChange={setWeeklyReminders}
+            styles={styles}
+            activeColors={activeColors}
           />
         </Section>
 
         {/* Data */}
-        <Section title="DATA">
+        <Section title="DATA" styles={styles}>
           <TouchableOpacity
             style={styles.clearHistoryButton}
             onPress={() => setClearHistoryModalVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Clear history — delete all saved sessions from this device"
           >
-            <Ionicons name="trash-outline" size={18} color={colors.nope} />
+            <Ionicons name="trash-outline" size={18} color={activeColors.nope} />
             <Text style={styles.clearHistoryText}>Clear History</Text>
           </TouchableOpacity>
         </Section>
 
         {/* About */}
-        <Section title="ABOUT">
+        <Section title="ABOUT" styles={styles}>
           <LinkRow
             label="Contact"
             onPress={() => router.push('/(tabs)/settings/contact')}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
           <LinkRow
             label="Version"
             value={Constants.expoConfig?.version ?? '—'}
             onPress={() => void WebBrowser.openBrowserAsync('https://github.com/yarins0/music-swipe/releases')}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
-          <LinkRow label="Privacy Policy" onPress={() => router.push('/(tabs)/settings/privacy-policy')} />
+          <LinkRow
+            label="Privacy Policy"
+            onPress={() => router.push('/(tabs)/settings/privacy-policy')}
+            styles={styles}
+            activeColors={activeColors}
+          />
           <View style={styles.divider} />
-          <LinkRow label="Terms of Service" onPress={() => router.push('/(tabs)/settings/terms-of-service')} />
+          <LinkRow
+            label="Terms of Service"
+            onPress={() => router.push('/(tabs)/settings/terms-of-service')}
+            styles={styles}
+            activeColors={activeColors}
+          />
         </Section>
 
         {/* Branding footer */}
         <View style={styles.brandingFooter}>
           <View style={styles.brandingIcon}>
-            <Ionicons name="musical-note" size={18} color={colors.surface} />
+            <Ionicons name="musical-note" size={18} color={activeColors.surface} />
           </View>
           <Text style={styles.brandingText}>MUSICSWIPE</Text>
         </View>
@@ -368,184 +489,186 @@ export default function SettingsScreen(): React.ReactElement {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: 40,
-    gap: spacing.lg,
-  },
-  contentTopAnchor: {
-    height: 0,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    paddingLeft: 4,
-  },
-  sectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    minHeight: 52,
-  },
-  rowTextGroup: {
-    flex: 1,
-    gap: 2,
-    marginRight: spacing.md,
-  },
-  rowLabel: {
-    fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurface,
-  },
-  rowSubtitle: {
-    fontSize: 12,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-  },
-  syncButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  syncButtonText: {
-    fontSize: 13,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.primary,
-  },
-  rowEnd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  rowValue: {
-    fontSize: 13,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.surfaceContainerHigh,
-    marginLeft: spacing.md,
-  },
-  accountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
-  avatarPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.surfaceContainerHigh,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accountInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  accountName: {
-    fontSize: 16,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.onSurface,
-  },
-  accountId: {
-    fontSize: 13,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-  },
-  logoutButton: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.surfaceContainerHigh,
-  },
-  logoutText: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.nope,
-  },
-  clearHistoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-  },
-  clearHistoryText: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.nope,
-  },
-  reconnectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
-  },
-  reconnectText: {
-    fontSize: 14,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.primary,
-  },
-  brandingFooter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing.md,
-    opacity: 0.4,
-  },
-  brandingIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandingText: {
-    fontSize: 11,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-    letterSpacing: 2,
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    scrollContent: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.lg,
+      paddingBottom: 40,
+      gap: spacing.lg,
+    },
+    contentTopAnchor: {
+      height: 0,
+    },
+    section: {
+      gap: spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: 11,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+      paddingLeft: 4,
+    },
+    sectionCard: {
+      backgroundColor: c.surface,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 1,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingVertical: 14,
+      minHeight: 52,
+    },
+    rowTextGroup: {
+      flex: 1,
+      gap: 2,
+      marginRight: spacing.md,
+    },
+    rowLabel: {
+      fontSize: 15,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurface,
+    },
+    rowSubtitle: {
+      fontSize: 12,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+    },
+    syncButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      marginTop: 10,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: c.primary,
+    },
+    syncButtonText: {
+      fontSize: 13,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.primary,
+    },
+    rowEnd: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    rowValue: {
+      fontSize: 13,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.surfaceContainerHigh,
+      marginLeft: spacing.md,
+    },
+    accountRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    avatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+    },
+    avatarPlaceholder: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: c.surfaceContainerHigh,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    accountInfo: {
+      flex: 1,
+      gap: 2,
+    },
+    accountName: {
+      fontSize: 16,
+      fontFamily: 'Outfit_700Bold',
+      color: c.onSurface,
+    },
+    accountId: {
+      fontSize: 13,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+    },
+    logoutButton: {
+      paddingVertical: 14,
+      alignItems: 'center',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.surfaceContainerHigh,
+    },
+    logoutText: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.nope,
+    },
+    clearHistoryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+    },
+    clearHistoryText: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.nope,
+    },
+    reconnectButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 14,
+    },
+    reconnectText: {
+      fontSize: 14,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.primary,
+    },
+    brandingFooter: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      paddingTop: spacing.md,
+      opacity: 0.4,
+    },
+    brandingIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      backgroundColor: c.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    brandingText: {
+      fontSize: 11,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+      letterSpacing: 2,
+    },
+  });
+}

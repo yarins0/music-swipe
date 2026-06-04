@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import type { Playlist } from '@/adapters/interface';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type Scope = 'this-track' | 'from-now-on' | 'entire-session';
 
@@ -31,6 +32,9 @@ export function DestinationEditor({
   onFromNowOn,
   onEntireSession,
 }: DestinationEditorProps): React.ReactElement {
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   const [activeScope, setActiveScope] = useState<Scope>('this-track');
   const [selectedIds, setSelectedIds] = useState<string[]>(
     perTrackOverrideIds ?? sessionDestinationIds,
@@ -214,169 +218,165 @@ export function DestinationEditor({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  sheet: {
-    // Bottom sheet is an elevated surface — matches card/modal convention in session-end.tsx
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    paddingBottom: 32,
-    maxHeight: '80%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  title: {
-    color: colors.onSurface,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  closeButton: {
-    minWidth: 32,
-    minHeight: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeIcon: {
-    color: colors.onSurfaceVariant,
-    fontSize: 18,
-  },
-  scopeRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 8,
-    marginBottom: 8,
-  },
-  scopeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    alignItems: 'center',
-  },
-  scopeButtonActive: {
-    borderColor: colors.primary,
-    // Semi-transparent primary tint — no dedicated subtle-primary token exists in theme.ts.
-    // rgba derived directly from colors.primary (#fd297b) at 10% opacity.
-    backgroundColor: 'rgba(253,41,123,0.10)',
-  },
-  scopeLabel: {
-    color: colors.onSurfaceVariant,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  scopeLabelActive: {
-    color: colors.primary,
-  },
-  scopeDescription: {
-    color: colors.onSurfaceVariant,
-    fontSize: 12,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  list: {
-    maxHeight: 260,
-    marginHorizontal: 20,
-  },
-  listContent: {
-    gap: 4,
-    paddingBottom: 8,
-  },
-  playlistRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    gap: 12,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.outline,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkmark: {
-    // Text sitting directly on a primary-colored surface — matches ctaPrimaryText convention in session-end.tsx
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  playlistName: {
-    flex: 1,
-    color: colors.onSurface,
-    fontSize: 15,
-  },
-  confirmBox: {
-    marginHorizontal: 20,
-    marginTop: 12,
-    backgroundColor: 'rgba(255,80,80,0.12)',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-  },
-  confirmText: {
-    color: colors.onSurface,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  confirmActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  cancelButtonText: {
-    color: colors.onSurface,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  removeButton: {
-    backgroundColor: 'rgba(255,60,60,0.8)',
-  },
-  removeButtonText: {
-    // Text on a red destructive surface — no semantic token; '#fff' matches convention
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  confirmPrimary: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  confirmPrimaryText: {
-    // Text sitting directly on a primary-colored surface — matches ctaPrimaryText convention in session-end.tsx
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingTop: 20,
+      paddingBottom: 32,
+      maxHeight: '80%',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      marginBottom: 16,
+    },
+    title: {
+      color: c.onSurface,
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    closeButton: {
+      minWidth: 32,
+      minHeight: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeIcon: {
+      color: c.onSurfaceVariant,
+      fontSize: 18,
+    },
+    scopeRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      gap: 8,
+      marginBottom: 8,
+    },
+    scopeButton: {
+      flex: 1,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+      alignItems: 'center',
+    },
+    scopeButtonActive: {
+      borderColor: c.primary,
+      backgroundColor: 'rgba(253,41,123,0.10)',
+    },
+    scopeLabel: {
+      color: c.onSurfaceVariant,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    scopeLabelActive: {
+      color: c.primary,
+    },
+    scopeDescription: {
+      color: c.onSurfaceVariant,
+      fontSize: 12,
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
+    list: {
+      maxHeight: 260,
+      marginHorizontal: 20,
+    },
+    listContent: {
+      gap: 4,
+      paddingBottom: 8,
+    },
+    playlistRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      gap: 12,
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: 4,
+      borderWidth: 1.5,
+      borderColor: c.outline,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkboxChecked: {
+      backgroundColor: c.primary,
+      borderColor: c.primary,
+    },
+    checkmark: {
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    playlistName: {
+      flex: 1,
+      color: c.onSurface,
+      fontSize: 15,
+    },
+    confirmBox: {
+      marginHorizontal: 20,
+      marginTop: 12,
+      backgroundColor: 'rgba(255,80,80,0.12)',
+      borderRadius: 12,
+      padding: 16,
+      gap: 12,
+    },
+    confirmText: {
+      color: c.onSurface,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    confirmActions: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    confirmButton: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    cancelButton: {
+      backgroundColor: c.surfaceContainerHigh,
+    },
+    cancelButtonText: {
+      color: c.onSurface,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    removeButton: {
+      backgroundColor: 'rgba(255,60,60,0.8)',
+    },
+    removeButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    confirmPrimary: {
+      marginHorizontal: 20,
+      marginTop: 16,
+      backgroundColor: c.primary,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    confirmPrimaryText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+    },
+  });
+}

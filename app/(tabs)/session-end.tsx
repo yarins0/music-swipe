@@ -18,7 +18,8 @@ import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { MusicPlatformAdapter, Track } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SessionStats {
   swipedCount: number;
@@ -54,6 +55,9 @@ function computeOptimisticStats(session: SessionEntry | null): SessionStats {
 // ---------------------------------------------------------------------------
 
 function StatCard({ label, value, progress }: { label: string; value: number; progress: number }) {
+  const { activeColors, isDark } = useTheme();
+  const statStyles = useMemo(() => createStatStyles(activeColors), [isDark]);
+
   return (
     <View style={statStyles.card}>
       <Text style={statStyles.value}>{value}</Text>
@@ -75,6 +79,9 @@ interface LikedTrackRowProps {
 }
 
 function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false }: LikedTrackRowProps) {
+  const { activeColors, isDark } = useTheme();
+  const trackStyles = useMemo(() => createTrackStyles(activeColors), [isDark]);
+
   return (
     <View style={trackStyles.row}>
       {track.albumArtUrl ? (
@@ -90,7 +97,7 @@ function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false
       {!hideRemove && (
         isRemoving ? (
           <View style={trackStyles.removeBtn}>
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={activeColors.primary} />
           </View>
         ) : (
           <Pressable style={trackStyles.removeBtn} onPress={onRemove} accessibilityLabel="Remove track">
@@ -109,6 +116,8 @@ function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false
 export default function SessionEndScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const isFilterMode = useSessionStore((s) => s.isFilterMode);
@@ -291,7 +300,7 @@ export default function SessionEndScreen(): React.ReactElement {
           <View style={styles.dedupSection}>
             {dedupPhase === 'running' ? (
               <View style={styles.dedupStatusRow}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color={activeColors.primary} />
                 <Text style={styles.dedupStatusText}>Tidying playlists…</Text>
               </View>
             ) : dedupPhase === 'done' ? (
@@ -318,7 +327,7 @@ export default function SessionEndScreen(): React.ReactElement {
               disabled={isSaving || !!savedPlaylistId}
             >
               {isSaving
-                ? <ActivityIndicator color={colors.primary} size="small" />
+                ? <ActivityIndicator color={activeColors.primary} size="small" />
                 : <Text style={styles.ctaSecondaryText}>{savedPlaylistId ? 'Saved ✓' : 'Save as Playlist'}</Text>}
             </Pressable>
           )}
@@ -338,89 +347,95 @@ export default function SessionEndScreen(): React.ReactElement {
 // Styles
 // ---------------------------------------------------------------------------
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerBrand: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: colors.primary },
-  headerIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  headerIconText: { fontSize: 20, color: colors.primary },
-  scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.lg },
-  hero: { alignItems: 'center', marginBottom: spacing.xl },
-  celebrationCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: spacing.lg,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  celebrationEmoji: { fontSize: 36 },
-  heroTitle: { fontSize: 36, fontFamily: 'Outfit_700Bold', color: colors.onSurface, textAlign: 'center', lineHeight: 42, marginBottom: spacing.md },
-  heroSubtitle: { fontSize: 14, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, textAlign: 'center', lineHeight: 22, paddingHorizontal: spacing.lg },
-  statsRow: { gap: spacing.sm, marginBottom: spacing.xl },
-  tracksSection: { marginBottom: spacing.xl },
-  tracksSectionTitle: { fontSize: 16, fontFamily: 'Outfit_700Bold', color: colors.onSurface, marginBottom: spacing.md },
-  dedupSection: { marginBottom: spacing.xl, alignItems: 'center' },
-  dedupStatusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  dedupStatusText: { fontSize: 13, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, textAlign: 'center' },
-  dedupButton: {
-    paddingVertical: 12, paddingHorizontal: spacing.lg, borderRadius: radius.full,
-    borderWidth: 1.5, borderColor: colors.outlineVariant, alignItems: 'center',
-  },
-  dedupButtonText: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurface },
-  ctas: { gap: spacing.sm },
-  ctaPrimary: {
-    backgroundColor: colors.primary, paddingVertical: 16,
-    borderRadius: radius.full, alignItems: 'center',
-    shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
-  },
-  ctaPrimaryText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 16 },
-  ctaSecondary: {
-    paddingVertical: 14, borderRadius: radius.full, alignItems: 'center',
-    borderWidth: 1.5, borderColor: colors.outlineVariant,
-  },
-  ctaSecondaryText: { color: colors.onSurface, fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
-  ctaDisabled: { opacity: 0.6 },
-  ctaGhost: { paddingVertical: 12, alignItems: 'center' },
-  ctaGhostText: { color: colors.onSurfaceVariant, fontFamily: 'Outfit_500Medium', fontSize: 14 },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingBottom: 12,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.surfaceContainerHigh,
+    },
+    headerBrand: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: c.primary },
+    headerIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+    headerIconText: { fontSize: 20, color: c.primary },
+    scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.lg },
+    hero: { alignItems: 'center', marginBottom: spacing.xl },
+    celebrationCircle: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: c.primary,
+      justifyContent: 'center', alignItems: 'center',
+      marginBottom: spacing.lg,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    celebrationEmoji: { fontSize: 36 },
+    heroTitle: { fontSize: 36, fontFamily: 'Outfit_700Bold', color: c.onSurface, textAlign: 'center', lineHeight: 42, marginBottom: spacing.md },
+    heroSubtitle: { fontSize: 14, fontFamily: 'Outfit_400Regular', color: c.onSurfaceVariant, textAlign: 'center', lineHeight: 22, paddingHorizontal: spacing.lg },
+    statsRow: { gap: spacing.sm, marginBottom: spacing.xl },
+    tracksSection: { marginBottom: spacing.xl },
+    tracksSectionTitle: { fontSize: 16, fontFamily: 'Outfit_700Bold', color: c.onSurface, marginBottom: spacing.md },
+    dedupSection: { marginBottom: spacing.xl, alignItems: 'center' },
+    dedupStatusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    dedupStatusText: { fontSize: 13, fontFamily: 'Outfit_400Regular', color: c.onSurfaceVariant, textAlign: 'center' },
+    dedupButton: {
+      paddingVertical: 12, paddingHorizontal: spacing.lg, borderRadius: radius.full,
+      borderWidth: 1.5, borderColor: c.outlineVariant, alignItems: 'center',
+    },
+    dedupButtonText: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: c.onSurface },
+    ctas: { gap: spacing.sm },
+    ctaPrimary: {
+      backgroundColor: c.primary, paddingVertical: 16,
+      borderRadius: radius.full, alignItems: 'center',
+      shadowColor: c.primary, shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+    },
+    ctaPrimaryText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 16 },
+    ctaSecondary: {
+      paddingVertical: 14, borderRadius: radius.full, alignItems: 'center',
+      borderWidth: 1.5, borderColor: c.outlineVariant,
+    },
+    ctaSecondaryText: { color: c.onSurface, fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
+    ctaDisabled: { opacity: 0.6 },
+    ctaGhost: { paddingVertical: 12, alignItems: 'center' },
+    ctaGhostText: { color: c.onSurfaceVariant, fontFamily: 'Outfit_500Medium', fontSize: 14 },
+  });
+}
 
-const statStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.surfaceContainerHigh,
-  },
-  value: { fontSize: 40, fontFamily: 'Outfit_700Bold', color: colors.primary, lineHeight: 48 },
-  label: { fontSize: 11, fontFamily: 'Outfit_600SemiBold', color: colors.onSurfaceVariant, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4, marginBottom: spacing.sm },
-  track: { width: '100%', height: 6, backgroundColor: colors.surfaceContainerHighest, borderRadius: 3, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
-});
+function createStatStyles(c: Colors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: c.surface, borderRadius: radius.xl, padding: spacing.lg,
+      alignItems: 'center', borderWidth: 1, borderColor: c.surfaceContainerHigh,
+    },
+    value: { fontSize: 40, fontFamily: 'Outfit_700Bold', color: c.primary, lineHeight: 48 },
+    label: { fontSize: 11, fontFamily: 'Outfit_600SemiBold', color: c.onSurfaceVariant, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 4, marginBottom: spacing.sm },
+    track: { width: '100%', height: 6, backgroundColor: c.surfaceContainerHighest, borderRadius: 3, overflow: 'hidden' },
+    fill: { height: '100%', backgroundColor: c.primary, borderRadius: 3 },
+  });
+}
 
-const trackStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: 12,
-    borderWidth: 1, borderColor: colors.surfaceContainerHigh, marginBottom: spacing.sm,
-  },
-  art: { width: 48, height: 48, borderRadius: radius.md, flexShrink: 0 },
-  artPlaceholder: { backgroundColor: colors.surfaceContainerHigh },
-  info: { flex: 1 },
-  title: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurface },
-  artist: { fontSize: 12, fontFamily: 'Outfit_400Regular', color: colors.onSurfaceVariant, marginTop: 2 },
-  statusIcon: { fontSize: 16, marginHorizontal: 4 },
-  removeBtn: { backgroundColor: colors.surfaceContainerHigh, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full, minWidth: 72, alignItems: 'center', justifyContent: 'center' },
-  removeBtnText: { color: colors.onSurfaceVariant, fontSize: 13, fontFamily: 'Outfit_600SemiBold' },
-});
+function createTrackStyles(c: Colors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      backgroundColor: c.surface, borderRadius: radius.lg, padding: 12,
+      borderWidth: 1, borderColor: c.surfaceContainerHigh, marginBottom: spacing.sm,
+    },
+    art: { width: 48, height: 48, borderRadius: radius.md, flexShrink: 0 },
+    artPlaceholder: { backgroundColor: c.surfaceContainerHigh },
+    info: { flex: 1 },
+    title: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: c.onSurface },
+    artist: { fontSize: 12, fontFamily: 'Outfit_400Regular', color: c.onSurfaceVariant, marginTop: 2 },
+    statusIcon: { fontSize: 16, marginHorizontal: 4 },
+    removeBtn: { backgroundColor: c.surfaceContainerHigh, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full, minWidth: 72, alignItems: 'center', justifyContent: 'center' },
+    removeBtnText: { color: c.onSurfaceVariant, fontSize: 13, fontFamily: 'Outfit_600SemiBold' },
+  });
+}

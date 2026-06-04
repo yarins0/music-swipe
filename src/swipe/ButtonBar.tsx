@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface ButtonBarProps {
   onUndo: () => void;
@@ -25,6 +26,9 @@ export function ButtonBar({
   isDecideLaterEnabled,
   isFilterMode = false,
 }: ButtonBarProps): React.ReactElement {
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   return (
     <View style={styles.row}>
       <Pressable
@@ -34,7 +38,7 @@ export function ButtonBar({
         accessibilityLabel="Undo"
         accessibilityState={{ disabled: !canUndo }}
       >
-        <Text style={[styles.smallIcon, { color: colors.rewind }]}>↺</Text>
+        <Text style={[styles.smallIcon, styles.thickIcon, { color: activeColors.rewind }]}>↺</Text>
       </Pressable>
 
       <Pressable
@@ -46,11 +50,11 @@ export function ButtonBar({
         {isFilterMode ? (
           // Destructive icon in filter mode — signals that left swipe permanently deletes
           <View style={styles.filterSkipContent}>
-            <Ionicons name="trash-outline" size={26} color={colors.nope} />
-            <Text style={styles.filterSkipLabel}>DELETE</Text>
+            <Ionicons name="trash-outline" size={26} color={activeColors.nope} />
+            <Text style={[styles.filterSkipLabel, { color: activeColors.nope }]}>DELETE</Text>
           </View>
         ) : (
-          <Text style={[styles.largeIcon, { color: colors.nope }]}>✕</Text>
+          <Text style={[styles.largeIcon, { color: activeColors.nope }]}>✕</Text>
         )}
       </Pressable>
 
@@ -60,7 +64,7 @@ export function ButtonBar({
         accessibilityRole="button"
         accessibilityLabel="Super Like"
       >
-        <Text style={[styles.smallIcon, { color: colors.superLike }]}>★</Text>
+        <Text style={[styles.largeIcon, styles.thickIcon, { color: activeColors.superLike }]}>★</Text>
       </Pressable>
 
       <Pressable
@@ -69,7 +73,7 @@ export function ButtonBar({
         accessibilityRole="button"
         accessibilityLabel="Like"
       >
-        <Text style={[styles.largeIcon, { color: colors.like }]}>♥</Text>
+        <Text style={[styles.largeIcon, { color: activeColors.like }]}>♥</Text>
       </Pressable>
 
       <Pressable
@@ -79,53 +83,56 @@ export function ButtonBar({
         accessibilityLabel="Decide Later"
         accessibilityState={{ disabled: !isDecideLaterEnabled }}
       >
-        <Text style={[styles.smallIcon, { color: colors.later }]}>⏱</Text>
+        <Text style={[styles.smallIcon, styles.thickIcon, { color: activeColors.later }]}>⏱</Text>
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 8,
-  },
-  smallButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
-  },
-  largeButton: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
-  },
-  smallIcon: { fontSize: 22 },
-  largeIcon: { fontSize: 28 },
-  dimmed: { opacity: 0.3 },
-  filterSkipContent: { alignItems: 'center', gap: 2 },
-  filterSkipLabel: { fontSize: 9, fontFamily: 'Outfit_600SemiBold', color: colors.nope, letterSpacing: 0.5 },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+      width: '100%',
+      paddingHorizontal: 8,
+    },
+    smallButton: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: c.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 4,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+    },
+    largeButton: {
+      width: 68,
+      height: 68,
+      borderRadius: 34,
+      backgroundColor: c.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 6,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+    },
+    smallIcon: { fontSize: 22 },
+    thickIcon: { fontWeight: '800' },
+    largeIcon: { fontSize: 28 },
+    dimmed: { opacity: 0.3 },
+    filterSkipContent: { alignItems: 'center', gap: 2 },
+    filterSkipLabel: { fontSize: 9, fontFamily: 'Outfit_600SemiBold', letterSpacing: 0.5 },
+  });
+}

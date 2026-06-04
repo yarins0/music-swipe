@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,8 @@ import { TabHeader } from '@/components/TabHeader';
 import { AppModal } from '@/components/AppModal';
 import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type Section = { title: string; data: Playlist[] };
 
@@ -27,6 +28,8 @@ export default function SourcePickerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,7 +114,7 @@ export default function SourcePickerScreen() {
         <TextInput
           style={styles.urlInput}
           placeholder="Paste Spotify playlist URL or ID…"
-          placeholderTextColor={colors.outline}
+          placeholderTextColor={activeColors.outline}
           value={urlInput}
           onChangeText={setUrlInput}
           onSubmitEditing={handleUrlSubmit}
@@ -120,7 +123,7 @@ export default function SourcePickerScreen() {
           autoCorrect={false}
         />
         {isResolvingUrl ? (
-          <ActivityIndicator style={styles.urlLoader} color={colors.primary} />
+          <ActivityIndicator style={styles.urlLoader} color={activeColors.primary} />
         ) : (
           <TouchableOpacity style={styles.urlButton} onPress={handleUrlSubmit}>
             <Text style={styles.urlButtonText}>Go</Text>
@@ -134,7 +137,7 @@ export default function SourcePickerScreen() {
   if (isLoading) {
     return (
       <View style={[styles.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={activeColors.primary} />
       </View>
     );
   }
@@ -209,110 +212,112 @@ export default function SourcePickerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  list: { flex: 1 },
-  listContent: { paddingHorizontal: spacing.md, paddingBottom: 16 },
-  listHeader: { paddingTop: spacing.lg, paddingBottom: spacing.sm },
-  sectionTag: {
-    fontSize: 11,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: colors.onSurface, letterSpacing: -0.3 },
-  sectionSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing.md,
-  },
-  urlRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: 4,
-  },
-  urlInput: {
-    flex: 1,
-    height: 44,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    fontSize: 14,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurface,
-    backgroundColor: colors.surface,
-  },
-  urlButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderRadius: radius.lg,
-  },
-  urlButtonText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 14 },
-  urlLoader: { marginHorizontal: spacing.sm },
-  urlError: {
-    fontSize: 12,
-    color: colors.nope,
-    fontFamily: 'Outfit_400Regular',
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  nudgeText: {
-    fontSize: 13,
-    color: colors.onSurfaceVariant,
-    fontFamily: 'Outfit_400Regular',
-    textAlign: 'center',
-    paddingVertical: spacing.md,
-  },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: colors.background },
-  errorText: { fontSize: 15, color: colors.onSurface, textAlign: 'center', marginBottom: spacing.md, fontFamily: 'Outfit_400Regular' },
-  retryButton: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radius.full },
-  retryText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
-  footer: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceContainerHigh,
-  },
-  nextBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: radius.full,
-    alignItems: 'center',
-  },
-  nextBtnDisabled: {
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  nextBtnText: {
-    color: '#fff',
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 16,
-  },
-  nextBtnTextDisabled: {
-    color: colors.onSurfaceVariant,
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    list: { flex: 1 },
+    listContent: { paddingHorizontal: spacing.md, paddingBottom: 16 },
+    listHeader: { paddingTop: spacing.lg, paddingBottom: spacing.sm },
+    sectionTag: {
+      fontSize: 11,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+      marginBottom: 4,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingBottom: 12,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.surfaceContainerHigh,
+    },
+    headerTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: c.onSurface, letterSpacing: -0.3 },
+    sectionSubtitle: {
+      fontSize: 14,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+      marginBottom: spacing.md,
+    },
+    urlRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: 4,
+    },
+    urlInput: {
+      flex: 1,
+      height: 44,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.md,
+      fontSize: 14,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurface,
+      backgroundColor: c.surface,
+    },
+    urlButton: {
+      backgroundColor: c.primary,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 10,
+      borderRadius: radius.lg,
+    },
+    urlButtonText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 14 },
+    urlLoader: { marginHorizontal: spacing.sm },
+    urlError: {
+      fontSize: 12,
+      color: c.nope,
+      fontFamily: 'Outfit_400Regular',
+      marginTop: 4,
+    },
+    sectionTitle: {
+      fontSize: 12,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginTop: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    nudgeText: {
+      fontSize: 13,
+      color: c.onSurfaceVariant,
+      fontFamily: 'Outfit_400Regular',
+      textAlign: 'center',
+      paddingVertical: spacing.md,
+    },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: c.background },
+    errorText: { fontSize: 15, color: c.onSurface, textAlign: 'center', marginBottom: spacing.md, fontFamily: 'Outfit_400Regular' },
+    retryButton: { backgroundColor: c.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radius.full },
+    retryText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 15 },
+    footer: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+      backgroundColor: c.surface,
+      borderTopWidth: 1,
+      borderTopColor: c.surfaceContainerHigh,
+    },
+    nextBtn: {
+      backgroundColor: c.primary,
+      paddingVertical: 16,
+      borderRadius: radius.full,
+      alignItems: 'center',
+    },
+    nextBtnDisabled: {
+      backgroundColor: c.surfaceContainerHigh,
+    },
+    nextBtnText: {
+      color: '#fff',
+      fontFamily: 'Outfit_700Bold',
+      fontSize: 16,
+    },
+    nextBtnTextDisabled: {
+      color: c.onSurfaceVariant,
+    },
+  });
+}

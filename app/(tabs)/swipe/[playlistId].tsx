@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -15,7 +15,8 @@ import { PlatformError, PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '@/ada
 import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { usePreviewPlayer } from '@/player/usePreviewPlayer';
 import { usePrefsStore } from '@/stores/prefsStore';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { BACKEND_URL } from '@/config';
 
 // Spotify caps a single page at 100 items for playlists and 50 for the saved-tracks
@@ -44,6 +45,9 @@ export default function SwipeScreen(): React.ReactElement {
   // Defensive decode ensures 'spotify:collection:tracks' always matches LIKED_SONGS_PLAYLIST_ID.
   const playlistId = rawPlaylistId ? decodeURIComponent(rawPlaylistId) : rawPlaylistId;
   const router = useRouter();
+
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const { destinationPlaylistIds } = useSessionStore();
@@ -143,7 +147,7 @@ export default function SwipeScreen(): React.ReactElement {
         writeErrorShownRef.current = true;
         Alert.alert(
           "Couldn't save some tracks",
-          'A like couldn’t be added to a destination playlist. Check that you’re still logged in and have permission to edit it.',
+          `A like couldn't be added to a destination playlist. Check that you're still logged in and have permission to edit it.`,
         );
       },
     );
@@ -222,17 +226,10 @@ export default function SwipeScreen(): React.ReactElement {
       }
 
       // Normal path: await flush before fetching tracks.
-      // flushPending() drains BackendSync's own in-memory queue (records from postSwipe
-      // calls during this session). The session's liked tracks live durably on its
-      // SessionEntry, so no store-level swipe buffer needs preserving here.
       await backendSyncRef.current!.flushPending().catch((err: unknown) => {
         console.warn('[SwipeScreen] flushPending failed; will retry on reconnect', err);
       });
 
-      // Drain any write-queue entries that survived a previous crash.
-      // Fire-and-forget from the perspective of the init sequence — failures are
-      // logged inside drainStoredQueue and the entries stay in storage for the
-      // next launch rather than blocking the current session from starting.
       PlaylistWriter.drainStoredQueue(adapterRef.current!).catch((err: unknown) => {
         console.warn('[SwipeScreen] drainStoredQueue failed:', err);
       });
@@ -341,44 +338,28 @@ export default function SwipeScreen(): React.ReactElement {
         const resume = getResumeTarget();
         const isResuming = resume !== null;
 
-        // Lazy paging (approach 1): load only the first page now; the rest stream in via
-        // loadMoreTracks as the stack drains. On resume, fetch from the session entry's
-        // stored resumeOffset so queue[0] is the resume track and currentIndex restarts at 0 —
-        // no slicing. resumeOffset counts source-playlist tracks (see docs/code-review H3).
         const pageSize = getPageSize(playlistId);
         const startOffset = resume ? resume.resumeOffset : 0;
         const { tracks, total } = await adapter.getPlaylistTracks(playlistId, startOffset, pageSize);
         setTotalTracksState(total);
         useSwipeStore.getState().setTotalTracks(total);
 
-        // Cursor for the next lazy page; handed to the store in phase 5's initSession call.
         initialNextOffsetRef.current = startOffset + pageSize;
 
-        // Fetch available playlists for the destination editor and subtitle
         const playlists = await adapter.getUserPlaylists();
         setAvailablePlaylists(playlists);
-        // Save to store so tab-away + return can restore instantly without an API call
         useSwipeStore.getState().setAvailablePlaylists(playlists);
 
-        // sessionStore has no persist middleware so it is always empty on app restart.
-        // When resuming from AsyncStorage (queue not in memory), repopulate it so the
-        // Discover subtitle renders and phase 5 passes the correct destination IDs.
         if (resume) {
           const srcName =
             playlistId === LIKED_SONGS_PLAYLIST_ID
               ? 'Liked Songs'
               : (playlists.find((p) => p.id === playlistId)?.name ?? resume.sourcePlaylistName ?? null);
           if (srcName) useSessionStore.getState().setSource(playlistId, srcName);
-          // The session entry is the source of truth on resume — overwrite any stale
-          // sessionStore values left from a previously-open session (switching sessions does
-          // not reset sessionStore) so writes target THIS session's destinations.
           useSessionStore.getState().setDestinations(resume.destinationPlaylistIds);
           useSessionStore.getState().setFilterMode(resume.isFilterMode);
         }
 
-        // Stash the loaded page so phase 5 can enrich any pending (decide-later) stubs
-        // that happen to fall within it; pending tracks already carry backend metadata
-        // for the rest. The queue starts at the resume position, so no slicing is needed.
         fullTracksRef.current = tracks;
         queueTracksRef.current = tracks;
         setPhase('opening_session');
@@ -406,15 +387,9 @@ export default function SwipeScreen(): React.ReactElement {
   }, [phase, playlistId, getResumeTarget]);
 
   const queueTracksRef = useRef<Track[]>([]);
-  // Full unsliced playlist — used to enrich pending tracks with complete metadata
   const fullTracksRef = useRef<Track[]>([]);
-  // Raw playlist offset for the next lazy page; set during the initial fetch (phase 4)
-  // and handed to the store when the session opens (phase 5).
   const initialNextOffsetRef = useRef<number>(0);
-  // Guards against overlapping lazy page fetches while one is already in flight.
   const isLoadingPageRef = useRef(false);
-  // True total track count from the API (not the loaded slice size).
-  // Must be state (not a ref) so changes propagate as a prop update to SwipeEngine.
   const [totalTracks, setTotalTracksState] = useState<number>(0);
 
   useEffect(() => {
@@ -427,8 +402,6 @@ export default function SwipeScreen(): React.ReactElement {
         const resume = getResumeTarget();
         const isResuming = resume !== null;
 
-        // Queue is still in memory from the previous mount AND belongs to this session —
-        // skip re-initializing to avoid resetting currentIndex back to 0.
         if (resume && store.queue.length > 0 && store.liveSessionId === resume.sessionId) {
           setSessionId(resume.sessionId);
           setPhase('ready');
@@ -443,16 +416,12 @@ export default function SwipeScreen(): React.ReactElement {
 
         let sid: string;
         let resumeOffset = 0;
-        // Destinations driving this session's live writes. On resume the entry is the source
-        // of truth (sessionStore may still hold a previously-open session's destinations); on a
-        // fresh start they come from the destination picker via sessionStore.
         let sessionDestIds: string[];
         if (resume) {
           sid = resume.sessionId;
           resumeOffset = resume.resumeOffset;
           sessionDestIds = resume.destinationPlaylistIds;
           useSwipeStore.getState().setActiveSession(sid);
-          // Refresh only volatile metadata — never overwrite the entry's own destinations/filter.
           useSwipeStore.getState().updateActiveSession({ totalTracks: total, sourcePlaylistName: sourceName });
         } else {
           sessionDestIds = destinationPlaylistIds;
@@ -468,7 +437,6 @@ export default function SwipeScreen(): React.ReactElement {
               throw err;
             }
           }
-          // Push the new session onto the History stack and make it active.
           useSwipeStore.getState().createSession({
             sessionId: sid,
             sourcePlaylistId: playlistId,
@@ -480,9 +448,6 @@ export default function SwipeScreen(): React.ReactElement {
           });
         }
 
-        // Replace any incomplete pending-track stubs (title = track ID, no art) with
-        // full metadata from the playlist fetch. Covers tracks whose position is
-        // before currentIndex and therefore absent from queueTracksRef.
         const trackById = new Map(fullTracksRef.current.map((t) => [t.id, t]));
         const enrichedPending = pendingTracksRef.current.map((t) => trackById.get(t.id) ?? t);
 
@@ -526,26 +491,7 @@ export default function SwipeScreen(): React.ReactElement {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Unmount: PRESERVE the session — no teardown here.
-  // -------------------------------------------------------------------------
-  // Leaving the swipe screen by ANY means (tabbing away, the no-preview badge →
-  // Settings, the hardware back button, Fast Refresh) must keep the in-progress
-  // session intact so returning to Discover resumes it. A previous version cleared
-  // the session on unmount unless the BottomNavBar had set an isSuspended flag first;
-  // every other exit (e.g. the no-preview badge) fell through to clearSession() and
-  // silently destroyed the session — the cause of "the session is gone after leaving
-  // Discover".
-  //
-  // The session is torn down only at genuine end-points, both handled elsewhere:
-  //   • natural end — handleSessionEnd closes the backend session, then the session-end
-  //     screen owns clearSession() on its own unmount;
-  //   • logout — resetAll() wipes everything.
-  // Starting a different source overwrites the session via initSession(isResuming=false).
-
-  // -------------------------------------------------------------------------
   // Session end callback (queue exhausted) — navigate to session-end screen.
-  // The session entry stays 'active' here; the session-end screen marks it completed
-  // (completeActiveSession) on its own unmount, after reading its stats/liked tracks.
   // -------------------------------------------------------------------------
   const handleSessionEnd = useCallback((): void => {
     if (!sessionClosedRef.current && sessionId && sessionTrackerRef.current) {
@@ -571,14 +517,12 @@ export default function SwipeScreen(): React.ReactElement {
       const activeEntry = store.sessions.find((e) => e.sessionId === store.activeSessionId);
       const likedTrackIds = (activeEntry?.likedSwipes ?? []).map((r) => r.track.id);
 
-      // Adds are fire-and-forget via PlaylistWriter
       for (const pid of added) {
         for (const trackId of likedTrackIds) {
           playlistWriterRef.current?.write(trackId, [pid]);
         }
       }
 
-      // Removes require sequential awaiting — show loading screen while in progress
       if (removed.length > 0 && adapterRef.current) {
         const adapter = adapterRef.current;
         setIsBulkRemoving(true);
@@ -601,11 +545,7 @@ export default function SwipeScreen(): React.ReactElement {
   );
 
   // -------------------------------------------------------------------------
-  // Lazy paging — fetch the next page when SwipeEngine signals the buffer is low.
-  // The in-flight guard stops overlapping triggers from double-fetching; the store's
-  // appendFreshTracks grows the queue without touching currentIndex/absoluteIndex, so
-  // the progress bar stays stable across the load. On failure the cursor is left
-  // unchanged, so the next buffer-low trigger retries the same page.
+  // Lazy paging
   // -------------------------------------------------------------------------
   const loadMoreTracks = useCallback(async (): Promise<void> => {
     if (isLoadingPageRef.current) return;
@@ -613,7 +553,7 @@ export default function SwipeScreen(): React.ReactElement {
     if (!adapter) return;
 
     const { nextPageOffset, totalTracks: storeTotal } = useSwipeStore.getState();
-    if (nextPageOffset >= storeTotal) return; // every page already loaded
+    if (nextPageOffset >= storeTotal) return;
 
     isLoadingPageRef.current = true;
     try {
@@ -643,7 +583,7 @@ export default function SwipeScreen(): React.ReactElement {
     return (
       <View style={styles.center}>
         <Text style={styles.brand}>MusicSwipe</Text>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={activeColors.primary} />
         <Text style={styles.loadingText}>{phaseLabel(phase)}</Text>
       </View>
     );
@@ -653,7 +593,7 @@ export default function SwipeScreen(): React.ReactElement {
     return (
       <View style={styles.center}>
         <Text style={styles.brand}>MusicSwipe</Text>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={activeColors.primary} />
         <Text style={styles.loadingText}>Removing tracks…</Text>
       </View>
     );
@@ -686,30 +626,32 @@ function phaseLabel(phase: InitPhase): string {
   }
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    gap: 16,
-  },
-  brand: {
-    fontSize: 28,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  loadingText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
-  },
-  errorText: {
-    color: colors.nope,
-    fontSize: 15,
-    textAlign: 'center',
-    paddingHorizontal: 32,
-    fontFamily: 'Outfit_400Regular',
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.background,
+      gap: 16,
+    },
+    brand: {
+      fontSize: 28,
+      fontFamily: 'Outfit_700Bold',
+      color: c.primary,
+      marginBottom: 8,
+    },
+    loadingText: {
+      color: c.onSurfaceVariant,
+      fontSize: 15,
+      fontFamily: 'Outfit_400Regular',
+    },
+    errorText: {
+      color: c.nope,
+      fontSize: 15,
+      textAlign: 'center',
+      paddingHorizontal: 32,
+      fontFamily: 'Outfit_400Regular',
+    },
+  });
+}

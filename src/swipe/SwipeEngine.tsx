@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { TabHeader } from '@/components/TabHeader';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -92,6 +93,9 @@ export function SwipeEngine({
     injectSecondPass,
     setActiveDestinations,
   } = useSwipeStore();
+
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   // More source-playlist pages remain to lazily load when the paging cursor hasn't
   // reached the reported total. Drives both the prefetch trigger and the session-end guard.
@@ -251,10 +255,6 @@ export function SwipeEngine({
   }, [currentIndex, queue.length, hasMoreTracks, hasPendingSecondPass, onSessionEnd]);
 
   // Preload upcoming tracks' album art so back-card image swaps don't flicker.
-  // When the back card's track prop swaps in place (D → E), expo-image must
-  // load E's URL from network if it isn't cached, leaving the Image area blank
-  // for a frame. Prefetching ~3 ahead ensures the URL is in the cache before
-  // it appears in any visible slot.
   useEffect(() => {
     const PRELOAD_AHEAD = 3;
     const upcoming = queue.slice(currentIndex + 1, currentIndex + 1 + PRELOAD_AHEAD);
@@ -405,7 +405,7 @@ export function SwipeEngine({
       accessibilityLabel="Edit destination playlists"
       style={styles.headerActionButton}
     >
-      <Ionicons name="create-outline" size={20} color={colors.onSurfaceVariant} />
+      <Ionicons name="create-outline" size={20} color={activeColors.onSurfaceVariant} />
     </Pressable>
   );
 
@@ -418,7 +418,7 @@ export function SwipeEngine({
         <TabHeader title="Discover" subtitle={headerSubtitle} />
         <View style={styles.empty}>
           {hasMoreTracks || hasPendingSecondPass ? (
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={activeColors.primary} />
           ) : (
             <Text style={styles.emptyText}>No more tracks</Text>
           )}
@@ -518,90 +518,91 @@ export function SwipeEngine({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 24,
-    gap: 12,
-  },
-  progressSection: { width: '100%' },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  queueLabel: {
-    fontSize: 11,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  songsLeft: {
-    fontSize: 11,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.primary,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: colors.surfaceContainerHighest,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 3,
-  },
-  cardArea: {
-    flex: 1,
-    width: '100%',
-  },
-  nextCard: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  headerActionButton: {
-    padding: 8,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  emptyText: {
-    color: colors.onSurfaceVariant,
-    fontSize: 18,
-    fontFamily: 'Outfit_400Regular',
-  },
-  // DEBUG styles — used only when DEBUG_FLICKER is true.
-  // (Front debug styles live in SwipeFrontCard.tsx.)
-  debugBackBorder: {
-    borderWidth: 4,
-    borderColor: 'blue',
-  },
-  debugLabelBack: {
-    position: 'absolute',
-    top: 50,
-    left: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,255,0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  debugLabelText: {
-    color: 'white',
-    fontSize: 12,
-    fontFamily: 'Outfit_700Bold',
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 24,
+      gap: 12,
+    },
+    progressSection: { width: '100%' },
+    progressLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    queueLabel: {
+      fontSize: 11,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    songsLeft: {
+      fontSize: 11,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.primary,
+    },
+    progressTrack: {
+      height: 6,
+      backgroundColor: c.surfaceContainerHighest,
+      borderRadius: 3,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: c.primary,
+      borderRadius: 3,
+    },
+    cardArea: {
+      flex: 1,
+      width: '100%',
+    },
+    nextCard: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+    },
+    headerActionButton: {
+      padding: 8,
+    },
+    empty: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.background,
+    },
+    emptyText: {
+      color: c.onSurfaceVariant,
+      fontSize: 18,
+      fontFamily: 'Outfit_400Regular',
+    },
+    // DEBUG styles — used only when DEBUG_FLICKER is true.
+    debugBackBorder: {
+      borderWidth: 4,
+      borderColor: 'blue',
+    },
+    debugLabelBack: {
+      position: 'absolute',
+      top: 50,
+      left: 8,
+      right: 8,
+      backgroundColor: 'rgba(0,0,255,0.85)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    debugLabelText: {
+      color: 'white',
+      fontSize: 12,
+      fontFamily: 'Outfit_700Bold',
+    },
+  });
+}

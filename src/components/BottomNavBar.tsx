@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 import { useRouter, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useSwipeStore, getMostRecentResumableSession } from '@/stores/swipeStore';
 
 type TabItem = {
@@ -44,9 +45,11 @@ interface NavTabProps {
   item: TabItem;
   isActive: boolean;
   onPress: () => void;
+  activeColors: Colors;
+  styles: ReturnType<typeof createStyles>;
 }
 
-function NavTab({ item, isActive, onPress }: NavTabProps): React.ReactElement {
+function NavTab({ item, isActive, onPress, activeColors, styles }: NavTabProps): React.ReactElement {
   return (
     <TouchableOpacity
       style={styles.tab}
@@ -58,7 +61,7 @@ function NavTab({ item, isActive, onPress }: NavTabProps): React.ReactElement {
       <Ionicons
         name={isActive ? item.iconActive : item.iconInactive}
         size={24}
-        color={isActive ? colors.primary : colors.outline}
+        color={isActive ? activeColors.primary : activeColors.outline}
       />
       <Text style={[styles.label, isActive && styles.labelActive]}>
         {item.label}
@@ -72,6 +75,8 @@ export function BottomNavBar(): React.ReactElement {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const tabWidth = screenWidth / TAB_COUNT;
   const activeIndex = resolveActiveIndex(pathname);
@@ -136,6 +141,8 @@ export function BottomNavBar(): React.ReactElement {
           item={item}
           isActive={item.label === TAB_ITEMS[activeIndex]?.label}
           onPress={() => handlePress(item)}
+          activeColors={activeColors}
+          styles={styles}
         />
       ))}
     </View>
@@ -144,35 +151,37 @@ export function BottomNavBar(): React.ReactElement {
 
 export const NAV_BAR_HEIGHT = 64;
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceContainerHigh,
-    paddingTop: 10,
-  },
-  indicator: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 1,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  label: {
-    fontSize: 10,
-    fontFamily: 'Outfit_600SemiBold',
-    letterSpacing: 0.5,
-    color: colors.outline,
-  },
-  labelActive: {
-    color: colors.primary,
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      backgroundColor: c.surface,
+      borderTopWidth: 1,
+      borderTopColor: c.surfaceContainerHigh,
+      paddingTop: 10,
+    },
+    indicator: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      height: 2,
+      backgroundColor: c.primary,
+      borderRadius: 1,
+    },
+    tab: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    label: {
+      fontSize: 10,
+      fontFamily: 'Outfit_600SemiBold',
+      letterSpacing: 0.5,
+      color: c.outline,
+    },
+    labelActive: {
+      color: c.primary,
+    },
+  });
+}

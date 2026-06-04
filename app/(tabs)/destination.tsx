@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,14 +18,16 @@ import { PlaylistRow } from '@/components/PlaylistRow';
 import { AppModal } from '@/components/AppModal';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useSwipeStore, isResumable, type SessionEntry } from '@/stores/swipeStore';
-import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { Playlist, MusicPlatformAdapter } from '@/adapters/interface';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function DestinationPickerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { playlistId, playlistName } = useLocalSearchParams<{ playlistId: string; playlistName: string }>();
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const setSource = useSessionStore((s) => s.setSource);
   const setDestinations = useSessionStore((s) => s.setDestinations);
@@ -193,7 +195,7 @@ export default function DestinationPickerScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search your playlists…"
-          placeholderTextColor={colors.outline}
+          placeholderTextColor={activeColors.outline}
           value={searchQuery}
           onChangeText={setSearchQuery}
           autoCapitalize="none"
@@ -212,7 +214,7 @@ export default function DestinationPickerScreen() {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={activeColors.primary} />
         </View>
       ) : (
         <FlatList
@@ -258,9 +260,7 @@ export default function DestinationPickerScreen() {
         onCancel={handleFilterModeCancel}
       />
 
-      {/* Resume vs Start-Over dedupe modal — shown when a session for this source is in progress.
-          Resume is the safe default (also the backdrop dismiss); Start Over is the explicit
-          destructive action that deletes the saved session before starting fresh. */}
+      {/* Resume vs Start-Over dedupe modal */}
       <AppModal
         visible={existingSession !== null}
         title="Resume your session?"
@@ -285,6 +285,7 @@ export default function DestinationPickerScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Playlist name"
+              placeholderTextColor={activeColors.outline}
               value={newPlaylistName}
               onChangeText={setNewPlaylistName}
               autoFocus
@@ -310,98 +311,100 @@ export default function DestinationPickerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: colors.onSurface, letterSpacing: -0.3 },
-  headerIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  headerIconText: { fontSize: 20, color: colors.primary },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: spacing.md,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    gap: spacing.sm,
-  },
-  searchIcon: { fontSize: 18, color: colors.outline },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: 'Outfit_400Regular', color: colors.onSurface },
-  filterModeBanner: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    backgroundColor: 'rgba(253,41,123,0.08)',
-    borderRadius: radius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.nope,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  filterModeBannerText: {
-    fontSize: 13,
-    fontFamily: 'Outfit_500Medium',
-    color: colors.nope,
-  },
-  list: { flex: 1 },
-  listContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { padding: 24, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: colors.onSurfaceVariant, textAlign: 'center', fontFamily: 'Outfit_400Regular' },
-  createRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-    borderWidth: 2,
-    borderColor: colors.outlineVariant,
-    borderStyle: 'dashed',
-    borderRadius: radius.lg,
-  },
-  createIcon: { fontSize: 22, color: colors.onSurfaceVariant },
-  createText: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: colors.onSurfaceVariant },
-  footer: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceContainerHigh,
-  },
-  startBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: radius.full,
-    alignItems: 'center',
-  },
-  startBtnDisabled: { backgroundColor: colors.surfaceContainerHigh },
-  startBtnText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 16 },
-  startBtnTextDisabled: { color: colors.onSurfaceVariant },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: 20, width: '100%', maxWidth: 360 },
-  modalTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', marginBottom: 12, color: colors.onSurface },
-  modalInput: {
-    borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: radius.md,
-    paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, fontFamily: 'Outfit_400Regular',
-    color: colors.onSurface, marginBottom: 16,
-  },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
-  modalCancel: { paddingVertical: 8, paddingHorizontal: 16 },
-  modalCancelText: { color: colors.onSurfaceVariant, fontSize: 15, fontFamily: 'Outfit_400Regular' },
-  modalCreate: { backgroundColor: colors.primary, paddingVertical: 8, paddingHorizontal: 20, borderRadius: radius.md, minWidth: 80, alignItems: 'center' },
-  modalCreateDisabled: { opacity: 0.5 },
-  modalCreateText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 15 },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingBottom: 12,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.surfaceContainerHigh,
+    },
+    headerTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', color: c.onSurface, letterSpacing: -0.3 },
+    headerIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+    headerIconText: { fontSize: 20, color: c.primary },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      margin: spacing.md,
+      paddingHorizontal: spacing.md,
+      height: 48,
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+      gap: spacing.sm,
+    },
+    searchIcon: { fontSize: 18, color: c.outline },
+    searchInput: { flex: 1, fontSize: 14, fontFamily: 'Outfit_400Regular', color: c.onSurface },
+    filterModeBanner: {
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.sm,
+      backgroundColor: 'rgba(253,41,123,0.08)',
+      borderRadius: radius.md,
+      borderLeftWidth: 3,
+      borderLeftColor: c.nope,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    filterModeBannerText: {
+      fontSize: 13,
+      fontFamily: 'Outfit_500Medium',
+      color: c.nope,
+    },
+    list: { flex: 1 },
+    listContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    empty: { padding: 24, alignItems: 'center' },
+    emptyText: { fontSize: 14, color: c.onSurfaceVariant, textAlign: 'center', fontFamily: 'Outfit_400Regular' },
+    createRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.lg,
+      marginTop: spacing.sm,
+      marginBottom: spacing.sm,
+      borderWidth: 2,
+      borderColor: c.outlineVariant,
+      borderStyle: 'dashed',
+      borderRadius: radius.lg,
+    },
+    createIcon: { fontSize: 22, color: c.onSurfaceVariant },
+    createText: { fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: c.onSurfaceVariant },
+    footer: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+      backgroundColor: c.surface,
+      borderTopWidth: 1,
+      borderTopColor: c.surfaceContainerHigh,
+    },
+    startBtn: {
+      backgroundColor: c.primary,
+      paddingVertical: 16,
+      borderRadius: radius.full,
+      alignItems: 'center',
+    },
+    startBtnDisabled: { backgroundColor: c.surfaceContainerHigh },
+    startBtnText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 16 },
+    startBtnTextDisabled: { color: c.onSurfaceVariant },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    modalCard: { backgroundColor: c.surface, borderRadius: radius.xl, padding: 20, width: '100%', maxWidth: 360 },
+    modalTitle: { fontSize: 18, fontFamily: 'Outfit_700Bold', marginBottom: 12, color: c.onSurface },
+    modalInput: {
+      borderWidth: 1, borderColor: c.outlineVariant, borderRadius: radius.md,
+      paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, fontFamily: 'Outfit_400Regular',
+      color: c.onSurface, marginBottom: 16,
+    },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+    modalCancel: { paddingVertical: 8, paddingHorizontal: 16 },
+    modalCancelText: { color: c.onSurfaceVariant, fontSize: 15, fontFamily: 'Outfit_400Regular' },
+    modalCreate: { backgroundColor: c.primary, paddingVertical: 8, paddingHorizontal: 20, borderRadius: radius.md, minWidth: 80, alignItems: 'center' },
+    modalCreateDisabled: { opacity: 0.5 },
+    modalCreateText: { color: '#fff', fontFamily: 'Outfit_700Bold', fontSize: 15 },
+  });
+}

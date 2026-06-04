@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   Pressable,
@@ -6,7 +6,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface AppModalProps {
   visible: boolean;
@@ -33,6 +34,9 @@ export function AppModal({
   onConfirm,
   onCancel,
 }: AppModalProps): React.ReactElement {
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   return (
     <Modal
       visible={visible}
@@ -78,95 +82,97 @@ export function AppModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.onSurface,
-    marginBottom: spacing.sm,
-  },
-  message: {
-    fontSize: 14,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-    lineHeight: 22,
-    marginBottom: spacing.md,
-  },
-  warningBox: {
-    backgroundColor: 'rgba(253,41,123,0.08)',
-    borderRadius: radius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  warningText: {
-    fontSize: 13,
-    fontFamily: 'Outfit_500Medium',
-    color: colors.primary,
-    lineHeight: 20,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: radius.full,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  cancelLabel: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurfaceVariant,
-  },
-  confirmButton: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  confirmLabel: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: '#fff',
-  },
-  destructiveButton: {
-    backgroundColor: colors.nope,
-    shadowColor: colors.nope,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  destructiveLabel: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: '#fff',
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    card: {
+      width: '100%',
+      backgroundColor: c.surface,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 24,
+      elevation: 12,
+    },
+    title: {
+      fontSize: 18,
+      fontFamily: 'Outfit_700Bold',
+      color: c.onSurface,
+      marginBottom: spacing.sm,
+    },
+    message: {
+      fontSize: 14,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+      lineHeight: 22,
+      marginBottom: spacing.md,
+    },
+    warningBox: {
+      backgroundColor: 'rgba(253,41,123,0.08)',
+      borderRadius: radius.md,
+      borderLeftWidth: 3,
+      borderLeftColor: c.primary,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    warningText: {
+      fontSize: 13,
+      fontFamily: 'Outfit_500Medium',
+      color: c.primary,
+      lineHeight: 20,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    button: {
+      flex: 1,
+      paddingVertical: 13,
+      borderRadius: radius.full,
+      alignItems: 'center',
+    },
+    cancelButton: {
+      backgroundColor: c.surfaceContainerHigh,
+    },
+    cancelLabel: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurfaceVariant,
+    },
+    confirmButton: {
+      backgroundColor: c.primary,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    confirmLabel: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: '#fff',
+    },
+    destructiveButton: {
+      backgroundColor: c.nope,
+      shadowColor: c.nope,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    destructiveLabel: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: '#fff',
+    },
+  });
+}

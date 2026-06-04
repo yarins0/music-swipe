@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Track } from '@/adapters/interface';
 import { SegmentNavigator } from '@/player/SegmentNavigator';
-import { colors } from '@/theme';
+import { type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SwipeCardProps {
   track: Track;
@@ -29,6 +30,9 @@ export function SwipeCard({
   showAlbumArt = true,
   onNoPreviewPress,
 }: SwipeCardProps): React.ReactElement {
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   return (
     <View style={styles.card}>
       {showAlbumArt ? (
@@ -41,7 +45,7 @@ export function SwipeCard({
         />
       ) : (
         <View style={styles.artPlaceholder}>
-          <Ionicons name="musical-note" size={48} color={colors.onSurfaceVariant} />
+          <Ionicons name="musical-note" size={48} color={activeColors.onSurfaceVariant} />
         </View>
       )}
 
@@ -84,73 +88,72 @@ export function SwipeCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  artPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.surfaceContainerHigh,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    // Bottom-heavy dark fade for legible text
-    backgroundColor: 'transparent',
-    // Simulated gradient via two layered views
-  },
-  infoOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    paddingTop: 80,
-    // Simulated gradient using backgroundColor with opacity
-    backgroundColor: 'rgba(0,0,0,0)',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontFamily: 'Outfit_700Bold',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  artist: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  noPreviewBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  noPreviewText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
-    fontFamily: 'Outfit_500Medium',
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    card: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 20,
+      overflow: 'hidden',
+      backgroundColor: '#1a1a1a',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    artPlaceholder: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: c.surfaceContainerHigh,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    gradientOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'transparent',
+    },
+    infoOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: 20,
+      paddingBottom: 24,
+      paddingTop: 80,
+      backgroundColor: 'rgba(0,0,0,0)',
+    },
+    title: {
+      color: '#ffffff',
+      fontSize: 22,
+      fontFamily: 'Outfit_700Bold',
+      marginBottom: 4,
+      textShadowColor: 'rgba(0,0,0,0.4)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+    artist: {
+      color: 'rgba(255,255,255,0.85)',
+      fontSize: 15,
+      fontFamily: 'Outfit_400Regular',
+      textShadowColor: 'rgba(0,0,0,0.4)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+    noPreviewBadge: {
+      position: 'absolute',
+      top: 16,
+      right: 16,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.15)',
+    },
+    noPreviewText: {
+      color: 'rgba(255,255,255,0.8)',
+      fontSize: 11,
+      fontFamily: 'Outfit_500Medium',
+    },
+  });
+}

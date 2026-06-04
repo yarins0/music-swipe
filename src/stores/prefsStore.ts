@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 interface PrefsState {
   showAlbumArt: boolean;
   autoPlayPreviews: boolean;
@@ -11,6 +13,7 @@ interface PrefsState {
   // every session and any extras are removed automatically. Opt-in (off by default)
   // because it issues destructive removes against the user's playlists.
   autoRemoveDuplicates: boolean;
+  themeMode: ThemeMode;
 }
 
 interface PrefsActions {
@@ -19,6 +22,7 @@ interface PrefsActions {
   setHapticFeedback: (value: boolean) => void;
   setWeeklyReminders: (value: boolean) => void;
   setAutoRemoveDuplicates: (value: boolean) => void;
+  setThemeMode: (value: ThemeMode) => void;
 }
 
 export const usePrefsStore = create<PrefsState & PrefsActions>()(
@@ -30,12 +34,14 @@ export const usePrefsStore = create<PrefsState & PrefsActions>()(
       hapticFeedback: true,
       weeklyReminders: true,
       autoRemoveDuplicates: false,
+      themeMode: 'system',
 
       setShowAlbumArt: (value) => set({ showAlbumArt: value }),
       setAutoPlayPreviews: (value) => set({ autoPlayPreviews: value }),
       setHapticFeedback: (value) => set({ hapticFeedback: value }),
       setWeeklyReminders: (value) => set({ weeklyReminders: value }),
       setAutoRemoveDuplicates: (value) => set({ autoRemoveDuplicates: value }),
+      setThemeMode: (value) => set({ themeMode: value }),
     }),
     {
       name: 'prefs-store',

@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import type { Playlist } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface PlaylistRowProps {
   playlist: Playlist;
@@ -17,6 +19,9 @@ export function PlaylistRow({
   isSelected = false,
   showCheckbox = false,
 }: PlaylistRowProps) {
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   const isLikedSongs = playlist.id === LIKED_SONGS_PLAYLIST_ID;
 
   return (
@@ -64,71 +69,73 @@ export function PlaylistRow({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceContainerHigh,
-    borderRadius: radius.lg,
-    marginBottom: spacing.sm,
-  },
-  rowSelected: {
-    borderColor: colors.primary,
-    backgroundColor: '#fff5f7',
-  },
-  thumbnail: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
-    marginRight: spacing.md,
-    flexShrink: 0,
-  },
-  likedSongsThumbnail: {
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heartIcon: { color: '#fff', fontSize: 22 },
-  placeholderThumbnail: { backgroundColor: colors.surfaceContainerHigh },
-  info: { flex: 1 },
-  name: {
-    fontSize: 15,
-    fontFamily: 'Outfit_600SemiBold',
-    color: colors.onSurface,
-  },
-  trackCount: {
-    fontSize: 12,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    borderColor: colors.outlineVariant,
-    marginLeft: spacing.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkmark: { color: '#fff', fontSize: 12, fontFamily: 'Outfit_700Bold' },
-  selectedIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-  },
-  selectedCheck: { color: '#fff', fontSize: 12, fontFamily: 'Outfit_700Bold' },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.surfaceContainerHigh,
+      borderRadius: radius.lg,
+      marginBottom: spacing.sm,
+    },
+    rowSelected: {
+      borderColor: c.primary,
+      backgroundColor: c.surfaceContainerHigh,
+    },
+    thumbnail: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.md,
+      marginRight: spacing.md,
+      flexShrink: 0,
+    },
+    likedSongsThumbnail: {
+      backgroundColor: c.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    heartIcon: { color: '#fff', fontSize: 22 },
+    placeholderThumbnail: { backgroundColor: c.surfaceContainerHigh },
+    info: { flex: 1 },
+    name: {
+      fontSize: 15,
+      fontFamily: 'Outfit_600SemiBold',
+      color: c.onSurface,
+    },
+    trackCount: {
+      fontSize: 12,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+      marginTop: 2,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: radius.full,
+      borderWidth: 2,
+      borderColor: c.outlineVariant,
+      marginLeft: spacing.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkboxSelected: {
+      backgroundColor: c.primary,
+      borderColor: c.primary,
+    },
+    checkmark: { color: '#fff', fontSize: 12, fontFamily: 'Outfit_700Bold' },
+    selectedIndicator: {
+      width: 24,
+      height: 24,
+      borderRadius: radius.full,
+      backgroundColor: c.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: spacing.sm,
+    },
+    selectedCheck: { color: '#fff', fontSize: 12, fontFamily: 'Outfit_700Bold' },
+  });
+}

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing } from '@/theme';
+import { spacing, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface TabHeaderProps {
   title: string;
@@ -12,6 +13,9 @@ interface TabHeaderProps {
 
 export function TabHeader({ title, subtitle, rightAction }: TabHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
       {/* 3-column layout: left spacer | centered content | right action */}
@@ -29,39 +33,41 @@ export function TabHeader({ title, subtitle, rightAction }: TabHeaderProps): Rea
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    paddingBottom: 12,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  // Left spacer mirrors the right slot width so the center content stays truly centered.
-  sideSlot: {
-    flex: 1,
-  },
-  centerContent: {
-    alignItems: 'center',
-  },
-  rightSlot: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.primary,
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontSize: 12,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    header: {
+      paddingBottom: 12,
+      paddingHorizontal: spacing.md,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.surfaceContainerHigh,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    // Left spacer mirrors the right slot width so the center content stays truly centered.
+    sideSlot: {
+      flex: 1,
+    },
+    centerContent: {
+      alignItems: 'center',
+    },
+    rightSlot: {
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+    title: {
+      fontSize: 18,
+      fontFamily: 'Outfit_700Bold',
+      color: c.primary,
+      letterSpacing: -0.3,
+    },
+    subtitle: {
+      fontSize: 12,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+      marginTop: 2,
+    },
+  });
+}

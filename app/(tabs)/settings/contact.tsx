@@ -1,32 +1,38 @@
+import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 const FEEDBACK_EMAIL = 'yarinso39@gmail.com';
 const GITHUB_ISSUES_URL = 'https://github.com/yarins0/music-swipe/issues';
 const GITHUB_REPO_URL = 'https://github.com/yarins0/music-swipe';
+
+type StylesType = ReturnType<typeof createStyles>;
 
 interface ContactRowProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   subtitle: string;
   onPress: () => void;
+  styles: StylesType;
+  activeColors: Colors;
 }
 
-function ContactRow({ icon, label, subtitle, onPress }: ContactRowProps): React.ReactElement {
+function ContactRow({ icon, label, subtitle, onPress, styles, activeColors }: ContactRowProps): React.ReactElement {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} accessibilityRole="link">
       <View style={styles.rowIcon}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
+        <Ionicons name={icon} size={20} color={activeColors.primary} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowLabel}>{label}</Text>
         <Text style={styles.rowSubtitle}>{subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.outlineVariant} />
+      <Ionicons name="chevron-forward" size={18} color={activeColors.outlineVariant} />
     </TouchableOpacity>
   );
 }
@@ -34,6 +40,8 @@ function ContactRow({ icon, label, subtitle, onPress }: ContactRowProps): React.
 export default function ContactScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const handleSendFeedback = () => {
     void Linking.openURL(
@@ -67,6 +75,8 @@ export default function ContactScreen(): React.ReactElement {
             label="Send Feedback"
             subtitle="Share ideas or suggestions"
             onPress={handleSendFeedback}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
           <ContactRow
@@ -74,6 +84,8 @@ export default function ContactScreen(): React.ReactElement {
             label="Report a Bug"
             subtitle="Open an issue on GitHub"
             onPress={handleReportBug}
+            styles={styles}
+            activeColors={activeColors}
           />
           <View style={styles.divider} />
           <ContactRow
@@ -81,6 +93,8 @@ export default function ContactScreen(): React.ReactElement {
             label="View on GitHub"
             subtitle="Browse the source code"
             onPress={handleViewOnGitHub}
+            styles={styles}
+            activeColors={activeColors}
           />
         </View>
       </View>
@@ -88,84 +102,86 @@ export default function ContactScreen(): React.ReactElement {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceContainerHigh,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Outfit_700Bold',
-    color: colors.onSurface,
-    letterSpacing: -0.3,
-  },
-  headerIconBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerIconText: {
-    fontSize: 20,
-    color: colors.primary,
-  },
-  content: {
-    padding: spacing.md,
-    paddingTop: spacing.lg,
-  },
-  sectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    minHeight: 64,
-    gap: spacing.md,
-  },
-  rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowText: {
-    flex: 1,
-    gap: 2,
-  },
-  rowLabel: {
-    fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurface,
-  },
-  rowSubtitle: {
-    fontSize: 12,
-    fontFamily: 'Outfit_400Regular',
-    color: colors.onSurfaceVariant,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.surfaceContainerHigh,
-    marginLeft: spacing.md,
-  },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingBottom: 12,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.surfaceContainerHigh,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontFamily: 'Outfit_700Bold',
+      color: c.onSurface,
+      letterSpacing: -0.3,
+    },
+    headerIconBtn: {
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerIconText: {
+      fontSize: 20,
+      color: c.primary,
+    },
+    content: {
+      padding: spacing.md,
+      paddingTop: spacing.lg,
+    },
+    sectionCard: {
+      backgroundColor: c.surface,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 1,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: 14,
+      minHeight: 64,
+      gap: spacing.md,
+    },
+    rowIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      backgroundColor: c.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowText: {
+      flex: 1,
+      gap: 2,
+    },
+    rowLabel: {
+      fontSize: 15,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurface,
+    },
+    rowSubtitle: {
+      fontSize: 12,
+      fontFamily: 'Outfit_400Regular',
+      color: c.onSurfaceVariant,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.surfaceContainerHigh,
+      marginLeft: spacing.md,
+    },
+  });
+}

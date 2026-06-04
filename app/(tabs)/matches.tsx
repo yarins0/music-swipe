@@ -3,7 +3,8 @@ import { Alert, Animated, FlatList, Pressable, StyleSheet, Text, View } from 're
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Swipeable } from 'react-native-gesture-handler';
-import { colors, spacing, radius } from '@/theme';
+import { spacing, radius, type Colors } from '@/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { useSwipeStore } from '@/stores/swipeStore';
 import type { SessionEntry } from '@/stores/swipeStore';
@@ -26,6 +27,9 @@ export default function MatchesScreen(): React.ReactElement {
   const setActiveSession = useSwipeStore((s) => s.setActiveSession);
   const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
   const deleteSession = useSwipeStore((s) => s.deleteSession);
+
+  const { activeColors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [isDark]);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
@@ -113,7 +117,7 @@ export default function MatchesScreen(): React.ReactElement {
           <Text style={styles.deleteActionText}>Delete</Text>
         </Pressable>
       ),
-    [],
+    [styles],
   );
 
   const renderItem = useCallback(
@@ -176,22 +180,24 @@ export default function MatchesScreen(): React.ReactElement {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  listContent: { paddingVertical: spacing.sm },
-  emptyContainer: { flex: 1 },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyText: { color: colors.onSurfaceVariant, fontSize: 16, fontFamily: 'Outfit_400Regular' },
-  // Aligned to the card's right inset + bottom gap so the red action matches the card.
-  deleteAction: {
-    backgroundColor: colors.nope,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-    width: 84,
-    marginRight: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: radius.lg,
-  },
-  deleteActionText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 12 },
-});
+function createStyles(c: Colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    listContent: { paddingVertical: spacing.sm },
+    emptyContainer: { flex: 1 },
+    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+    emptyText: { color: c.onSurfaceVariant, fontSize: 16, fontFamily: 'Outfit_400Regular' },
+    // Aligned to the card's right inset + bottom gap so the red action matches the card.
+    deleteAction: {
+      backgroundColor: c.nope,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 4,
+      width: 84,
+      marginRight: spacing.md,
+      marginBottom: spacing.sm,
+      borderRadius: radius.lg,
+    },
+    deleteActionText: { color: '#fff', fontFamily: 'Outfit_600SemiBold', fontSize: 12 },
+  });
+}
