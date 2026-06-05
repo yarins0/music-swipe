@@ -163,6 +163,14 @@ interface SwipeActions {
 
   /** Persist filter mode flag for the open session. */
   setIsFilterMode: (value: boolean) => void;
+
+  /**
+   * Merge a server-fetched session list into the local stack (stale-while-revalidate,
+   * local-wins-on-conflict). Restores History across reinstalls/devices: sessions absent
+   * locally are taken wholesale; sessions present in both keep local liked-track copies
+   * (deduped by record id then track id) and local fields for the active session.
+   */
+  mergeRemoteSessions: (remote: SessionEntry[]) => void;
 }
 
 // Live fields reset whenever no session is open (completion, deletion of the active one, logout).
@@ -227,6 +235,35 @@ function evictToCap(sessions: SessionEntry[], protectId: string | null): Session
     removable.slice(0, sessions.length - MAX_SESSION_HISTORY).map((entry) => entry.sessionId),
   );
   return sessions.filter((entry) => !dropIds.has(entry.sessionId));
+}
+
+/**
+ * Union a session's liked swipes from local + remote, local winning on conflict.
+ * Keyed by record id (local overwrites the same id), then a secondary dedupe by
+ * track id drops a remote record whose track already has a local copy — so a
+ * not-yet-synced client-UUID record and its backend twin render once, keeping the
+ * local copy (it carries likedSongsWrittenByUs + per-track destination names).
+ * Result is ordered oldest-first to match local insertion order.
+ */
+function mergeLikedSwipes(local: SwipeRecord[], remote: SwipeRecord[]): SwipeRecord[] {
+  const byId = new Map<string, SwipeRecord>();
+  for (const record of remote) byId.set(record.id, record);
+  for (const record of local) byId.set(record.id, record);
+
+  const localIds = new Set(local.map((record) => record.id));
+  const localTrackIds = new Set(local.map((record) => record.track.id));
+
+  const deduped: SwipeRecord[] = [];
+  const seenTrackIds = new Set<string>();
+  for (const record of byId.values()) {
+    const isRemoteOnly = !localIds.has(record.id);
+    if (isRemoteOnly && localTrackIds.has(record.track.id)) continue; // backend twin of a local record
+    if (seenTrackIds.has(record.track.id)) continue;
+    seenTrackIds.add(record.track.id);
+    deduped.push(record);
+  }
+
+  return deduped.sort((a, b) => a.swipedAt.localeCompare(b.swipedAt));
 }
 
 /** Shape of the persisted (partialized) swipe-store blob — only the durable session stack. */
@@ -328,6 +365,41 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           activeSessionId: null,
           ...LIVE_RESET,
         })),
+
+      mergeRemoteSessions: (remote) =>
+        set((state) => {
+          const activeId = state.activeSessionId;
+          const localById = new Map(state.sessions.map((entry) => [entry.sessionId, entry]));
+          // Seed from local to preserve every local-only session; remote then patches/adds.
+          const mergedById = new Map<string, SessionEntry>(localById);
+
+          for (const remoteSession of remote) {
+            const local = localById.get(remoteSession.sessionId);
+
+            // Reinstall / cross-device restore: no local copy → take remote wholesale.
+            if (!local) {
+              mergedById.set(remoteSession.sessionId, remoteSession);
+              continue;
+            }
+
+            const mergedLikedSwipes = mergeLikedSwipes(local.likedSwipes, remoteSession.likedSwipes);
+
+            // Session-level fields: the active session's in-flight local state always wins;
+            // otherwise prefer the fresher side by updatedAt. Liked swipes stay locally merged.
+            const preferRemote =
+              remoteSession.sessionId !== activeId &&
+              remoteSession.updatedAt.localeCompare(local.updatedAt) > 0;
+            const base = preferRemote ? remoteSession : local;
+
+            mergedById.set(remoteSession.sessionId, { ...base, likedSwipes: mergedLikedSwipes });
+          }
+
+          // Most-recent-first, then trim to the cap (active session protected).
+          const merged = [...mergedById.values()].sort((a, b) =>
+            b.updatedAt.localeCompare(a.updatedAt),
+          );
+          return { sessions: evictToCap(merged, activeId) };
+        }),
 
       deleteSession: (sessionId) =>
         set((state) => {

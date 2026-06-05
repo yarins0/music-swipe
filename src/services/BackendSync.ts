@@ -4,6 +4,8 @@
  * postSwipe() calls and is drained by flushPending().
  */
 
+import type { Track } from '@/adapters/interface';
+
 export interface SwipePayload {
   sessionId: string;
   trackId: string;
@@ -11,6 +13,10 @@ export interface SwipePayload {
   direction: 'liked' | 'super_liked' | 'skipped' | 'pending';
   destinationPlaylistIds: string[];
   timestamp: string;
+  // Full track metadata for server-side restore (title/artist/art). Optional so
+  // legacy/replayed payloads without it still post successfully; the client
+  // always supplies it on live swipes.
+  track?: Track;
 }
 
 export class BackendSync {
@@ -69,6 +75,22 @@ export class BackendSync {
       spotifyTrackId: p.trackId,
       status: p.direction,
       destinationPlaylistIds: p.destinationPlaylistIds,
+      // Nest the track metadata only when present so no-track payloads keep
+      // their exact shape (the backend treats `track` as optional).
+      ...(p.track
+        ? {
+            track: {
+              uri: p.track.uri,
+              title: p.track.title,
+              artist: p.track.artist,
+              artists: p.track.artists,
+              album: p.track.album,
+              albumArtUrl: p.track.albumArtUrl,
+              durationMs: p.track.durationMs,
+              previewUrl: p.track.previewUrl,
+            },
+          }
+        : {}),
     }));
 
     const response = await fetch(`${this.backendUrl}/swipes`, {

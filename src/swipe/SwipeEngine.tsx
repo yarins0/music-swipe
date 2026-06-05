@@ -303,6 +303,7 @@ export function SwipeEngine({
         direction: status,
         destinationPlaylistIds: effectiveDestinations,
         timestamp: new Date().toISOString(),
+        track: currentTrack,
       });
 
       // Clear per-track override after each swipe
@@ -331,6 +332,7 @@ export function SwipeEngine({
       direction: 'pending',
       destinationPlaylistIds: [],
       timestamp: new Date().toISOString(),
+      track: currentTrack,
     });
     setPerTrackOverrideIds(null);
   }, [currentTrack, recordSwipe, backendSync, sessionId]);

@@ -1,7 +1,22 @@
 import { BackendSync, SwipePayload } from '../BackendSync';
+import type { Track } from '@/adapters/interface';
 
 const BASE_URL = 'https://api.example.com';
 const TOKEN = 'test-token';
+
+function makeTrack(id: string): Track {
+  return {
+    id,
+    uri: `spotify:track:${id}`,
+    title: `Track ${id}`,
+    artist: 'Artist',
+    artists: ['Artist', 'Featured'],
+    album: 'Album',
+    albumArtUrl: `https://example.com/art/${id}.jpg`,
+    durationMs: 180000,
+    previewUrl: null,
+  };
+}
 
 function makePayload(overrides: Partial<SwipePayload> = {}): SwipePayload {
   return {
@@ -78,6 +93,39 @@ describe('BackendSync', () => {
         status: 'skipped',
         destinationPlaylistIds: ['dest-1'],
       });
+    });
+
+    it('nests track metadata in the POST body when payload.track is present', async () => {
+      const fetchMock = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = fetchMock;
+
+      sync.postSwipe(makePayload({ trackId: 'track-m', track: makeTrack('track-m') }));
+      await Promise.resolve();
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes[0]['track']).toEqual({
+        uri: 'spotify:track:track-m',
+        title: 'Track track-m',
+        artist: 'Artist',
+        artists: ['Artist', 'Featured'],
+        album: 'Album',
+        albumArtUrl: 'https://example.com/art/track-m.jpg',
+        durationMs: 180000,
+        previewUrl: null,
+      });
+    });
+
+    it('omits the track key entirely when payload.track is undefined', async () => {
+      const fetchMock = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = fetchMock;
+
+      sync.postSwipe(makePayload()); // no track
+      await Promise.resolve();
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes[0]).not.toHaveProperty('track');
     });
 
     it('does not throw when the server returns an error', async () => {

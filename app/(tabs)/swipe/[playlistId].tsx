@@ -426,13 +426,21 @@ export default function SwipeScreen(): React.ReactElement {
         } else {
           sessionDestIds = destinationPlaylistIds;
           const filterMode = useSessionStore.getState().isFilterMode;
+          // Send the full SessionEntry shape so a restored History card can be
+          // rebuilt server-side (names, destinations, filter mode, track total).
+          const sessionMeta = {
+            sourcePlaylistName: sourceName,
+            destinationPlaylistNames: sessionDestIds.map(resolveName),
+            isFilterMode: filterMode,
+            totalTracks: total,
+          };
           try {
-            sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds);
+            sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds, sessionMeta);
           } catch (err) {
             // Supabase JWT expired — refresh it once and retry
             if (err instanceof Error && err.message.includes('401')) {
               await refreshSupabaseToken();
-              sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds);
+              sid = await sessionTrackerRef.current!.openSession(playlistId, sessionDestIds, sessionMeta);
             } else {
               throw err;
             }
@@ -497,6 +505,13 @@ export default function SwipeScreen(): React.ReactElement {
     if (!sessionClosedRef.current && sessionId && sessionTrackerRef.current) {
       sessionClosedRef.current = true;
       sessionTrackerRef.current.closeSession(sessionId);
+      // Flush the final resume progress + completed status once (not per-swipe)
+      // so the session restores correctly on another device/reinstall.
+      const entry = useSwipeStore.getState().sessions.find((e) => e.sessionId === sessionId);
+      sessionTrackerRef.current.updateSession(sessionId, {
+        resumeOffset: entry?.resumeOffset ?? 0,
+        status: 'completed',
+      });
     }
     router.replace({
       pathname: '/(tabs)/session-end' as const,

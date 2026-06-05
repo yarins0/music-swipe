@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Swipeable } from 'react-native-gesture-handler';
 import { spacing, radius, type Colors } from '@/theme';
@@ -14,6 +14,7 @@ import { PlaylistWriter } from '@/services/PlaylistWriter';
 import { TabHeader } from '@/components/TabHeader';
 import { SessionCard } from '@/components/SessionCard';
 import { AppModal } from '@/components/AppModal';
+import { useHistoryHydration } from '@/stores/useHistoryHydration';
 
 /**
  * History tab — a stack of the user's recent swipe sessions. Each card shows the session's
@@ -27,6 +28,15 @@ export default function MatchesScreen(): React.ReactElement {
   const setActiveSession = useSwipeStore((s) => s.setActiveSession);
   const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
   const deleteSession = useSwipeStore((s) => s.deleteSession);
+
+  // Restore History from the server whenever this tab gains focus: stale-while-revalidate,
+  // local-wins — survives reinstalls and travels across devices.
+  const { hydrate } = useHistoryHydration();
+  useFocusEffect(
+    useCallback(() => {
+      void hydrate();
+    }, [hydrate]),
+  );
 
   const { activeColors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(activeColors), [isDark]);

@@ -536,7 +536,7 @@ describe('migrateSwipeStore (v0 → v1)', () => {
 
     const migrated = migrateSwipeStore(v0Blob, 0) as typeof v0Blob;
 
-    expect(migrated.sessions[0].likedSwipes.map((r) => (r as SwipeRecord).id)).toEqual([
+    expect(migrated.sessions[0].likedSwipes.map((r) => (r as unknown as SwipeRecord).id)).toEqual([
       '2026-01-01T00:00:00.000Z',
       '2026-01-01T00:00:01.000Z',
     ]);
