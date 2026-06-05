@@ -22,25 +22,35 @@ CREATE TABLE IF NOT EXISTS playlists (
 );
 
 CREATE TABLE IF NOT EXISTS tracks (
-  id               UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
-  spotify_track_id TEXT  UNIQUE NOT NULL,
-  title            TEXT  NOT NULL,
-  artist           TEXT  NOT NULL,
+  id               UUID   PRIMARY KEY DEFAULT gen_random_uuid(),
+  spotify_track_id TEXT   UNIQUE NOT NULL,
+  title            TEXT   NOT NULL,
+  artist           TEXT   NOT NULL,
+  artists          TEXT[] NOT NULL DEFAULT '{}',
   album            TEXT,
   album_art_url    TEXT,
   duration_ms      INT,
-  preview_url      TEXT
+  preview_url      TEXT,
+  uri              TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id            UUID        REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  source_playlist_id TEXT        NOT NULL,
-  started_at         TIMESTAMPTZ DEFAULT now(),
-  ended_at           TIMESTAMPTZ,
-  swiped_count       INT         DEFAULT 0,
-  liked_count        INT         DEFAULT 0,
-  super_liked_count  INT         DEFAULT 0
+  id                         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                    UUID        REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  source_playlist_id         TEXT        NOT NULL,
+  source_playlist_name       TEXT,
+  destination_playlist_ids   TEXT[]      NOT NULL DEFAULT '{}',
+  destination_playlist_names TEXT[]      NOT NULL DEFAULT '{}',
+  is_filter_mode             BOOLEAN     NOT NULL DEFAULT false,
+  resume_offset              INT         NOT NULL DEFAULT 0,
+  total_tracks               INT         NOT NULL DEFAULT 0,
+  status                     TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed')),
+  started_at                 TIMESTAMPTZ DEFAULT now(),
+  ended_at                   TIMESTAMPTZ,
+  updated_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),
+  swiped_count               INT         DEFAULT 0,
+  liked_count                INT         DEFAULT 0,
+  super_liked_count          INT         DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS swipes (
@@ -73,9 +83,16 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user    ON sessions(user_id);
 -- all within a single transaction. Called from the Express backend via
 -- supabase.rpc('upsert_swipes', { p_user_id, p_swipes }).
 --
--- p_swipes JSON array shape:
+-- p_swipes JSON array shape (track is OPTIONAL — see migration 0002):
 --   [{ "sessionId": uuid, "spotifyTrackId": text, "status": text,
---      "destinationPlaylistIds": text[] }, ...]
+--      "destinationPlaylistIds": text[],
+--      "track": { "uri": text, "title": text, "artist": text, "artists": text[],
+--                 "album": text, "albumArtUrl": text, "durationMs": int,
+--                 "previewUrl": text } }, ...]
+--
+-- When present (non-null title), track metadata is upserted into `tracks`
+-- (deduped by UNIQUE(spotify_track_id)) before the swipe upsert, in the same
+-- transaction. Returned counts are SWIPES ONLY.
 --
 -- Returns: { "inserted": n, "updated": m }
 -- ---------------------------------------------------------------------------
@@ -89,12 +106,14 @@ DECLARE
   v_inserted   INT := 0;
   v_updated    INT := 0;
   v_item       JSONB;
+  v_track      JSONB;
   v_swipe_id   UUID;
   v_session_id UUID;
   v_track_id   TEXT;
   v_status     TEXT;
   v_dest_ids   TEXT[];
   v_dest_id    TEXT;
+  v_artists    TEXT[];
   v_xmax       BIGINT;
 BEGIN
   FOR v_item IN SELECT jsonb_array_elements(p_swipes)
@@ -111,6 +130,44 @@ BEGIN
 
     IF v_dest_ids IS NULL THEN
       v_dest_ids := '{}';
+    END IF;
+
+    -- Optional track metadata upsert (skipped when absent / null title).
+    v_track := v_item->'track';
+    IF v_track IS NOT NULL AND (v_track->>'title') IS NOT NULL THEN
+      SELECT ARRAY(
+        SELECT jsonb_array_elements_text(v_track->'artists')
+      )
+      INTO v_artists;
+
+      IF v_artists IS NULL THEN
+        v_artists := '{}';
+      END IF;
+
+      INSERT INTO tracks (
+        spotify_track_id, title, artist, artists, album,
+        album_art_url, duration_ms, preview_url, uri
+      )
+      VALUES (
+        v_track_id,
+        v_track->>'title',
+        COALESCE(v_track->>'artist', ''),
+        v_artists,
+        v_track->>'album',
+        v_track->>'albumArtUrl',
+        (v_track->>'durationMs')::INT,
+        v_track->>'previewUrl',
+        v_track->>'uri'
+      )
+      ON CONFLICT (spotify_track_id) DO UPDATE SET
+        title         = EXCLUDED.title,
+        artist        = EXCLUDED.artist,
+        artists       = EXCLUDED.artists,
+        album         = EXCLUDED.album,
+        album_art_url = EXCLUDED.album_art_url,
+        duration_ms   = EXCLUDED.duration_ms,
+        preview_url   = EXCLUDED.preview_url,
+        uri           = EXCLUDED.uri;
     END IF;
 
     -- Upsert the swipe row. ON CONFLICT targets the unique constraint on
