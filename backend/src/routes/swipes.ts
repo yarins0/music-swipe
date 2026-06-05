@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { supabase } from '../db/client';
+import { TRACK_SELECT, buildTracksById, type TrackRow, type TrackResponse } from './trackResponse';
 
 const router = Router();
 
@@ -113,6 +114,10 @@ interface SwipeInput {
   spotifyTrackId?: unknown;
   status?: unknown;
   destinationPlaylistIds?: unknown;
+  // Optional track metadata for server-side restore (M7). When present it is
+  // forwarded to upsert_swipes, which caches it in `tracks`. Optional so legacy
+  // or replayed payloads without it still succeed.
+  track?: unknown;
 }
 
 interface SwipeRow {
@@ -179,6 +184,26 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
       });
       return;
     }
+
+    // Optional track metadata: when present it must be an object carrying at
+    // least a non-empty title + artist (the fields a restored row needs to
+    // render). Anything malformed is rejected rather than silently dropped.
+    if (item.track !== undefined) {
+      const track = item.track;
+      if (typeof track !== 'object' || track === null || Array.isArray(track)) {
+        res.status(400).json({ error: `swipes[${i}].track must be an object` });
+        return;
+      }
+      const fields = track as Record<string, unknown>;
+      if (typeof fields['title'] !== 'string' || fields['title'].length === 0) {
+        res.status(400).json({ error: `swipes[${i}].track.title is required` });
+        return;
+      }
+      if (typeof fields['artist'] !== 'string' || fields['artist'].length === 0) {
+        res.status(400).json({ error: `swipes[${i}].track.artist is required` });
+        return;
+      }
+    }
   }
 
   // Collect unique session IDs referenced in the batch
@@ -228,6 +253,9 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     spotifyTrackId: s.spotifyTrackId as string,
     status: s.status as string,
     destinationPlaylistIds: (s.destinationPlaylistIds as string[] | undefined) ?? [],
+    // Forward track metadata only when present so payloads without it keep their
+    // exact prior shape (the upsert function treats `track` as optional).
+    ...(s.track ? { track: s.track } : {}),
   }));
 
   const rpcResult = await supabase.rpc('upsert_swipes', {
@@ -394,6 +422,23 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     }
   }
 
+  // Hydrate track metadata in one batched query (mirrors destinationsBySwipe).
+  // A restored row whose track was never cached server-side comes back as null.
+  let tracksById = new Map<string, TrackResponse>();
+  const trackIds = [...new Set(resultRows.map((s) => s.spotify_track_id))];
+
+  if (trackIds.length > 0) {
+    const tracksResult = await supabase.from('tracks').select(TRACK_SELECT).in('spotify_track_id', trackIds);
+
+    if (tracksResult.error) {
+      console.error('GET /swipes tracks fetch error:', tracksResult.error);
+      res.status(500).json({ error: 'Failed to fetch tracks' });
+      return;
+    }
+
+    tracksById = buildTracksById((tracksResult.data ?? []) as TrackRow[]);
+  }
+
   const result = resultRows.map((s) => ({
     id: s.id,
     sessionId: s.session_id,
@@ -402,6 +447,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     swipedAt: s.swiped_at,
     sourcePlaylistId: s.sessions?.source_playlist_id ?? null,
     destinationPlaylistIds: destinationsBySwipe.get(s.id) ?? [],
+    track: tracksById.get(s.spotify_track_id) ?? null,
   }));
 
   res.json({ swipes: result });

@@ -764,6 +764,115 @@ describe('POST /swipes pending reconciliation', () => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /swipes — optional track metadata (M7)
+// ---------------------------------------------------------------------------
+describe('POST /swipes track metadata', () => {
+  const TRACK = {
+    uri: 'spotify:track:aaa',
+    title: 'Song One',
+    artist: 'Artist One',
+    artists: ['Artist One'],
+    album: 'Album One',
+    albumArtUrl: 'http://art/1.jpg',
+    durationMs: 180000,
+    previewUrl: null,
+  };
+
+  it('forwards the track object to rpc when present', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_ID, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    mockFrom.mockReturnValueOnce(sessionMock);
+
+    mockRpcSuccess(1, 0);
+
+    const reconcileSessionsMock = makeQueryMock({
+      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const pendingRowsMock = makeQueryMock({ data: [], error: null });
+    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'liked',
+            destinationPlaylistIds: [PLAYLIST_A],
+            track: TRACK,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith('upsert_swipes', {
+      p_user_id: VALID_USER_ID,
+      p_swipes: [
+        {
+          sessionId: SESSION_ID,
+          spotifyTrackId: TRACK_ID_1,
+          status: 'liked',
+          destinationPlaylistIds: [PLAYLIST_A],
+          track: TRACK,
+        },
+      ],
+    });
+  });
+
+  it('returns 400 when track is present but missing title', async () => {
+    authenticateAs();
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'liked',
+            track: { artist: 'Artist One' },
+          },
+        ],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/track\.title is required/);
+  });
+
+  it('returns 400 when track is present but missing artist', async () => {
+    authenticateAs();
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'liked',
+            track: { title: 'Song One' },
+          },
+        ],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/track\.artist is required/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET /swipes
 // ---------------------------------------------------------------------------
 describe('GET /swipes', () => {
@@ -812,9 +921,13 @@ describe('GET /swipes', () => {
       error: null,
     });
 
+    // 3: tracks fetch — uses .select().in()
+    const tracksMock = makeQueryMock({ data: [], error: null });
+
     mockFrom
       .mockReturnValueOnce(swipeMock)
-      .mockReturnValueOnce(destMock);
+      .mockReturnValueOnce(destMock)
+      .mockReturnValueOnce(tracksMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -830,7 +943,101 @@ describe('GET /swipes', () => {
       status: 'liked',
       sourcePlaylistId: PLAYLIST_A,
       destinationPlaylistIds: [PLAYLIST_B],
+      track: null,
     });
+  });
+
+  it('joins track metadata onto each swipe and returns null when uncached', async () => {
+    authenticateAs();
+
+    const swipeMock = makeQueryMock({
+      data: [
+        {
+          id: SWIPE_ID_1,
+          session_id: SESSION_ID,
+          spotify_track_id: TRACK_ID_1,
+          status: 'liked',
+          swiped_at: '2026-01-01T00:00:00Z',
+          sessions: { source_playlist_id: PLAYLIST_A },
+        },
+        {
+          id: SWIPE_ID_2,
+          session_id: SESSION_ID,
+          spotify_track_id: TRACK_ID_2,
+          status: 'liked',
+          swiped_at: '2026-01-01T00:01:00Z',
+          sessions: { source_playlist_id: PLAYLIST_A },
+        },
+      ],
+      error: null,
+    });
+    const destMock = makeQueryMock({ data: [], error: null });
+    // Only TRACK_ID_1 has cached metadata; TRACK_ID_2 must come back as track: null.
+    const tracksMock = makeQueryMock({
+      data: [
+        {
+          spotify_track_id: TRACK_ID_1,
+          title: 'Song One',
+          artist: 'Artist One',
+          artists: ['Artist One'],
+          album: 'Album One',
+          album_art_url: 'http://art/1.jpg',
+          duration_ms: 180000,
+          preview_url: null,
+          uri: 'spotify:track:aaa',
+        },
+      ],
+      error: null,
+    });
+
+    mockFrom
+      .mockReturnValueOnce(swipeMock)
+      .mockReturnValueOnce(destMock)
+      .mockReturnValueOnce(tracksMock);
+
+    const app = buildApp();
+    const res = await request(app).get('/swipes').set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body.swipes).toHaveLength(2);
+    expect(res.body.swipes[0].track).toMatchObject({
+      id: TRACK_ID_1,
+      title: 'Song One',
+      artist: 'Artist One',
+      uri: 'spotify:track:aaa',
+    });
+    expect(res.body.swipes[1].track).toBeNull();
+  });
+
+  it('returns 500 when the tracks fetch fails', async () => {
+    authenticateAs();
+
+    const swipeMock = makeQueryMock({
+      data: [
+        {
+          id: SWIPE_ID_1,
+          session_id: SESSION_ID,
+          spotify_track_id: TRACK_ID_1,
+          status: 'liked',
+          swiped_at: '2026-01-01T00:00:00Z',
+          sessions: { source_playlist_id: PLAYLIST_A },
+        },
+      ],
+      error: null,
+    });
+    const destMock = makeQueryMock({ data: [], error: null });
+    const tracksMock = makeQueryMock({ data: null, error: new Error('Tracks DB error') });
+
+    mockFrom
+      .mockReturnValueOnce(swipeMock)
+      .mockReturnValueOnce(destMock)
+      .mockReturnValueOnce(tracksMock);
+
+    const app = buildApp();
+    const res = await request(app).get('/swipes').set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/Failed to fetch tracks/);
   });
 
   it('returns 200 with empty swipes array when user has no swipes', async () => {
@@ -945,11 +1152,14 @@ describe('GET /swipes?status=pending dedupe', () => {
     const decidedMock = makeMatchEqMock({ data: [{ spotify_track_id: TRACK_ID_1 }], error: null });
     // 3: destinations for the surviving swipe — none
     const destMock = makeQueryMock({ data: [], error: null });
+    // 4: tracks for the surviving swipe — none cached
+    const tracksMock = makeQueryMock({ data: [], error: null });
 
     mockFrom
       .mockReturnValueOnce(pendingMock)
       .mockReturnValueOnce(decidedMock)
-      .mockReturnValueOnce(destMock);
+      .mockReturnValueOnce(destMock)
+      .mockReturnValueOnce(tracksMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -973,11 +1183,13 @@ describe('GET /swipes?status=pending dedupe', () => {
     });
     const decidedMock = makeMatchEqMock({ data: [], error: null });
     const destMock = makeQueryMock({ data: [], error: null });
+    const tracksMock = makeQueryMock({ data: [], error: null });
 
     mockFrom
       .mockReturnValueOnce(pendingMock)
       .mockReturnValueOnce(decidedMock)
-      .mockReturnValueOnce(destMock);
+      .mockReturnValueOnce(destMock)
+      .mockReturnValueOnce(tracksMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -1048,10 +1260,14 @@ describe('GET /swipes?session_id=', () => {
       error: null,
     });
 
+    // 4: tracks fetch
+    const tracksMock = makeQueryMock({ data: [], error: null });
+
     mockFrom
       .mockReturnValueOnce(sessionOwnershipMock) // sessions ownership
       .mockReturnValueOnce(swipesMock)           // swipes with session_id filter
-      .mockReturnValueOnce(destMock);            // swipe_destinations
+      .mockReturnValueOnce(destMock)             // swipe_destinations
+      .mockReturnValueOnce(tracksMock);          // tracks
 
     const app = buildApp();
     const res = await request(app)
