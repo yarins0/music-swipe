@@ -65,13 +65,14 @@ function setSwipes(swipes: ReturnType<typeof makeSwipeRecord>[]) {
   });
 }
 
+let swipeRecordSeq = 0;
 function makeSwipeRecord(
   track: Track,
   status: 'liked' | 'super_liked' | 'skipped' | 'pending',
   destinationPlaylistIds = DEST_IDS,
   swipedAt = new Date().toISOString(),
 ) {
-  return { track, status, destinationPlaylistIds, swipedAt };
+  return { id: `rec-${swipeRecordSeq++}`, track, status, destinationPlaylistIds, swipedAt };
 }
 
 // ---------------------------------------------------------------------------
@@ -145,12 +146,13 @@ describe('MatchRecord shape', () => {
   it('maps SwipeRecord fields to the correct MatchRecord structure', () => {
     const swipedAt = '2026-05-19T12:00:00.000Z';
     setSwipes([
-      { track: TRACK_A, status: 'liked', destinationPlaylistIds: DEST_IDS, swipedAt },
+      { id: 'rec-fixed', track: TRACK_A, status: 'liked', destinationPlaylistIds: DEST_IDS, swipedAt },
     ]);
 
     const { result } = renderHook(() => useMatchesStore());
     const record: MatchRecord = result.current.matches[0];
 
+    expect(record.id).toBe('rec-fixed');
     expect(record.track).toEqual(TRACK_A);
     expect(record.status).toBe('liked');
     expect(record.destinationPlaylistIds).toEqual(DEST_IDS);
@@ -200,6 +202,7 @@ describe('fetchFromBackend', () => {
     const mockResponse = {
       swipes: [
         {
+          id: 'swipe-a',
           track_id: 'a',
           status: 'liked',
           destination_playlist_ids: ['p1'],
@@ -217,6 +220,7 @@ describe('fetchFromBackend', () => {
           },
         },
         {
+          id: 'swipe-b',
           track_id: 'b',
           status: 'super_liked',
           destination_playlist_ids: ['p1', 'p2'],
@@ -244,8 +248,10 @@ describe('fetchFromBackend', () => {
     const results = await fetchFromBackend(SESSION_ID, TOKEN, BACKEND_URL);
 
     expect(results).toHaveLength(2);
+    expect(results[0].id).toBe('swipe-a');
     expect(results[0].status).toBe('liked');
     expect(results[0].track.id).toBe('a');
+    expect(results[1].id).toBe('swipe-b');
     expect(results[1].status).toBe('super_liked');
     expect(results[1].track.id).toBe('b');
     expect(results[1].destinationPlaylistIds).toEqual(['p1', 'p2']);
@@ -255,6 +261,7 @@ describe('fetchFromBackend', () => {
     const mockResponse = {
       swipes: [
         {
+          id: 'swipe-a',
           track_id: 'a',
           status: 'liked',
           destination_playlist_ids: [],
@@ -265,6 +272,7 @@ describe('fetchFromBackend', () => {
           },
         },
         {
+          id: 'swipe-b',
           track_id: 'b',
           status: 'skipped',
           destination_playlist_ids: [],
@@ -284,7 +292,7 @@ describe('fetchFromBackend', () => {
     expect(results[0].track.id).toBe('a');
   });
 
-  it('calls the correct URL with session_id and status params', async () => {
+  it('calls the correct URL with session_id and no comma-status param', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ swipes: [] }),
@@ -294,7 +302,8 @@ describe('fetchFromBackend', () => {
 
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toContain(`session_id=${SESSION_ID}`);
-    expect(calledUrl).toContain('status=liked,super_liked');
+    // GET /swipes rejects comma-list status values; the function must not send one.
+    expect(calledUrl).not.toContain('status=liked,super_liked');
   });
 
   it('sends Authorization header with Bearer token', async () => {

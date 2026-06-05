@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { randomUUID } from 'expo-crypto';
 import type { Track, Playlist } from '@/adapters/interface';
 import { useSessionStore } from '@/stores/sessionStore';
 import {
@@ -119,7 +120,7 @@ interface SwipeActions {
   deleteSession: (sessionId: string) => void;
 
   /** Remove one liked track from a session's history (post-removal from its playlist). */
-  removeSwipeFromSession: (sessionId: string, swipedAt: string) => void;
+  removeSwipeFromSession: (sessionId: string, recordId: string) => void;
 
   /**
    * Append a lazily-fetched page of fresh source-playlist tracks to the queue. Grows
@@ -228,6 +229,28 @@ function evictToCap(sessions: SessionEntry[], protectId: string | null): Session
   return sessions.filter((entry) => !dropIds.has(entry.sessionId));
 }
 
+/** Shape of the persisted (partialized) swipe-store blob — only the durable session stack. */
+type PersistedSwipeState = Pick<SwipeState, 'sessions' | 'activeSessionId'>;
+
+/**
+ * Persist migration. v1 introduced SwipeRecord.id as the stable identity (was swipedAt).
+ * Records persisted under v0 have no id, so backfill it from swipedAt — unique enough within
+ * one device's history to serve as identity until a server hydration replaces the record.
+ */
+export function migrateSwipeStore(persisted: unknown, fromVersion: number): unknown {
+  const state = persisted as Partial<PersistedSwipeState> | undefined;
+  if (fromVersion < 1 && state?.sessions) {
+    state.sessions = state.sessions.map((session) => ({
+      ...session,
+      likedSwipes: (session.likedSwipes ?? []).map((record) => ({
+        ...record,
+        id: record.id ?? record.swipedAt,
+      })),
+    }));
+  }
+  return state;
+}
+
 export const useSwipeStore = create<SwipeState & SwipeActions>()(
   persist(
     (set, get) => ({
@@ -315,15 +338,15 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
           return { sessions };
         }),
 
-      removeSwipeFromSession: (sessionId, swipedAt) =>
+      removeSwipeFromSession: (sessionId, recordId) =>
         set((state) => ({
           sessions: state.sessions.map((e) => {
             if (e.sessionId !== sessionId) return e;
-            const removed = e.likedSwipes.find((s) => s.swipedAt === swipedAt);
+            const removed = e.likedSwipes.find((s) => s.id === recordId);
             if (!removed) return e;
             return {
               ...e,
-              likedSwipes: e.likedSwipes.filter((s) => s.swipedAt !== swipedAt),
+              likedSwipes: e.likedSwipes.filter((s) => s.id !== recordId),
               likedCount: removed.status === 'liked' ? Math.max(0, e.likedCount - 1) : e.likedCount,
               superLikedCount:
                 removed.status === 'super_liked' ? Math.max(0, e.superLikedCount - 1) : e.superLikedCount,
@@ -354,6 +377,9 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
 
       recordSwipe: (track, status, destinationIds, destinationNames) => {
         const record: SwipeRecord = {
+          // Client-generated identity for the not-yet-synced record; the backend swipe id
+          // replaces it on hydration (records dedupe by track id during merge).
+          id: randomUUID(),
           track,
           status,
           destinationPlaylistIds: destinationIds,
@@ -430,7 +456,7 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
               superLikedCount:
                 last.status === 'super_liked' ? Math.max(0, e.superLikedCount - 1) : e.superLikedCount,
               likedSwipes: wasLiked
-                ? e.likedSwipes.filter((s) => s.swipedAt !== last.swipedAt)
+                ? e.likedSwipes.filter((s) => s.id !== last.id)
                 : e.likedSwipes,
             })),
           };
@@ -481,6 +507,9 @@ export const useSwipeStore = create<SwipeState & SwipeActions>()(
     {
       name: 'swipe-store',
       storage: createJSONStorage(() => AsyncStorage),
+      // v1 introduced SwipeRecord.id as the stable identity (was swipedAt). See migrateSwipeStore.
+      version: 1,
+      migrate: migrateSwipeStore,
       // Only the durable session stack is persisted. Live queue state (queue, currentIndex,
       // absoluteIndex, decideQueue, banding/paging) is re-derived on resume from the active
       // entry's resumeOffset + a fresh playlist fetch.

@@ -11,11 +11,15 @@ export type SwipeStatus = 'liked' | 'super_liked' | 'skipped' | 'pending';
  * backend sync buffer).
  */
 export interface SwipeRecord {
+  // Stable per-record identity used for undo/remove/React keys. Sourced from the backend
+  // swipe id once synced/hydrated, or a client-generated UUID at creation for not-yet-synced
+  // records. Replaces the former swipedAt-as-identity (which collides on shared timestamps).
+  id: string;
   track: Track;
   status: SwipeStatus;
   destinationPlaylistIds: string[];
   destinationPlaylistNames?: string[];
-  swipedAt: string; // ISO timestamp — also the per-record identity used for undo/remove
+  swipedAt: string; // ISO timestamp — display/order only; no longer the record identity
   sessionId?: string;
   sourcePlaylistName?: string;
   // Set to true only after PlaylistWriter confirms the track was added to Liked Songs
@@ -36,10 +40,10 @@ export type SessionStatus = 'active' | 'completed';
  * and shaped to mirror a future `sessions` DB row, so a server-backed
  * SessionHistoryRepository can persist/restore the exact same fields later.
  *
- * Future backend migration would add to the `sessions` table: source_playlist_name,
- * destination_playlist_ids[], destination_playlist_names[], resume_offset, status,
- * updated_at — plus a `GET /sessions` list endpoint. None of that is built this round;
- * the stack lives in AsyncStorage via the swipe store's persist middleware.
+ * The `sessions` table mirrors these fields (source_playlist_name, destination_playlist_ids[],
+ * destination_playlist_names[], resume_offset, status, updated_at) and `GET /sessions` returns
+ * them, so History restores across devices/reinstalls. The local stack (AsyncStorage via the
+ * persist middleware) is a stale-while-revalidate cache hydrated from the server on focus.
  */
 export interface SessionEntry {
   sessionId: string;                  // backend session id (from POST /sessions)

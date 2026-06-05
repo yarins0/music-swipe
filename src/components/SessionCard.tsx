@@ -14,9 +14,9 @@ interface SessionCardProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onResume: () => void;
-  /** Remove one liked track (identified by its swipedAt) from this session. */
-  onRemoveTrack: (swipedAt: string) => void;
-  /** swipedAt values currently mid-removal — shows a spinner instead of the Cancel button. */
+  /** Remove one liked track (identified by its record id) from this session. */
+  onRemoveTrack: (recordId: string) => void;
+  /** Record ids currently mid-removal — shows a spinner instead of the Cancel button. */
   removingIds: Set<string>;
 }
 
@@ -110,10 +110,10 @@ export function SessionCard({
           <View style={styles.tracks}>
             {[...session.likedSwipes].reverse().map((record) => (
               <LikedRow
-                key={record.swipedAt}
+                key={record.id}
                 record={record}
-                isRemoving={removingIds.has(record.swipedAt)}
-                onRemove={() => onRemoveTrack(record.swipedAt)}
+                isRemoving={removingIds.has(record.id)}
+                onRemove={() => onRemoveTrack(record.id)}
                 styles={styles}
                 activeColors={activeColors}
               />

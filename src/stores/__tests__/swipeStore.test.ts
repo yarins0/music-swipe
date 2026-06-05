@@ -1,4 +1,4 @@
-import { useSwipeStore, getMostRecentResumableSession } from '../swipeStore';
+import { useSwipeStore, getMostRecentResumableSession, migrateSwipeStore } from '../swipeStore';
 import { isResumable, MAX_SESSION_HISTORY, type SwipeRecord, type CreateSessionMeta } from '../swipeStore';
 import type { Track } from '@/adapters/interface';
 
@@ -396,9 +396,9 @@ describe('removeSwipeFromSession', () => {
       useSwipeStore.getState().recordSwipe(TRACK_A, 'liked', DEST_IDS);
       jest.setSystemTime(new Date('2026-01-01T00:00:01.000Z')); // distinct swipedAt for B
       useSwipeStore.getState().recordSwipe(TRACK_B, 'super_liked', DEST_IDS);
-      const swipedAt = activeEntry().likedSwipes[0].swipedAt; // A's record
+      const recordId = activeEntry().likedSwipes[0].id; // A's record
 
-      useSwipeStore.getState().removeSwipeFromSession('sess-1', swipedAt);
+      useSwipeStore.getState().removeSwipeFromSession('sess-1', recordId);
       const entry = activeEntry();
       expect(entry.likedSwipes.map((r) => r.track.id)).toEqual(['b']);
       expect(entry.likedCount).toBe(0);
@@ -516,5 +516,41 @@ describe('persist partialize', () => {
     expect(persisted).not.toHaveProperty('currentIndex');
     expect(persisted).not.toHaveProperty('absoluteIndex');
     expect(persisted).not.toHaveProperty('liveSessionId');
+  });
+});
+
+describe('migrateSwipeStore (v0 → v1)', () => {
+  it('backfills SwipeRecord.id from swipedAt for records persisted without an id', () => {
+    const v0Blob = {
+      activeSessionId: 's1',
+      sessions: [
+        {
+          sessionId: 's1',
+          likedSwipes: [
+            { track: TRACK_A, status: 'liked', destinationPlaylistIds: [], swipedAt: '2026-01-01T00:00:00.000Z' },
+            { track: TRACK_B, status: 'super_liked', destinationPlaylistIds: [], swipedAt: '2026-01-01T00:00:01.000Z' },
+          ],
+        },
+      ],
+    };
+
+    const migrated = migrateSwipeStore(v0Blob, 0) as typeof v0Blob;
+
+    expect(migrated.sessions[0].likedSwipes.map((r) => (r as SwipeRecord).id)).toEqual([
+      '2026-01-01T00:00:00.000Z',
+      '2026-01-01T00:00:01.000Z',
+    ]);
+  });
+
+  it('leaves already-identified records untouched and is a no-op at the current version', () => {
+    const v1Blob = {
+      sessions: [
+        { sessionId: 's1', likedSwipes: [{ id: 'existing-id', track: TRACK_A, status: 'liked', destinationPlaylistIds: [], swipedAt: 'x' }] },
+      ],
+    };
+
+    const migrated = migrateSwipeStore(v1Blob, 1) as typeof v1Blob;
+
+    expect((migrated.sessions[0].likedSwipes[0] as SwipeRecord).id).toBe('existing-id');
   });
 });

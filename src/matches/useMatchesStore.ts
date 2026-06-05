@@ -2,6 +2,7 @@ import { useSwipeStore } from '@/stores/swipeStore';
 import type { Track } from '@/adapters/interface';
 
 export interface MatchRecord {
+  id: string;
   track: Track;
   status: 'liked' | 'super_liked';
   destinationPlaylistIds: string[];
@@ -25,6 +26,7 @@ export function useMatchesStore(): UseMatchesStoreResult {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .flatMap((session) =>
       [...session.likedSwipes].reverse().map((record) => ({
+        id: record.id,
         track: record.track,
         status: record.status as 'liked' | 'super_liked',
         destinationPlaylistIds: record.destinationPlaylistIds,
@@ -40,6 +42,7 @@ export function useMatchesStore(): UseMatchesStoreResult {
 }
 
 interface BackendSwipeItem {
+  id: string;
   track_id: string;
   status: string;
   destination_playlist_ids: string[];
@@ -66,7 +69,9 @@ export async function fetchFromBackend(
   token: string,
   backendUrl: string,
 ): Promise<MatchRecord[]> {
-  const url = `${backendUrl}/swipes?session_id=${encodeURIComponent(sessionId)}&status=liked,super_liked`;
+  // No status filter: GET /swipes validates a single status value and rejects comma lists, so we
+  // fetch all of the session's swipes and filter to liked/super_liked client-side below.
+  const url = `${backendUrl}/swipes?session_id=${encodeURIComponent(sessionId)}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -83,6 +88,7 @@ export async function fetchFromBackend(
         item.status === 'liked' || item.status === 'super_liked',
     )
     .map((item) => ({
+      id: item.id,
       track: {
         id: item.track?.id ?? item.track_id,
         uri: item.track?.uri ?? '',

@@ -195,7 +195,7 @@ export default function SessionEndScreen(): React.ReactElement {
       await writer.undoWriteAsync(trackId, regularIds);
 
       // Removes from both session-end and the History tab simultaneously (same SessionEntry).
-      if (record && activeSession) removeSwipeFromSession(activeSession.sessionId, record.swipedAt);
+      if (record && activeSession) removeSwipeFromSession(activeSession.sessionId, record.id);
 
       // Best-effort: also remove from Liked Songs if we added it this session.
       if (record?.likedSongsWrittenByUs === true) {
@@ -282,7 +282,7 @@ export default function SessionEndScreen(): React.ReactElement {
             </Text>
             {likedTracks.map((r) => (
               <LikedTrackRow
-                key={r.swipedAt}
+                key={r.id}
                 track={r.track}
                 status={r.status}
                 isRemoving={removingIds.has(r.track.id)}

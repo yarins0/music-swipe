@@ -60,17 +60,17 @@ export default function MatchesScreen(): React.ReactElement {
   );
 
   const handleRemoveTrack = useCallback(
-    async (session: SessionEntry, swipedAt: string): Promise<void> => {
-      const record = session.likedSwipes.find((r) => r.swipedAt === swipedAt);
+    async (session: SessionEntry, recordId: string): Promise<void> => {
+      const record = session.likedSwipes.find((r) => r.id === recordId);
       if (!record) return;
-      setRemovingIds((prev) => new Set(prev).add(swipedAt));
+      setRemovingIds((prev) => new Set(prev).add(recordId));
       try {
         const writer = new PlaylistWriter(getAdapter());
         // Remove from regular playlists first — this gates the history update.
         const regularIds = record.destinationPlaylistIds.filter((id) => id !== LIKED_SONGS_PLAYLIST_ID);
         await writer.undoWriteAsync(record.track.id, regularIds);
 
-        removeSwipeFromSession(session.sessionId, swipedAt);
+        removeSwipeFromSession(session.sessionId, recordId);
 
         // Best-effort: also remove from Liked Songs if we added it this session.
         if (record.likedSongsWrittenByUs === true) {
@@ -83,7 +83,7 @@ export default function MatchesScreen(): React.ReactElement {
       } finally {
         setRemovingIds((prev) => {
           const next = new Set(prev);
-          next.delete(swipedAt);
+          next.delete(recordId);
           return next;
         });
       }
@@ -135,7 +135,7 @@ export default function MatchesScreen(): React.ReactElement {
             setExpandedId((prev) => (prev === item.sessionId ? null : item.sessionId))
           }
           onResume={() => handleResume(item)}
-          onRemoveTrack={(swipedAt) => void handleRemoveTrack(item, swipedAt)}
+          onRemoveTrack={(recordId) => void handleRemoveTrack(item, recordId)}
           removingIds={removingIds}
         />
       </Swipeable>
