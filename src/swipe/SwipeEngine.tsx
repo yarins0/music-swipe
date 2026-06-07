@@ -48,6 +48,18 @@ function computeSeekStepMs(durationMs: number): number {
 // this size means the fetch almost always resolves before the user reaches the gap.
 const PREFETCH_AHEAD = 10;
 
+// How often to poll the adapter for playback position to drive the segment-progress
+// dots. getCurrentPositionMs() makes a real Spotify HTTP request, so this interval
+// trades dot responsiveness for staying well clear of rate limits.
+const POSITION_POLL_INTERVAL_MS = 4000;
+
+// After a manual seek, Spotify's reported position can lag the real (just-seeked-to)
+// position by a few seconds — polling during that window would overwrite the correct,
+// optimistically-set dot with a stale pre-seek value, then "bounce" back once Spotify
+// catches up. Suppressing polls for this long (longer than one poll interval, so at
+// least one tick is skipped) lets the reported position settle before trusting it again.
+const SEEK_SETTLE_GRACE_MS = 6000;
+
 interface SwipeEngineProps {
   trackPlayer: TrackPlayer;
   playlistWriter: PlaylistWriter;
@@ -108,6 +120,23 @@ export function SwipeEngine({
 
   // Playback strategy for current track — determines isSeekEnabled on SwipeCard
   const [isSeekEnabled, setIsSeekEnabled] = useState(false);
+  // Polled playback position — drives the segment-progress dots on the front card
+  const [positionMs, setPositionMs] = useState(0);
+  // Mirrors positionMs synchronously. Refs update immediately (state does not), so
+  // this is the authoritative base for back-to-back seek taps: reading positionMs
+  // from a closure could see a stale value from before an in-flight render committed,
+  // letting rapid taps compute targets from inconsistent bases.
+  const positionRef = useRef<number>(0);
+  // Timestamp of the last manual seek — see SEEK_SETTLE_GRACE_MS for why polls are
+  // briefly suppressed after one fires.
+  const lastManualSeekAtRef = useRef<number>(0);
+
+  // Single write path for position changes — keeps positionRef and positionMs in
+  // lockstep so the ref never drifts from what's rendered.
+  const applyPosition = useCallback((value: number): void => {
+    positionRef.current = value;
+    setPositionMs(value);
+  }, []);
   // Per-track destination override (null = use session default)
   const [perTrackOverrideIds, setPerTrackOverrideIds] = useState<string[] | null>(null);
   // Destination editor modal visibility
@@ -123,10 +152,10 @@ export function SwipeEngine({
 
   const router = useRouter();
 
-  // The "No full preview" badge means there is no active Spotify device, so playback fell
-  // back to a 30s preview. Tapping it routes to the Auto-play Previews setting (and its new
+  // The "Audio unavailable" badge means there is no active Spotify device, so playback
+  // could not start. Tapping it routes to the Auto-play Music setting (and its
   // "Sync Spotify" button) and asks that row to flash so the fix is obvious.
-  const handleNoPreviewPress = useCallback((): void => {
+  const handleAudioUnavailablePress = useCallback((): void => {
     useUiStore.getState().requestAutoPlayHighlight();
     router.navigate('/(tabs)/settings');
   }, [router]);
@@ -160,39 +189,55 @@ export function SwipeEngine({
     return perTrackOverrideIds ?? activeDestinationIds;
   }, [perTrackOverrideIds, activeDestinationIds]);
 
-  // Seek helpers — read the live position, then seek one step relative to it.
+  // Seek helpers — step one segment relative to the locally-tracked position.
   // Step is one-eighth of the track (min 20s); see computeSeekStepMs.
-  const handleSeekBack = useCallback(async (): Promise<void> => {
+  //
+  // Deliberately do NOT re-read trackPlayer.getCurrentPositionMs() here. That makes
+  // a real Spotify HTTP request whose reported position lags briefly behind an actual
+  // seek/play call — with SegmentNavigator firing taps with no debounce, a slow, stale
+  // read from one tap could resolve after a faster, fresher tap and overwrite its
+  // (correct) position with a stale-derived one, producing a visible "bounce" once the
+  // network round trip completed. Computing from positionRef.current — updated
+  // synchronously, in order, on every tap — keeps every step self-consistent and
+  // removes the race entirely. The actual seekTo call is fire-and-forget; there is
+  // nothing to "correct" against since our local position is authoritative until the
+  // next (grace-window-protected) poll.
+  const handleSeekBack = useCallback((): void => {
     if (!currentTrack) return;
-    try {
-      const position = await trackPlayer.getCurrentPositionMs();
-      const step = computeSeekStepMs(currentTrack.durationMs);
-      await trackPlayer.seekTo(Math.max(0, position - step));
-    } catch {
+    const step = computeSeekStepMs(currentTrack.durationMs);
+    const target = Math.max(0, positionRef.current - step);
+    lastManualSeekAtRef.current = Date.now();
+    applyPosition(target);
+    void trackPlayer.seekTo(target).catch(() => {
       // seek errors are non-fatal
-    }
-  }, [trackPlayer, currentTrack]);
+    });
+  }, [trackPlayer, currentTrack, applyPosition]);
 
-  const handleSeekForward = useCallback(async (): Promise<void> => {
+  const handleSeekForward = useCallback((): void => {
     if (!currentTrack) return;
-    try {
-      const position = await trackPlayer.getCurrentPositionMs();
-      const step = computeSeekStepMs(currentTrack.durationMs);
-      const target = position + step;
-      // Clamp to the track end when the duration is known so we never seek past it.
-      const clamped =
-        currentTrack.durationMs > 0 ? Math.min(target, currentTrack.durationMs) : target;
-      await trackPlayer.seekTo(clamped);
-    } catch {
+    const step = computeSeekStepMs(currentTrack.durationMs);
+    const durationMs = currentTrack.durationMs;
+    const rawTarget = positionRef.current + step;
+    // Clamp to the track end when the duration is known so we never seek past it.
+    const target = durationMs > 0 ? Math.min(rawTarget, durationMs) : rawTarget;
+    lastManualSeekAtRef.current = Date.now();
+    applyPosition(target);
+    void trackPlayer.seekTo(target).catch(() => {
       // seek errors are non-fatal
-    }
-  }, [trackPlayer, currentTrack]);
+    });
+  }, [trackPlayer, currentTrack, applyPosition]);
 
-  // Play the track at queue[idx] and update seek availability
+  // Play the track at queue[idx] and update seek availability. Gated behind the
+  // Auto-play Music preference — when off, the card stays silent and there is
+  // nothing to seek within, so isSeekEnabled stays false.
   const playTrackAt = useCallback(
     async (idx: number): Promise<void> => {
       const track = queue[idx];
       if (!track) return;
+      if (!usePrefsStore.getState().autoPlayMusic) {
+        setIsSeekEnabled(false);
+        return;
+      }
       try {
         const result = await trackPlayer.play(track);
         setIsSeekEnabled(result.strategy === 'adapter');
@@ -220,6 +265,43 @@ export function SwipeEngine({
       void playTrackAt(currentIndex);
     }
   }, [currentIndex, currentTrack, playTrackAt]);
+
+  // Reset the polled position whenever the card changes — the new track starts at 0,
+  // and waiting for the next poll tick would briefly show the previous track's dot.
+  // Also clear the seek-settle suppression so the new track's polls aren't dropped
+  // because of a seek made on the previous track.
+  useEffect(() => {
+    applyPosition(0);
+    lastManualSeekAtRef.current = 0;
+  }, [currentIndex, applyPosition]);
+
+  // Poll the adapter for playback position so the segment-progress dots advance as the
+  // track plays. Only runs while seek is enabled (i.e. the adapter is actually playing
+  // this track) — otherwise there is nothing to poll and isSeekEnabled === false anyway.
+  useEffect(() => {
+    if (!isSeekEnabled || !currentTrack) return;
+
+    const intervalId = setInterval(() => {
+      trackPlayer
+        .getCurrentPositionMs()
+        .then((polled) => {
+          // Drop polls that land inside the post-seek settle window — see
+          // SEEK_SETTLE_GRACE_MS for why trusting them would make the dots bounce.
+          if (Date.now() - lastManualSeekAtRef.current < SEEK_SETTLE_GRACE_MS) return;
+          applyPosition(polled);
+        })
+        .catch(() => {
+          // polling errors are non-fatal — the dots simply stop advancing until the next tick
+        });
+    }, POSITION_POLL_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [isSeekEnabled, currentTrack, trackPlayer, applyPosition]);
+
+  // Segment math mirrors the tap-to-seek step so each dot corresponds to one seek tap.
+  const stepMs = currentTrack ? computeSeekStepMs(currentTrack.durationMs) : SEEK_MIN_STEP_MS;
+  const totalSegments = currentTrack ? Math.max(1, Math.ceil(currentTrack.durationMs / stepMs)) : 1;
+  const currentSegment = Math.min(totalSegments - 1, Math.floor(positionMs / stepMs));
 
   // Request the next lazy page once the user is within PREFETCH_AHEAD cards of the
   // loaded queue end and more pages remain. The screen guards against concurrent fetches,
@@ -463,6 +545,8 @@ export function SwipeEngine({
               onSeekBack={() => undefined}
               onSeekForward={() => undefined}
               isSeekEnabled={false}
+              totalSegments={1}
+              currentSegment={0}
               showAlbumArt={showAlbumArt}
             />
             {DEBUG_FLICKER && (
@@ -485,8 +569,10 @@ export function SwipeEngine({
           onSeekBack={handleSeekBack}
           onSeekForward={handleSeekForward}
           isSeekEnabled={isSeekEnabled}
+          totalSegments={totalSegments}
+          currentSegment={currentSegment}
           showAlbumArt={showAlbumArt}
-          onNoPreviewPress={handleNoPreviewPress}
+          onAudioUnavailablePress={handleAudioUnavailablePress}
           debug={DEBUG_FLICKER}
         />
       </View>

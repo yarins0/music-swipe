@@ -30,6 +30,10 @@ import * as WebBrowser from 'expo-web-browser';
 // ReturnType works here because createStyles is a function declaration (hoisted).
 type StylesType = ReturnType<typeof createStyles>;
 
+// "Sync Spotify" play-resume retry tuning — see handleSyncSpotify for why this retries.
+const SYNC_PLAY_ATTEMPTS = 3;
+const SYNC_PLAY_RETRY_DELAY_MS = 2500;
+
 interface ToggleRowProps {
   label: string;
   subtitle?: string;
@@ -172,13 +176,13 @@ export default function SettingsScreen(): React.ReactElement {
   const clearAllSessions = useSwipeStore((s) => s.clearAllSessions);
 
   const showAlbumArt = usePrefsStore((s) => s.showAlbumArt);
-  const autoPlayPreviews = usePrefsStore((s) => s.autoPlayPreviews);
+  const autoPlayMusic = usePrefsStore((s) => s.autoPlayMusic);
   const hapticFeedback = usePrefsStore((s) => s.hapticFeedback);
   const weeklyReminders = usePrefsStore((s) => s.weeklyReminders);
   const autoRemoveDuplicates = usePrefsStore((s) => s.autoRemoveDuplicates);
   const themeMode = usePrefsStore((s) => s.themeMode);
   const setShowAlbumArt = usePrefsStore((s) => s.setShowAlbumArt);
-  const setAutoPlayPreviews = usePrefsStore((s) => s.setAutoPlayPreviews);
+  const setAutoPlayMusic = usePrefsStore((s) => s.setAutoPlayMusic);
   const setHapticFeedback = usePrefsStore((s) => s.setHapticFeedback);
   const setWeeklyReminders = usePrefsStore((s) => s.setWeeklyReminders);
   const setAutoRemoveDuplicates = usePrefsStore((s) => s.setAutoRemoveDuplicates);
@@ -213,7 +217,7 @@ export default function SettingsScreen(): React.ReactElement {
       });
   }, []);
 
-  // --- Auto-play Previews row: scroll-to + flash, driven by the swipe screen's badge ---
+  // --- Auto-play Music row: scroll-to + flash, driven by the swipe screen's badge ---
   const scrollRef = useRef<ScrollView>(null);
   // Zero-height anchor at the top of the scroll content. Measuring the row and this anchor
   // in window coordinates yields the row's absolute offset within the content, regardless
@@ -227,7 +231,7 @@ export default function SettingsScreen(): React.ReactElement {
     outputRange: ['rgba(253,41,123,0)', 'rgba(253,41,123,0.18)'],
   });
 
-  // Scroll the Auto-play Previews row into view and flash its background twice.
+  // Scroll the Auto-play Music row into view and flash its background twice.
   const triggerAutoPlayHighlight = useCallback((): void => {
     const row = autoPlayRowRef.current;
     const anchor = contentTopRef.current;
@@ -248,7 +252,7 @@ export default function SettingsScreen(): React.ReactElement {
   }, [pulse]);
 
   // When the screen gains focus with a pending request (set by tapping the swipe-card
-  // "No full preview" badge), run the highlight once and clear the flag. Consume-on-focus
+  // "Audio unavailable" badge), run the highlight once and clear the flag. Consume-on-focus
   // means a normal Settings visit never triggers it.
   useFocusEffect(
     useCallback(() => {
@@ -261,15 +265,30 @@ export default function SettingsScreen(): React.ReactElement {
   );
 
   // Open Spotify and best-effort resume playback so it registers as the active device,
-  // enabling full-track playback (and removing the "No full preview" badge).
+  // enabling full-track playback (and removing the "Audio unavailable" badge).
+  //
+  // Spotify needs a moment to come to the foreground and register itself as an active
+  // playback device after the deep link fires — an immediate play attempt routinely
+  // lands before that happens and silently no-ops. Retry a few times with a short
+  // delay between attempts so sync succeeds without the user having to tap again.
   const handleSyncSpotify = useCallback(async (): Promise<void> => {
     await openPlatformDeepLink('spotify:');
-    try {
-      if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
-      const current = await adapterRef.current.getCurrentTrack();
-      if (current) await adapterRef.current.play(current.uri);
-    } catch {
-      // Spotify may not be ready as a playback device yet — the user can press play there.
+    if (!adapterRef.current) adapterRef.current = createSpotifyAdapter();
+
+    for (let attempt = 0; attempt < SYNC_PLAY_ATTEMPTS; attempt++) {
+      if (attempt > 0) {
+        await new Promise<void>((resolve) => setTimeout(resolve, SYNC_PLAY_RETRY_DELAY_MS));
+      }
+      try {
+        const current = await adapterRef.current.getCurrentTrack();
+        if (current) {
+          await adapterRef.current.play(current.uri);
+          return;
+        }
+      } catch {
+        // Spotify may not be ready as a playback device yet — retry below, or
+        // give up after the last attempt and let the user press play there.
+      }
     }
   }, []);
 
@@ -296,7 +315,7 @@ export default function SettingsScreen(): React.ReactElement {
         showsVerticalScrollIndicator={false}
       >
         {/* Zero-height anchor marking the top of the scroll content (used to compute the
-            Auto-play Previews row's offset for the scroll-to-and-flash interaction). */}
+            Auto-play Music row's offset for the scroll-to-and-flash interaction). */}
         <View ref={contentTopRef} style={styles.contentTopAnchor} />
 
         {/* Account */}
@@ -343,16 +362,16 @@ export default function SettingsScreen(): React.ReactElement {
             activeColors={activeColors}
           />
           <View style={styles.divider} />
-          {/* Custom Auto-play Previews row: toggle + a "Sync Spotify" action, with an
+          {/* Custom Auto-play Music row: toggle + a "Sync Spotify" action, with an
               animated background the swipe-card badge can flash to draw attention.
               The measurement ref sits on a plain View — measureLayout requires a native
               component, which an Animated.View wrapper is not. */}
           <View ref={autoPlayRowRef}>
             <Animated.View style={[styles.row, { backgroundColor: pulseBackground }]}>
               <View style={styles.rowTextGroup}>
-                <Text style={styles.rowLabel}>Auto-play Previews</Text>
+                <Text style={styles.rowLabel}>Auto-play Music</Text>
                 <Text style={styles.rowSubtitle}>
-                  Plays a 30s preview when no Spotify device is active
+                  Start playback automatically when a card appears
                 </Text>
                 <TouchableOpacity
                   style={styles.syncButton}
@@ -365,8 +384,8 @@ export default function SettingsScreen(): React.ReactElement {
                 </TouchableOpacity>
               </View>
               <Switch
-                value={autoPlayPreviews}
-                onValueChange={setAutoPlayPreviews}
+                value={autoPlayMusic}
+                onValueChange={setAutoPlayMusic}
                 trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
                 thumbColor={activeColors.surface}
                 ios_backgroundColor={activeColors.surfaceContainerHighest}

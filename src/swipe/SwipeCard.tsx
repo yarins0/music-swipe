@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Track } from '@/adapters/interface';
 import { SegmentNavigator } from '@/player/SegmentNavigator';
+import { TrackProgressDots } from '@/swipe/TrackProgressDots';
 import { type Colors } from '@/theme';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -12,14 +13,18 @@ interface SwipeCardProps {
   onSeekBack: () => void;
   onSeekForward: () => void;
   isSeekEnabled: boolean;
+  /** Number of playback segments the track is divided into — drives TrackProgressDots. */
+  totalSegments: number;
+  /** Index of the segment currently playing — drives TrackProgressDots. */
+  currentSegment: number;
   /** When false, replaces the album art image with a solid background and a musical-note icon. */
   showAlbumArt?: boolean;
   /**
-   * When provided, the "No full preview" badge becomes tappable and calls this — used by
-   * the front card to send the user to the Auto-play Previews setting. Omitted on the back
+   * When provided, the "Audio unavailable" badge becomes tappable and calls this — used by
+   * the front card to send the user to the Auto-play Music setting. Omitted on the back
    * card so it stays non-interactive.
    */
-  onNoPreviewPress?: () => void;
+  onAudioUnavailablePress?: () => void;
 }
 
 export function SwipeCard({
@@ -27,8 +32,10 @@ export function SwipeCard({
   onSeekBack,
   onSeekForward,
   isSeekEnabled,
+  totalSegments,
+  currentSegment,
   showAlbumArt = true,
-  onNoPreviewPress,
+  onAudioUnavailablePress,
 }: SwipeCardProps): React.ReactElement {
   const { activeColors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(activeColors), [isDark]);
@@ -63,24 +70,25 @@ export function SwipeCard({
       <View style={styles.infoOverlay} pointerEvents="none">
         <Text style={styles.title} numberOfLines={1}>{track.title}</Text>
         <Text style={styles.artist} numberOfLines={1}>{track.artist}</Text>
+        <TrackProgressDots totalSegments={totalSegments} currentSegment={currentSegment} />
       </View>
 
       {!isSeekEnabled && (
-        onNoPreviewPress ? (
-          // Tappable on the front card: routes to the Auto-play Previews setting. A corner
+        onAudioUnavailablePress ? (
+          // Tappable on the front card: routes to the Auto-play Music setting. A corner
           // tap won't trigger the swipe pan (which only activates on movement).
           <Pressable
-            style={styles.noPreviewBadge}
-            onPress={onNoPreviewPress}
+            style={styles.audioUnavailableBadge}
+            onPress={onAudioUnavailablePress}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="No full preview — open playback settings"
+            accessibilityLabel="Audio unavailable — open playback settings"
           >
-            <Text style={styles.noPreviewText}>No full preview</Text>
+            <Text style={styles.audioUnavailableText}>Audio unavailable</Text>
           </Pressable>
         ) : (
-          <View style={styles.noPreviewBadge} pointerEvents="none">
-            <Text style={styles.noPreviewText}>No full preview</Text>
+          <View style={styles.audioUnavailableBadge} pointerEvents="none">
+            <Text style={styles.audioUnavailableText}>Audio unavailable</Text>
           </View>
         )
       )}
@@ -139,7 +147,7 @@ function createStyles(c: Colors) {
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 4,
     },
-    noPreviewBadge: {
+    audioUnavailableBadge: {
       position: 'absolute',
       top: 16,
       right: 16,
@@ -150,7 +158,7 @@ function createStyles(c: Colors) {
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.15)',
     },
-    noPreviewText: {
+    audioUnavailableText: {
       color: 'rgba(255,255,255,0.8)',
       fontSize: 11,
       fontFamily: 'Outfit_500Medium',

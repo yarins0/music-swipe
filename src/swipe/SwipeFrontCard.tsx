@@ -14,9 +14,13 @@ interface SwipeFrontCardProps {
   onSeekBack: () => void;
   onSeekForward: () => void;
   isSeekEnabled: boolean;
+  /** Number of playback segments the track is divided into — drives TrackProgressDots. */
+  totalSegments: number;
+  /** Index of the segment currently playing — drives TrackProgressDots. */
+  currentSegment: number;
   showAlbumArt: boolean;
-  /** Tapped when the "No full preview" badge is pressed — routes to the playback setting. */
-  onNoPreviewPress?: () => void;
+  /** Tapped when the "Audio unavailable" badge is pressed — routes to the playback setting. */
+  onAudioUnavailablePress?: () => void;
   /** Optional debug border + label for the swipe-flicker investigation. */
   debug?: boolean;
 }
@@ -43,8 +47,10 @@ export function SwipeFrontCard({
   onSeekBack,
   onSeekForward,
   isSeekEnabled,
+  totalSegments,
+  currentSegment,
   showAlbumArt,
-  onNoPreviewPress,
+  onAudioUnavailablePress,
   debug = false,
 }: SwipeFrontCardProps): React.ReactElement {
   const { gesture, animatedStyle, resetCard } = useSwipeGesture({ onSwipe, onHaptic });
@@ -68,8 +74,10 @@ export function SwipeFrontCard({
           onSeekBack={onSeekBack}
           onSeekForward={onSeekForward}
           isSeekEnabled={isSeekEnabled}
+          totalSegments={totalSegments}
+          currentSegment={currentSegment}
           showAlbumArt={showAlbumArt}
-          onNoPreviewPress={onNoPreviewPress}
+          onAudioUnavailablePress={onAudioUnavailablePress}
         />
         {debug && (
           <View style={styles.debugLabel} pointerEvents="none">

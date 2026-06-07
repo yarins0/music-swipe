@@ -6,7 +6,7 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface PrefsState {
   showAlbumArt: boolean;
-  autoPlayPreviews: boolean;
+  autoPlayMusic: boolean;
   hapticFeedback: boolean;
   weeklyReminders: boolean;
   // When true, destination playlists are scanned for duplicate tracks at the end of
@@ -18,7 +18,7 @@ interface PrefsState {
 
 interface PrefsActions {
   setShowAlbumArt: (value: boolean) => void;
-  setAutoPlayPreviews: (value: boolean) => void;
+  setAutoPlayMusic: (value: boolean) => void;
   setHapticFeedback: (value: boolean) => void;
   setWeeklyReminders: (value: boolean) => void;
   setAutoRemoveDuplicates: (value: boolean) => void;
@@ -30,14 +30,14 @@ export const usePrefsStore = create<PrefsState & PrefsActions>()(
     (set) => ({
       // Defaults
       showAlbumArt: true,
-      autoPlayPreviews: false,
+      autoPlayMusic: true,
       hapticFeedback: true,
       weeklyReminders: true,
       autoRemoveDuplicates: false,
       themeMode: 'system',
 
       setShowAlbumArt: (value) => set({ showAlbumArt: value }),
-      setAutoPlayPreviews: (value) => set({ autoPlayPreviews: value }),
+      setAutoPlayMusic: (value) => set({ autoPlayMusic: value }),
       setHapticFeedback: (value) => set({ hapticFeedback: value }),
       setWeeklyReminders: (value) => set({ weeklyReminders: value }),
       setAutoRemoveDuplicates: (value) => set({ autoRemoveDuplicates: value }),
