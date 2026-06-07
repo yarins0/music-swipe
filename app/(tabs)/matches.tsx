@@ -100,12 +100,16 @@ export default function MatchesScreen(): React.ReactElement {
         // liked/super_liked). Fire-and-forget via the postSwipe queue + retry path.
         getBackendSync().unlikeSwipe(session.sessionId, record.track.id);
 
-        // Best-effort: also remove from Liked Songs. Safe to call unconditionally —
-        // undoWriteAsync only removes tracks PlaylistWriter recorded writing to the
-        // library (libraryWrittenIds), so pre-existing likes are never touched. (The
-        // former record.likedSongsWrittenByUs guard is never set on server-restored
-        // records, so it wrongly skipped removal for those.)
-        writer.undoWriteAsync(record.track.id, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
+        // Best-effort Liked Songs removal. A server-restored record carries the
+        // persisted likedSongsWrittenByUs flag but not the per-device libraryWrittenIds
+        // entry (empty after a clear + restore), so when the flag is set we force the
+        // removal; otherwise we use the guarded path, which only removes tracks this
+        // device recorded writing and never touches pre-existing likes.
+        const removeFromLikedSongs =
+          record.likedSongsWrittenByUs === true
+            ? writer.removeFromLibrary(record.track.id)
+            : writer.undoWriteAsync(record.track.id, [LIKED_SONGS_PLAYLIST_ID]);
+        removeFromLikedSongs.catch((err: unknown) => {
           console.warn('[History] removeFromLikedSongs failed:', err);
         });
       } catch {

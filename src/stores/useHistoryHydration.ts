@@ -27,6 +27,7 @@ interface RemoteLikedSwipe {
   swipedAt: string;
   destinationPlaylistIds: string[];
   track: RemoteTrack | null;
+  likedSongsWrittenByUs?: boolean;
 }
 
 interface RemoteSession {
@@ -83,6 +84,9 @@ function toSwipeRecord(remote: RemoteLikedSwipe, sessionId: string): SwipeRecord
     destinationPlaylistIds: remote.destinationPlaylistIds,
     swipedAt: remote.swipedAt,
     sessionId,
+    // Restore the persisted library-written bit so cancel can remove the track
+    // from Liked Songs even when the per-device libraryWrittenIds set is empty.
+    likedSongsWrittenByUs: remote.likedSongsWrittenByUs === true,
   };
 }
 

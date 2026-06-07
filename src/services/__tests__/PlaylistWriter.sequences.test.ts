@@ -227,6 +227,20 @@ describe('PlaylistWriter – stateful action sequences', () => {
       expect(adapter.calls.removeFromLibrary).toHaveLength(0);
       expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(true);
     });
+
+    it('removeFromLibrary: removes a restored track from the library with an empty libraryWrittenIds set', async () => {
+      // Track is in the library but a fresh writer has no libraryWrittenIds entry
+      // (the clear + restore case). The guarded undo path would skip it; the force
+      // path removes it because the caller has the restored likedSongsWrittenByUs flag.
+      const { adapter, writer } = setup({ likedTrackIds: new Set(['t1']) });
+
+      await writer.undoWriteAsync('t1', [LIKED_SONGS_PLAYLIST_ID]); // guarded: no-op
+      expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(true);
+
+      await writer.removeFromLibrary('t1'); // force: removes it
+      expect(adapter.fixtures.likedTrackIds.has('t1')).toBe(false);
+      expect(adapter.calls.removeFromLibrary).toContain('t1');
+    });
   });
 
   // ─────────────────────────────────────────────

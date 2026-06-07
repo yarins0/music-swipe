@@ -254,6 +254,7 @@ interface SwipeListRow {
   spotify_track_id: string;
   status: string;
   swiped_at: string;
+  liked_songs_written_by_us: boolean;
 }
 
 interface SessionCounts {
@@ -299,7 +300,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
   // restore list (the liked/super_liked subset).
   const swipesResult = await supabase
     .from('swipes')
-    .select('id, session_id, spotify_track_id, status, swiped_at')
+    .select('id, session_id, spotify_track_id, status, swiped_at, liked_songs_written_by_us')
     .in('session_id', sessionIds);
 
   if (swipesResult.error) {
@@ -387,6 +388,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
       swipedAt: row.swiped_at,
       destinationPlaylistIds: destinationsBySwipe.get(row.id) ?? [],
       track: tracksById.get(row.spotify_track_id) ?? null,
+      likedSongsWrittenByUs: row.liked_songs_written_by_us === true,
     });
     likedBySession.set(row.session_id, list);
   }

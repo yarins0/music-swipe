@@ -179,6 +179,61 @@ describe('BackendSync', () => {
 
       expect(sync.unlikeSwipe('session-7', 'track-cancel')).toBeUndefined();
     });
+
+    it('does not set the likedSongsWrittenByUs flag', async () => {
+      const fetchMock = mockFetch(200, { inserted: 0, updated: 1 });
+      global.fetch = fetchMock;
+
+      sync.unlikeSwipe('session-7', 'track-cancel');
+      await Promise.resolve();
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes[0]).not.toHaveProperty('likedSongsWrittenByUs');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // markLibraryWritten
+  // ---------------------------------------------------------------------------
+
+  describe('markLibraryWritten()', () => {
+    it('re-posts the swipe with likedSongsWrittenByUs=true and the original status/destinations', async () => {
+      const fetchMock = mockFetch(200, { inserted: 0, updated: 1 });
+      global.fetch = fetchMock;
+
+      sync.markLibraryWritten({
+        sessionId: 'session-9',
+        trackId: 'track-lib',
+        direction: 'super_liked',
+        destinationPlaylistIds: ['dest-1', 'dest-2'],
+      });
+      await Promise.resolve();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe(`${BASE_URL}/swipes`);
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes[0]).toMatchObject({
+        sessionId: 'session-9',
+        spotifyTrackId: 'track-lib',
+        status: 'super_liked',
+        destinationPlaylistIds: ['dest-1', 'dest-2'],
+        likedSongsWrittenByUs: true,
+      });
+    });
+
+    it('is fire-and-forget — returns undefined synchronously', () => {
+      global.fetch = mockFetch(200, { inserted: 0, updated: 1 });
+
+      const result = sync.markLibraryWritten({
+        sessionId: 'session-9',
+        trackId: 'track-lib',
+        direction: 'liked',
+        destinationPlaylistIds: [],
+      });
+      expect(result).toBeUndefined();
+    });
   });
 
   // ---------------------------------------------------------------------------

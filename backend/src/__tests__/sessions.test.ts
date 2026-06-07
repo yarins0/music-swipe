@@ -721,6 +721,7 @@ describe('GET /sessions', () => {
           spotify_track_id: 'tr-1',
           status: 'liked',
           swiped_at: '2026-01-01T00:00:01Z',
+          liked_songs_written_by_us: true,
         },
         {
           id: 'sw-2',
@@ -728,6 +729,7 @@ describe('GET /sessions', () => {
           spotify_track_id: 'tr-2',
           status: 'super_liked',
           swiped_at: '2026-01-01T00:00:02Z',
+          liked_songs_written_by_us: false,
         },
         {
           id: 'sw-3',
@@ -806,8 +808,10 @@ describe('GET /sessions', () => {
       spotifyTrackId: 'tr-1',
       status: 'liked',
       destinationPlaylistIds: ['dest-1'],
+      likedSongsWrittenByUs: true,
     });
     expect(session.likedSwipes[0].track).toMatchObject({ id: 'tr-1', title: 'Song One' });
+    expect(session.likedSwipes[1]).toMatchObject({ id: 'sw-2', likedSongsWrittenByUs: false });
     expect(session.likedSwipes[1].track).toBeNull();
   });
 

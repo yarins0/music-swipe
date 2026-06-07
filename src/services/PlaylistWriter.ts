@@ -297,6 +297,20 @@ export class PlaylistWriter {
     }
   }
 
+  // Unconditionally removes a track from Liked Songs, bypassing the libraryWrittenIds
+  // guard. For callers with authoritative knowledge that WE wrote it — e.g. a
+  // History cancel of a record whose persisted likedSongsWrittenByUs flag is true,
+  // where the per-device libraryWrittenIds set is empty after a clear + restore.
+  // Throws on API failure so the caller can surface it.
+  async removeFromLibrary(trackId: string): Promise<void> {
+    await this.adapter.removeFromPlaylist(LIKED_SONGS_PLAYLIST_ID, trackId);
+    // Keep the local guard consistent if it happened to hold this id.
+    if (this.libraryWrittenIds.has(trackId)) {
+      this.libraryWrittenIds.delete(trackId);
+      void this.persistLibraryWrittenIds();
+    }
+  }
+
   // Undo a super-like: removes from destination playlists and from library,
   // delegating both to undoWrite (which guards the library removal behind libraryWrittenIds).
   undoSuperLike(trackId: string, destinationIds: string[]): void {

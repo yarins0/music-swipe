@@ -649,6 +649,29 @@ describe('PlaylistWriter', () => {
     });
   });
 
+  describe('removeFromLibrary()', () => {
+    it('removes from Liked Songs even when libraryWrittenIds is empty (post-restore)', async () => {
+      // Empty libraryWrittenIds simulates a fresh device after a clear + restore.
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.removeFromLibrary('track-1');
+
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith(LIKED_SONGS_PLAYLIST_ID, 'track-1');
+    });
+
+    it('throws when removeFromPlaylist rejects so the caller can surface it', async () => {
+      const adapter = buildMockAdapter({
+        removeFromPlaylist: jest.fn().mockRejectedValue(new Error('Spotify 500')),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await expect(writer.removeFromLibrary('track-1')).rejects.toThrow('Spotify 500');
+    });
+  });
+
   describe('superLike() — filter mode (empty destinations)', () => {
     it('does not call addToPlaylist when destinations array is empty', async () => {
       const adapter = buildMockAdapter();

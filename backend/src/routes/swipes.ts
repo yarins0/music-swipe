@@ -118,6 +118,9 @@ interface SwipeInput {
   // forwarded to upsert_swipes, which caches it in `tracks`. Optional so legacy
   // or replayed payloads without it still succeed.
   track?: unknown;
+  // Optional flag: WE added this track to Liked Songs (not pre-existing). Sent as
+  // a deferred update after the library write confirms; upsert keeps it sticky-true.
+  likedSongsWrittenByUs?: unknown;
 }
 
 interface SwipeRow {
@@ -204,6 +207,14 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
         return;
       }
     }
+
+    if (
+      item.likedSongsWrittenByUs !== undefined &&
+      typeof item.likedSongsWrittenByUs !== 'boolean'
+    ) {
+      res.status(400).json({ error: `swipes[${i}].likedSongsWrittenByUs must be a boolean` });
+      return;
+    }
   }
 
   // Collect unique session IDs referenced in the batch
@@ -256,6 +267,8 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     // Forward track metadata only when present so payloads without it keep their
     // exact prior shape (the upsert function treats `track` as optional).
     ...(s.track ? { track: s.track } : {}),
+    // Forward the library-written flag only when true (sticky-true server-side).
+    ...(s.likedSongsWrittenByUs === true ? { likedSongsWrittenByUs: true } : {}),
   }));
 
   const rpcResult = await supabase.rpc('upsert_swipes', {

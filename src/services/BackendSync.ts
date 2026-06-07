@@ -17,6 +17,10 @@ export interface SwipePayload {
   // legacy/replayed payloads without it still post successfully; the client
   // always supplies it on live swipes.
   track?: Track;
+  // True once PlaylistWriter confirms WE added this track to Liked Songs (not
+  // pre-existing). Persisted so cancel-from-History can remove it from the
+  // library after a clear + restore. Sent only when true (sticky-true server-side).
+  likedSongsWrittenByUs?: boolean;
 }
 
 export class BackendSync {
@@ -66,6 +70,28 @@ export class BackendSync {
   }
 
   /**
+   * Records that WE added a track to Liked Songs by re-posting its swipe with
+   * likedSongsWrittenByUs=true. The library write confirms asynchronously after
+   * the original swipe is posted, so this is a deferred update; the server keeps
+   * the flag sticky-true regardless of arrival order. Fire-and-forget.
+   */
+  markLibraryWritten(args: {
+    sessionId: string;
+    trackId: string;
+    direction: SwipePayload['direction'];
+    destinationPlaylistIds: string[];
+  }): void {
+    this.postSwipe({
+      sessionId: args.sessionId,
+      trackId: args.trackId,
+      direction: args.direction,
+      destinationPlaylistIds: args.destinationPlaylistIds,
+      timestamp: new Date().toISOString(),
+      likedSongsWrittenByUs: true,
+    });
+  }
+
+  /**
    * Sends all pending payloads in a single batch request.
    * Resolves when the server responds with 2xx; rejects on HTTP or network errors.
    * Is a no-op (resolves immediately) when the queue is empty.
@@ -108,6 +134,9 @@ export class BackendSync {
             },
           }
         : {}),
+      // Send the flag only when true so plain swipes keep their exact prior shape
+      // (the backend defaults it to false and keeps it sticky-true on conflict).
+      ...(p.likedSongsWrittenByUs ? { likedSongsWrittenByUs: true } : {}),
     }));
 
     const response = await fetch(`${this.backendUrl}/swipes`, {

@@ -59,6 +59,7 @@ function remoteLiked(
   id: string,
   trackId: string,
   track: Record<string, unknown> | null = remoteTrack(trackId),
+  likedSongsWrittenByUs = false,
 ): Record<string, unknown> {
   return {
     id,
@@ -67,6 +68,7 @@ function remoteLiked(
     swipedAt: '2026-01-01T00:00:00.000Z',
     destinationPlaylistIds: ['p1'],
     track,
+    likedSongsWrittenByUs,
   };
 }
 
@@ -168,6 +170,25 @@ describe('useHistoryHydration', () => {
     expect(sessions[0].likedSwipes[0].id).toBe('sw-1');
     // Snake-case remote track is mapped to the internal Track shape.
     expect(sessions[0].likedSwipes[0].track).toEqual(clientTrack('a'));
+  });
+
+  it('restores the persisted likedSongsWrittenByUs flag onto the record', async () => {
+    global.fetch = mockFetchSessions([
+      remoteSession({
+        likedSwipes: [
+          remoteLiked('sw-written', 'a', remoteTrack('a'), true),
+          remoteLiked('sw-not-written', 'b', remoteTrack('b'), false),
+        ],
+      }),
+    ]);
+
+    await runHydrate();
+
+    const likedSwipes = useSwipeStore.getState().sessions[0].likedSwipes;
+    const written = likedSwipes.find((r) => r.id === 'sw-written');
+    const notWritten = likedSwipes.find((r) => r.id === 'sw-not-written');
+    expect(written?.likedSongsWrittenByUs).toBe(true);
+    expect(notWritten?.likedSongsWrittenByUs).toBe(false);
   });
 
   it('keeps the local copy on a track-id collision and preserves likedSongsWrittenByUs', async () => {

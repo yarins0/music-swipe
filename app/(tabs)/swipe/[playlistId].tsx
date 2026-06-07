@@ -138,7 +138,22 @@ export default function SwipeScreen(): React.ReactElement {
       adapter,
       undefined,
       (trackId) => {
-        useSwipeStore.getState().markLikedSongsWritten(trackId);
+        const store = useSwipeStore.getState();
+        store.markLikedSongsWritten(trackId);
+        // Persist the library-written bit so cancel-from-History can remove the
+        // track from Liked Songs after a clear + restore (libraryWrittenIds is
+        // per-device and lost on reinstall). Re-posts the swipe with the flag set.
+        const activeId = store.activeSessionId;
+        if (!activeId) return;
+        const entry = store.sessions.find((e) => e.sessionId === activeId);
+        const record = entry?.likedSwipes.find((r) => r.track.id === trackId);
+        if (!record) return;
+        backendSyncRef.current?.markLibraryWritten({
+          sessionId: activeId,
+          trackId,
+          direction: record.status,
+          destinationPlaylistIds: record.destinationPlaylistIds,
+        });
       },
       // Surface non-retryable write failures once per session — a track that
       // genuinely can't be saved (e.g. permission revoked) should not vanish silently.

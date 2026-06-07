@@ -322,6 +322,111 @@ describe('POST /swipes', () => {
     });
   });
 
+  it('forwards likedSongsWrittenByUs to rpc only when true', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_ID, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    mockFrom.mockReturnValueOnce(sessionMock);
+
+    mockRpcSuccess(0, 1);
+
+    // super_liked is a decided status, so reconcilePendingDecisions runs.
+    const reconcileSessionsMock = makeQueryMock({
+      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const pendingRowsMock = makeQueryMock({ data: [], error: null });
+    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'super_liked',
+            destinationPlaylistIds: [PLAYLIST_A],
+            likedSongsWrittenByUs: true,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const rpcArgs = mockRpc.mock.calls[0][1] as { p_swipes: Record<string, unknown>[] };
+    expect(rpcArgs.p_swipes[0]).toMatchObject({
+      spotifyTrackId: TRACK_ID_1,
+      likedSongsWrittenByUs: true,
+    });
+  });
+
+  it('omits likedSongsWrittenByUs from the rpc payload when false or absent', async () => {
+    authenticateAs();
+
+    const sessionMock = makeQueryMock({
+      data: [{ id: SESSION_ID, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    mockFrom.mockReturnValueOnce(sessionMock);
+
+    mockRpcSuccess(1, 0);
+
+    // skipped is a decided status, so reconcilePendingDecisions runs.
+    const reconcileSessionsMock = makeQueryMock({
+      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
+      error: null,
+    });
+    const pendingRowsMock = makeQueryMock({ data: [], error: null });
+    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'skipped',
+            destinationPlaylistIds: [],
+            likedSongsWrittenByUs: false,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const rpcArgs = mockRpc.mock.calls[0][1] as { p_swipes: Record<string, unknown>[] };
+    expect(rpcArgs.p_swipes[0]).not.toHaveProperty('likedSongsWrittenByUs');
+  });
+
+  it('returns 400 when likedSongsWrittenByUs is not a boolean', async () => {
+    authenticateAs();
+
+    const app = buildApp();
+    const res = await request(app)
+      .post('/swipes')
+      .set('Authorization', VALID_TOKEN)
+      .send({
+        swipes: [
+          {
+            sessionId: SESSION_ID,
+            spotifyTrackId: TRACK_ID_1,
+            status: 'liked',
+            likedSongsWrittenByUs: 'yes',
+          },
+        ],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: 'swipes[0].likedSongsWrittenByUs must be a boolean' });
+  });
+
   it('returns 200 { inserted: 0, updated: 1 } when rpc reports an update', async () => {
     authenticateAs();
 
