@@ -135,6 +135,108 @@ interface SwipeRowWithSession extends SwipeRow {
   sessions: { source_playlist_id: string };
 }
 
+interface ValidationError {
+  status: number;
+  error: string;
+}
+
+function validateTrackMetadata(track: unknown, index: number): ValidationError | null {
+  const prefix = `swipes[${index}].track`;
+  if (typeof track !== 'object' || track === null || Array.isArray(track))
+    return { status: 400, error: `${prefix} must be an object` };
+  const fields = track as Record<string, unknown>;
+  if (typeof fields['title'] !== 'string' || fields['title'].length === 0)
+    return { status: 400, error: `${prefix}.title is required` };
+  if (typeof fields['artist'] !== 'string' || fields['artist'].length === 0)
+    return { status: 400, error: `${prefix}.artist is required` };
+  return null;
+}
+
+function validateSwipeItem(item: SwipeInput, index: number): ValidationError | null {
+  const prefix = `swipes[${index}]`;
+  if (!item.sessionId || typeof item.sessionId !== 'string')
+    return { status: 400, error: `${prefix}.sessionId is required` };
+  if (!item.spotifyTrackId || typeof item.spotifyTrackId !== 'string')
+    return { status: 400, error: `${prefix}.spotifyTrackId is required` };
+  if (!item.status || typeof item.status !== 'string' || !VALID_STATUSES.has(item.status))
+    return { status: 400, error: `${prefix}.status must be one of: liked, super_liked, skipped, pending` };
+  if (item.destinationPlaylistIds !== undefined && !Array.isArray(item.destinationPlaylistIds))
+    return { status: 400, error: `${prefix}.destinationPlaylistIds must be an array` };
+  if (
+    Array.isArray(item.destinationPlaylistIds) &&
+    !(item.destinationPlaylistIds as unknown[]).every((e) => typeof e === 'string' && e.length > 0)
+  )
+    return { status: 400, error: `${prefix}.destinationPlaylistIds must contain only non-empty strings` };
+  if (item.track !== undefined) return validateTrackMetadata(item.track, index);
+  if (item.likedSongsWrittenByUs !== undefined && typeof item.likedSongsWrittenByUs !== 'boolean')
+    return { status: 400, error: `${prefix}.likedSongsWrittenByUs must be a boolean` };
+  return null;
+}
+
+function validateSwipeBatch(swipes: SwipeInput[]): ValidationError | null {
+  for (let i = 0; i < swipes.length; i++) {
+    const error = validateSwipeItem(swipes[i], i);
+    if (error) return error;
+  }
+  return null;
+}
+
+interface SessionVerification {
+  ok: true;
+  sessionPlaylistMap: Map<string, string>;
+}
+
+interface SessionVerificationError {
+  ok: false;
+  status: number;
+  error: string;
+}
+
+// Fetches session rows and verifies every session belongs to the given user.
+// Returns the sessionId → source_playlist_id map needed by reconciliation.
+async function fetchAndVerifySessions(
+  sessionIds: string[],
+  userId: string,
+): Promise<SessionVerification | SessionVerificationError> {
+  const result = await supabase
+    .from('sessions')
+    .select('id, user_id, source_playlist_id')
+    .in('id', sessionIds);
+
+  if (result.error) {
+    console.error('POST /swipes session ownership check error:', result.error);
+    return { ok: false, status: 500, error: 'Failed to verify session ownership' };
+  }
+
+  const rows = (result.data ?? []) as Array<{ id: string; user_id: string; source_playlist_id?: string }>;
+  const sessionMap = new Map(rows.map((s) => [s.id, s.user_id]));
+
+  for (const sessionId of sessionIds) {
+    const ownerId = sessionMap.get(sessionId);
+    if (!ownerId || ownerId !== userId)
+      return { ok: false, status: 404, error: `Session not found: ${sessionId}` };
+  }
+
+  const sessionPlaylistMap = new Map(
+    rows
+      .filter((s) => typeof s.source_playlist_id === 'string')
+      .map((s) => [s.id, s.source_playlist_id as string]),
+  );
+
+  return { ok: true, sessionPlaylistMap };
+}
+
+function buildRpcPayload(swipes: SwipeInput[]) {
+  return swipes.map((s) => ({
+    sessionId: s.sessionId as string,
+    spotifyTrackId: s.spotifyTrackId as string,
+    status: s.status as string,
+    destinationPlaylistIds: (s.destinationPlaylistIds as string[] | undefined) ?? [],
+    ...(s.track ? { track: s.track } : {}),
+    ...(s.likedSongsWrittenByUs === true ? { likedSongsWrittenByUs: true } : {}),
+  }));
+}
+
 // POST /swipes
 // Batch upserts swipes for the authenticated user.
 // Body: { swipes: SwipeInput[] }
@@ -147,133 +249,22 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  // Validate each swipe entry
-  for (let i = 0; i < swipes.length; i++) {
-    const item = swipes[i] as SwipeInput;
-
-    if (!item.sessionId || typeof item.sessionId !== 'string') {
-      res.status(400).json({ error: `swipes[${i}].sessionId is required` });
-      return;
-    }
-
-    if (!item.spotifyTrackId || typeof item.spotifyTrackId !== 'string') {
-      res.status(400).json({ error: `swipes[${i}].spotifyTrackId is required` });
-      return;
-    }
-
-    if (!item.status || typeof item.status !== 'string' || !VALID_STATUSES.has(item.status)) {
-      res.status(400).json({
-        error: `swipes[${i}].status must be one of: liked, super_liked, skipped, pending`,
-      });
-      return;
-    }
-
-    if (
-      item.destinationPlaylistIds !== undefined &&
-      !Array.isArray(item.destinationPlaylistIds)
-    ) {
-      res.status(400).json({ error: `swipes[${i}].destinationPlaylistIds must be an array` });
-      return;
-    }
-
-    if (
-      Array.isArray(item.destinationPlaylistIds) &&
-      !(item.destinationPlaylistIds as unknown[]).every(
-        (element) => typeof element === 'string' && element.length > 0,
-      )
-    ) {
-      res.status(400).json({
-        error: `swipes[${i}].destinationPlaylistIds must contain only non-empty strings`,
-      });
-      return;
-    }
-
-    // Optional track metadata: when present it must be an object carrying at
-    // least a non-empty title + artist (the fields a restored row needs to
-    // render). Anything malformed is rejected rather than silently dropped.
-    if (item.track !== undefined) {
-      const track = item.track;
-      if (typeof track !== 'object' || track === null || Array.isArray(track)) {
-        res.status(400).json({ error: `swipes[${i}].track must be an object` });
-        return;
-      }
-      const fields = track as Record<string, unknown>;
-      if (typeof fields['title'] !== 'string' || fields['title'].length === 0) {
-        res.status(400).json({ error: `swipes[${i}].track.title is required` });
-        return;
-      }
-      if (typeof fields['artist'] !== 'string' || fields['artist'].length === 0) {
-        res.status(400).json({ error: `swipes[${i}].track.artist is required` });
-        return;
-      }
-    }
-
-    if (
-      item.likedSongsWrittenByUs !== undefined &&
-      typeof item.likedSongsWrittenByUs !== 'boolean'
-    ) {
-      res.status(400).json({ error: `swipes[${i}].likedSongsWrittenByUs must be a boolean` });
-      return;
-    }
-  }
-
-  // Collect unique session IDs referenced in the batch
-  const sessionIds = [...new Set((swipes as SwipeInput[]).map((s) => s.sessionId as string))];
-
-  // Verify that all referenced sessions belong to the authenticated user.
-  // source_playlist_id is fetched alongside ownership so the post-write reconciliation
-  // can scope dangling-pending cleanup to the right playlist (see below).
-  const sessionOwnershipResult = await supabase
-    .from('sessions')
-    .select('id, user_id, source_playlist_id')
-    .in('id', sessionIds);
-
-  if (sessionOwnershipResult.error) {
-    console.error('POST /swipes session ownership check error:', sessionOwnershipResult.error);
-    res.status(500).json({ error: 'Failed to verify session ownership' });
+  const validationError = validateSwipeBatch(swipes as SwipeInput[]);
+  if (validationError) {
+    res.status(validationError.status).json({ error: validationError.error });
     return;
   }
 
-  const sessionRows = (sessionOwnershipResult.data ?? []) as Array<{
-    id: string;
-    user_id: string;
-    source_playlist_id?: string;
-  }>;
-  const sessionMap = new Map<string, string>(sessionRows.map((s) => [s.id, s.user_id]));
-  // sessionId → source_playlist_id, used by the reconciliation step after writes.
-  const sessionPlaylistMap = new Map<string, string>(
-    sessionRows
-      .filter((s) => typeof s.source_playlist_id === 'string')
-      .map((s) => [s.id, s.source_playlist_id as string]),
-  );
-
-  for (const sessionId of sessionIds) {
-    const ownerId = sessionMap.get(sessionId);
-    if (!ownerId || ownerId !== req.userId) {
-      res.status(404).json({ error: `Session not found: ${sessionId}` });
-      return;
-    }
+  const sessionIds = [...new Set((swipes as SwipeInput[]).map((s) => s.sessionId as string))];
+  const sessionResult = await fetchAndVerifySessions(sessionIds, req.userId as string);
+  if (!sessionResult.ok) {
+    res.status(sessionResult.status).json({ error: sessionResult.error });
+    return;
   }
-
-  // Build the JSON payload for the Postgres function. The function runs the
-  // entire batch — upsert + destination replacement — in one transaction,
-  // eliminating the racy SELECT-then-INSERT and mid-batch partial-failure
-  // issues present in the previous multi-statement approach.
-  const rpcPayload = (swipes as SwipeInput[]).map((s) => ({
-    sessionId: s.sessionId as string,
-    spotifyTrackId: s.spotifyTrackId as string,
-    status: s.status as string,
-    destinationPlaylistIds: (s.destinationPlaylistIds as string[] | undefined) ?? [],
-    // Forward track metadata only when present so payloads without it keep their
-    // exact prior shape (the upsert function treats `track` as optional).
-    ...(s.track ? { track: s.track } : {}),
-    // Forward the library-written flag only when true (sticky-true server-side).
-    ...(s.likedSongsWrittenByUs === true ? { likedSongsWrittenByUs: true } : {}),
-  }));
 
   const rpcResult = await supabase.rpc('upsert_swipes', {
     p_user_id: req.userId,
-    p_swipes: rpcPayload,
+    p_swipes: buildRpcPayload(swipes as SwipeInput[]),
   });
 
   if (rpcResult.error) {
@@ -284,11 +275,10 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
 
   const { inserted, updated } = rpcResult.data as { inserted: number; updated: number };
 
-  // Clean up any pending rows now superseded by a decision in this batch.
   const reconcile = await reconcilePendingDecisions(
     req.userId as string,
     swipes as SwipeInput[],
-    sessionPlaylistMap,
+    sessionResult.sessionPlaylistMap,
   );
   if (!reconcile.ok) {
     res.status(reconcile.status ?? 500).json({ error: reconcile.error });
