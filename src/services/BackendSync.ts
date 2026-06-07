@@ -49,6 +49,23 @@ export class BackendSync {
   }
 
   /**
+   * Un-likes a previously-liked track (cancel-from-History): flips its server
+   * swipe row to 'skipped' with no destinations. Because GET /sessions only
+   * restores liked/super_liked rows, this stops the cancelled like from
+   * re-hydrating into History on the next focus. Fire-and-forget — reuses the
+   * postSwipe queue + retry path; no track metadata is needed for a skip.
+   */
+  unlikeSwipe(sessionId: string, trackId: string): void {
+    this.postSwipe({
+      sessionId,
+      trackId,
+      direction: 'skipped',
+      destinationPlaylistIds: [],
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
    * Sends all pending payloads in a single batch request.
    * Resolves when the server responds with 2xx; rejects on HTTP or network errors.
    * Is a no-op (resolves immediately) when the queue is empty.

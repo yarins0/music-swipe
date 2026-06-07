@@ -293,3 +293,114 @@ describe('useHistoryHydration', () => {
     expect(useSwipeStore.getState().sessions).toHaveLength(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Post-hydration flows: cancelling a restored like, and continuing a restored
+// (active) session. These exercise the bug-fix contract for cancel-from-History
+// on records that came from the server rather than from a live local swipe.
+// ---------------------------------------------------------------------------
+
+describe('useHistoryHydration — cancel + continue after restore', () => {
+  it('keeps a cancelled like gone once the server reflects the un-like', async () => {
+    // First focus: server restores a completed session with one liked track.
+    global.fetch = mockFetchSessions([
+      remoteSession({ likedSwipes: [remoteLiked('sw-1', 'a')] }),
+    ]);
+    await runHydrate();
+    expect(useSwipeStore.getState().sessions[0].likedSwipes).toHaveLength(1);
+
+    // Cancel-from-History (local half): matches.tsx removes the record locally and
+    // fires BackendSync.unlikeSwipe, which flips the server row to 'skipped'.
+    useSwipeStore.getState().removeSwipeFromSession('s1', 'sw-1');
+    expect(useSwipeStore.getState().sessions[0].likedSwipes).toHaveLength(0);
+
+    // Next focus: GET /sessions no longer returns the row (skipped rows are excluded
+    // from likedSwipes), so the merge must not resurrect it.
+    global.fetch = mockFetchSessions([
+      remoteSession({ likedSwipes: [], likedCount: 0, swipedCount: 1 }),
+    ]);
+    await runHydrate();
+
+    const session = useSwipeStore.getState().sessions[0];
+    expect(session.sessionId).toBe('s1');
+    expect(session.likedSwipes).toHaveLength(0);
+  });
+
+  it('resurrects a locally-removed like if the server still returns it (why unlikeSwipe is required)', async () => {
+    // Restore + local-only removal, exactly as above.
+    global.fetch = mockFetchSessions([
+      remoteSession({ likedSwipes: [remoteLiked('sw-1', 'a')] }),
+    ]);
+    await runHydrate();
+    useSwipeStore.getState().removeSwipeFromSession('s1', 'sw-1');
+    expect(useSwipeStore.getState().sessions[0].likedSwipes).toHaveLength(0);
+
+    // Re-hydrate while the server STILL lists the like (the un-like was never sent).
+    // Stale-while-revalidate is local-wins but does not track deletions, so the
+    // still-present remote row restores. This is the resurrection that the server
+    // un-like (flip to 'skipped') prevents.
+    global.fetch = mockFetchSessions([
+      remoteSession({ likedSwipes: [remoteLiked('sw-1', 'a')] }),
+    ]);
+    await runHydrate();
+
+    expect(useSwipeStore.getState().sessions[0].likedSwipes).toHaveLength(1);
+  });
+
+  it('continues a server-restored active session — new swipes append and advance progress', async () => {
+    // Server restores an in-progress session with prior progress and one like.
+    global.fetch = mockFetchSessions([
+      remoteSession({
+        status: 'active',
+        resumeOffset: 5,
+        swipedCount: 5,
+        likedCount: 1,
+        likedSwipes: [remoteLiked('sw-1', 'a')],
+      }),
+    ]);
+    await runHydrate();
+
+    const restored = useSwipeStore.getState().sessions[0];
+    expect(restored.status).toBe('active');
+    expect(restored.resumeOffset).toBe(5);
+    expect(restored.likedSwipes).toHaveLength(1);
+
+    // Resume it the way the swipe screen does: make it active, then set up the live
+    // queue starting at its restored resumeOffset (isResuming = true).
+    const store = useSwipeStore.getState();
+    store.setActiveSession('s1');
+    store.initSession('s1', 'src', [clientTrack('b'), clientTrack('c')], [], ['p1'], true, 7, 5);
+
+    // Continue swiping: a fresh-track like appends to the restored history and
+    // advances the session's offset/counts on top of the restored values.
+    useSwipeStore.getState().recordSwipe(clientTrack('b'), 'liked', ['p1']);
+
+    const continued = useSwipeStore.getState().sessions.find((e) => e.sessionId === 's1')!;
+    expect(continued.likedSwipes.map((r) => r.track.id)).toEqual(['a', 'b']);
+    expect(continued.likedCount).toBe(2);
+    expect(continued.resumeOffset).toBe(6);
+  });
+
+  it('protects the restored active session from being overwritten by a later hydrate', async () => {
+    // Restore an active session, resume it, and make local progress.
+    global.fetch = mockFetchSessions([
+      remoteSession({ status: 'active', resumeOffset: 5, likedSwipes: [remoteLiked('sw-1', 'a')] }),
+    ]);
+    await runHydrate();
+    const store = useSwipeStore.getState();
+    store.setActiveSession('s1');
+    store.initSession('s1', 'src', [clientTrack('b')], [], ['p1'], true, 7, 5);
+    useSwipeStore.getState().recordSwipe(clientTrack('b'), 'liked', ['p1']); // resumeOffset → 6
+
+    // A background re-hydrate arrives with the older server state (resumeOffset 5).
+    // The active session's in-flight local progress must win.
+    global.fetch = mockFetchSessions([
+      remoteSession({ status: 'active', resumeOffset: 5, likedSwipes: [remoteLiked('sw-1', 'a')] }),
+    ]);
+    await runHydrate();
+
+    const session = useSwipeStore.getState().sessions.find((e) => e.sessionId === 's1')!;
+    expect(session.resumeOffset).toBe(6);
+    expect(session.likedSwipes.map((r) => r.track.id)).toEqual(['a', 'b']);
+  });
+});

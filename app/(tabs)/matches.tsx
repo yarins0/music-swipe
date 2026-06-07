@@ -11,6 +11,9 @@ import type { SessionEntry } from '@/stores/swipeStore';
 import type { MusicPlatformAdapter } from '@/adapters/interface';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import { PlaylistWriter } from '@/services/PlaylistWriter';
+import { BackendSync } from '@/services/BackendSync';
+import { useAuthStore } from '@/stores/authStore';
+import { BACKEND_URL } from '@/config';
 import { TabHeader } from '@/components/TabHeader';
 import { SessionCard } from '@/components/SessionCard';
 import { AppModal } from '@/components/AppModal';
@@ -52,6 +55,16 @@ export default function MatchesScreen(): React.ReactElement {
     return adapterRef.current;
   };
 
+  // Lazily-built backend client used to un-like a cancelled track on the server.
+  const backendSyncRef = useRef<BackendSync | null>(null);
+  const getBackendSync = (): BackendSync => {
+    if (!backendSyncRef.current) {
+      const getToken = (): string => useAuthStore.getState().supabaseToken ?? '';
+      backendSyncRef.current = new BackendSync(BACKEND_URL, getToken);
+    }
+    return backendSyncRef.current;
+  };
+
   // Most-recently-touched session first.
   const ordered = useMemo(
     () => [...sessions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
@@ -82,12 +95,19 @@ export default function MatchesScreen(): React.ReactElement {
 
         removeSwipeFromSession(session.sessionId, recordId);
 
-        // Best-effort: also remove from Liked Songs if we added it this session.
-        if (record.likedSongsWrittenByUs === true) {
-          writer.undoWriteAsync(record.track.id, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
-            console.warn('[History] removeFromLikedSongs failed:', err);
-          });
-        }
+        // Un-like on the server so the next History hydrate can't restore this record:
+        // flips the swipe to 'skipped' with no destinations (GET /sessions only returns
+        // liked/super_liked). Fire-and-forget via the postSwipe queue + retry path.
+        getBackendSync().unlikeSwipe(session.sessionId, record.track.id);
+
+        // Best-effort: also remove from Liked Songs. Safe to call unconditionally —
+        // undoWriteAsync only removes tracks PlaylistWriter recorded writing to the
+        // library (libraryWrittenIds), so pre-existing likes are never touched. (The
+        // former record.likedSongsWrittenByUs guard is never set on server-restored
+        // records, so it wrongly skipped removal for those.)
+        writer.undoWriteAsync(record.track.id, [LIKED_SONGS_PLAYLIST_ID]).catch((err: unknown) => {
+          console.warn('[History] removeFromLikedSongs failed:', err);
+        });
       } catch {
         Alert.alert('Error', 'Could not remove track. Please try again.');
       } finally {

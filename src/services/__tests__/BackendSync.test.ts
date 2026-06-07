@@ -147,6 +147,41 @@ describe('BackendSync', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // unlikeSwipe
+  // ---------------------------------------------------------------------------
+
+  describe('unlikeSwipe()', () => {
+    it('POSTs a skipped swipe with no destinations and no track metadata', async () => {
+      const fetchMock = mockFetch(200, { inserted: 0, updated: 1 });
+      global.fetch = fetchMock;
+
+      sync.unlikeSwipe('session-7', 'track-cancel');
+      await Promise.resolve();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe(`${BASE_URL}/swipes`);
+      expect(init.method).toBe('POST');
+
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes).toHaveLength(1);
+      expect(body.swipes[0]).toMatchObject({
+        sessionId: 'session-7',
+        spotifyTrackId: 'track-cancel',
+        status: 'skipped',
+        destinationPlaylistIds: [],
+      });
+      expect(body.swipes[0]).not.toHaveProperty('track');
+    });
+
+    it('is fire-and-forget — returns undefined synchronously', () => {
+      global.fetch = mockFetch(200, { inserted: 0, updated: 1 });
+
+      expect(sync.unlikeSwipe('session-7', 'track-cancel')).toBeUndefined();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // flushPending
   // ---------------------------------------------------------------------------
 
