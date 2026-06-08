@@ -1,16 +1,16 @@
 # Graph Report - music-swipe  (2026-06-08)
 
 ## Corpus Check
-- 127 files · ~77,445 words
+- 128 files · ~78,328 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1143 nodes · 1712 edges · 71 communities (64 shown, 7 thin omitted)
+- 1152 nodes · 1727 edges · 72 communities (63 shown, 9 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3b757ae4`
+- Built from commit: `fc832505`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,6 +83,7 @@
 - [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
 - [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `useTheme()` - 40 edges
@@ -94,25 +95,25 @@
 7. `colors` - 22 edges
 8. `Track` - 21 edges
 9. `useAuthStore` - 21 edges
-10. `spotifyFetch()` - 17 edges
+10. `spotifyFetch()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `StatCard()` --calls--> `useTheme()`  [EXTRACTED]
+  app/(tabs)/session-end.tsx → src/hooks/useTheme.ts
+- `LikedTrackRow()` --calls--> `useTheme()`  [EXTRACTED]
+  app/(tabs)/session-end.tsx → src/hooks/useTheme.ts
 - `ContactScreen()` --calls--> `useTheme()`  [EXTRACTED]
   app/(tabs)/settings/contact.tsx → src/hooks/useTheme.ts
 - `PrivacyPolicyScreen()` --calls--> `useTheme()`  [EXTRACTED]
   app/(tabs)/settings/privacy-policy.tsx → src/hooks/useTheme.ts
 - `TermsOfServiceScreen()` --calls--> `useTheme()`  [EXTRACTED]
   app/(tabs)/settings/terms-of-service.tsx → src/hooks/useTheme.ts
-- `RootLayout()` --calls--> `useAuthStore`  [EXTRACTED]
-  app/_layout.tsx → src/stores/authStore.ts
-- `LoginScreen()` --calls--> `useTheme()`  [EXTRACTED]
-  app/(auth)/login.tsx → src/hooks/useTheme.ts
 
-## Communities (71 total, 7 thin omitted)
+## Communities (72 total, 9 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.12
-Nodes (16): LoginScreen(), styles, useSpotifyAuth(), ThemeResult, PolicySectionProps, PrivacyPolicyScreen(), styles, StylesType (+8 more)
+Cohesion: 0.18
+Nodes (10): LoginScreen(), styles, useSpotifyAuth(), ThemeResult, colors, darkColors, getColors(), lightColors (+2 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
@@ -121,10 +122,6 @@ Nodes (30): dependencies, cors, dotenv, express, express-rate-limit, helmet, @su
 ### Community 2 - "Community 2"
 Cohesion: 0.07
 Nodes (27): backgroundColor, foregroundImage, adaptiveIcon, package, typedRoutes, expo, android, experiments (+19 more)
-
-### Community 3 - "Community 3"
-Cohesion: 0.05
-Nodes (20): mapSpotifyPlaylist(), mapSpotifyTrack(), SpotifyAlbum, SpotifyArtist, SpotifyImage, SpotifyPlaylistItem, SpotifyPlaylistOwner, SpotifyTrackItem (+12 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.08
@@ -151,8 +148,8 @@ Cohesion: 0.09
 Nodes (19): adapter, addToPlaylist, authError, callOrder, drainPromise, entry, firstAdd, firstSetItem (+11 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.17
-Nodes (12): createSpotifyAdapter(), createSpotifyAuthContext(), SpotifyDevice, SpotifyDevicesResponse, SpotifyMeResponse, SpotifyNewPlaylistResponse, SpotifyPaginatedResponse, SpotifyPlayerState (+4 more)
+Cohesion: 0.31
+Nodes (7): createSpotifyAdapter(), createSpotifyAuthContext(), mapHttpError(), performTokenRefresh(), refreshSpotifyToken(), sleep(), SpotifyAuthContext
 
 ### Community 12 - "Community 12"
 Cohesion: 0.12
@@ -183,16 +180,16 @@ Cohesion: 0.09
 Nodes (20): Adapter Layer (the central constraint), Architectural Rules, Architecture, Backend, Backend schema (PostgreSQL via Supabase), code:bash (npx expo start              # start dev server (scan QR or p), code:bash (npm run dev     # start Express server with hot reload (node), code:bash (eas build --platform ios) (+12 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.18
-Nodes (11): AdapterCapabilities, PlatformError, PlatformErrorCode, UserProfile, DEFAULT_PLAYLISTS, DEFAULT_TRACKS, MockCalls, MockFixtures (+3 more)
+Cohesion: 0.16
+Nodes (11): AdapterCapabilities, Track, UserProfile, PlaylistAccessGuardProps, styles, DEFAULT_PLAYLISTS, DEFAULT_TRACKS, MockCalls (+3 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.14
-Nodes (8): ErrorBoundary, ErrorBoundaryProps, ErrorBoundaryState, styles, button, errorLogCall, { getByText }, { queryByText }
+Cohesion: 0.06
+Nodes (27): RootLayout(), styles, AuthLayout(), discovery, SCOPES, UseSpotifyAuthReturn, ErrorBoundary, ErrorBoundaryProps (+19 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.25
-Nodes (8): RootLayout(), styles, AuthLayout(), SettingsScreen(), AuthActions, AuthState, KEYS, useAuthStore
+Cohesion: 0.12
+Nodes (19): mapSpotifyPlaylist(), mapSpotifyTrack(), SpotifyAlbum, SpotifyArtist, SpotifyImage, SpotifyPlaylistItem, SpotifyPlaylistOwner, SpotifyTrackItem (+11 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.07
@@ -211,8 +208,8 @@ Cohesion: 0.22
 Nodes (7): BottomNavBar(), NavTabProps, resolveActiveIndex(), styles, TAB_ITEMS, TabItem, getMostRecentResumableSession()
 
 ### Community 27 - "Community 27"
-Cohesion: 0.14
-Nodes (15): useTheme(), usePrefsStore, SessionActions, SessionState, useSessionStore, SwipeEngine(), DestinationPickerScreen(), LikedTrackRow() (+7 more)
+Cohesion: 0.12
+Nodes (14): usePrefsStore, SessionActions, SessionState, useSessionStore, SwipeScreen(), DestinationPickerScreen(), LikedTrackRow(), LikedTrackRowProps (+6 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.23
@@ -223,12 +220,12 @@ Cohesion: 0.15
 Nodes (12): skills, supabase, supabase-postgres-best-practices, computedHash, computedHash, skillPath, source, sourceType (+4 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.15
-Nodes (14): Playlist, DestinationEditor(), DestinationEditorProps, Scope, styles, SwipeCard(), computeSeekStepMs(), styles (+6 more)
+Cohesion: 0.18
+Nodes (14): ButtonBar(), SwipeCard(), computeSeekStepMs(), styles, SwipeEngine(), SwipeEngineProps, styles, SwipeFrontCard() (+6 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.14
-Nodes (8): Track, PlaybackResult, TrackPlayer, usePreviewPlayer(), InitPhase, phaseLabel(), styles, SwipeScreen()
+Cohesion: 0.13
+Nodes (10): openPlatformDeepLink(), AudioPlayer, AudioStatus, expoAudio, PreviewPlayerControls, usePreviewPlayer(), InitPhase, phaseLabel() (+2 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.17
@@ -244,7 +241,7 @@ Nodes (9): compilerOptions, ignoreDeprecations, paths, strict, types, exclude, e
 
 ### Community 35 - "Community 35"
 Cohesion: 0.07
-Nodes (28): ☑ C1 — Decide-later restore reads the wrong response field (CRITICAL), ☑ C2 — Cancelled pan gesture never springs back; card can freeze (HIGH; was flagged Critical), code:bash (npx jest                 # mobile unit/sequence tests), Findings, ☐ H1 — Spotify token-refresh concurrent burst → forced logout (HIGH), ☐ H2 — `onAuthExpired` fires on any non-OK refresh → transient outage = permanent logout (HIGH), ☐ H3 — PlaylistWriter durable-queue read-modify-write race → lost crash-recovery entries (HIGH), ☐ H4 — Backend API has no rate limiting except `/auth/register` (HIGH) (+20 more)
+Nodes (28): ☑ C1 — Decide-later restore reads the wrong response field (CRITICAL), ☑ C2 — Cancelled pan gesture never springs back; card can freeze (HIGH; was flagged Critical), code:bash (npx jest                 # mobile unit/sequence tests), Findings, ☑ H1 — Spotify token-refresh concurrent burst → forced logout (HIGH), ☑ H2 — `onAuthExpired` fires on any non-OK refresh → transient outage = permanent logout (HIGH), ☐ H3 — PlaylistWriter durable-queue read-modify-write race → lost crash-recovery entries (HIGH), ☐ H4 — Backend API has no rate limiting except `/auth/register` (HIGH) (+20 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.10
@@ -263,24 +260,20 @@ Cohesion: 0.22
 Nodes (5): compat, { FlatCompat }, noSpotifyOutsideAdapters, rule, { RuleTester }
 
 ### Community 40 - "Community 40"
-Cohesion: 0.15
-Nodes (12): AppModal(), AppModalProps, styles, PlaylistRow(), PlaylistRowProps, styles, getUserPlaylists(), spacing (+4 more)
+Cohesion: 0.14
+Nodes (17): AppModal(), AppModalProps, styles, PlaylistRow(), PlaylistRowProps, styles, styles, TabHeader() (+9 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.14
 Nodes (6): SessionTracker, body, fetchMock, [, init], result, [url, init]
 
 ### Community 42 - "Community 42"
-Cohesion: 0.29
-Nodes (4): AudioPlayer, AudioStatus, expoAudio, PreviewPlayerControls
+Cohesion: 0.18
+Nodes (5): addCall, bodies, deleteCall, localItem, mockSpotifyFetch
 
 ### Community 43 - "Community 43"
-Cohesion: 0.08
-Nodes (17): openPlatformDeepLink(), LinkRowProps, pickerStyles, SectionProps, SettingRowProps, styles, StylesType, THEME_OPTIONS (+9 more)
-
-### Community 44 - "Community 44"
-Cohesion: 0.40
-Nodes (3): discovery, SCOPES, UseSpotifyAuthReturn
+Cohesion: 0.09
+Nodes (15): LinkRowProps, pickerStyles, SectionProps, SettingRowProps, styles, StylesType, THEME_OPTIONS, ThemeSegmentedPickerProps (+7 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.06
@@ -320,8 +313,8 @@ Cohesion: 0.17
 Nodes (12): SessionMeta, SessionPatch, SessionStatus, SwipeRecord, SwipeStatus, RemoteLikedSwipe, RemoteSession, RemoteTrack (+4 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.15
-Nodes (11): detectSwipeDirection(), SNAP_BACK_CONFIG, UseSwipeGestureOptions, UseSwipeGestureResult, capturedHandlers, onSwipe, panBuilder, { resetCard } (+3 more)
+Cohesion: 0.20
+Nodes (8): detectSwipeDirection(), capturedHandlers, onSwipe, panBuilder, { resetCard }, result, { useSwipeGesture }, { withTiming }
 
 ### Community 59 - "Community 59"
 Cohesion: 0.15
@@ -352,36 +345,40 @@ Cohesion: 0.29
 Nodes (4): assertion, auth, mockFetch, promise
 
 ### Community 66 - "Community 66"
-Cohesion: 0.33
-Nodes (5): calledKeys, mockDeleteItem, mockSetItem, SECURE_STORE_KEYS, state
+Cohesion: 0.29
+Nodes (4): PlatformError, PlatformErrorCode, err, mockSpotifyFetch
 
 ### Community 67 - "Community 67"
-Cohesion: 0.40
-Nodes (3): styles, TabHeader(), TabHeaderProps
+Cohesion: 0.25
+Nodes (4): apiCall, auth, FakeResponseOptions, TOKEN_SUCCESS
 
 ### Community 68 - "Community 68"
-Cohesion: 0.67
-Nodes (3): AppLayout(), HIDDEN_NAV_PREFIXES, shouldShowNavBar()
+Cohesion: 0.29
+Nodes (5): Playlist, DestinationEditor(), DestinationEditorProps, Scope, styles
+
+### Community 69 - "Community 69"
+Cohesion: 0.29
+Nodes (4): PolicySectionProps, PrivacyPolicyScreen(), styles, StylesType
 
 ## Knowledge Gaps
-- **628 isolated node(s):** `name`, `slug`, `version`, `scheme`, `orientation` (+623 more)
+- **632 isolated node(s):** `name`, `slug`, `version`, `scheme`, `orientation` (+627 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `MockAdapter` connect `Community 10` to `Community 48`, `Community 19`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `PlaylistWriter` connect `Community 24` to `Community 38`, `Community 9`, `Community 48`, `Community 27`, `Community 30`, `Community 31`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `Track` connect `Community 31` to `Community 3`, `Community 9`, `Community 59`, `Community 11`, `Community 12`, `Community 46`, `Community 15`, `Community 16`, `Community 19`, `Community 57`, `Community 27`, `Community 60`, `Community 61`, `Community 30`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `Track` connect `Community 19` to `Community 9`, `Community 59`, `Community 12`, `Community 46`, `Community 15`, `Community 16`, `Community 21`, `Community 57`, `Community 27`, `Community 60`, `Community 61`, `Community 30`, `Community 31`?**
   _High betweenness centrality (0.024) - this node is a cross-community bridge._
+- **Why does `SpotifyAdapter` connect `Community 3` to `Community 66`, `Community 42`, `Community 11`, `Community 44`, `Community 21`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **What connects `name`, `slug`, `version` to the rest of the system?**
-  _628 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.11666666666666667 - nodes in this community are weakly interconnected._
+  _632 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06451612903225806 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
