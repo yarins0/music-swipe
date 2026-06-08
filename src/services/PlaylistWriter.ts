@@ -26,12 +26,23 @@ export interface WriteErrorContext {
 
 const QUEUE_KEY = '@music-swipe/playlist-write-queue';
 const LIBRARY_WRITTEN_IDS_KEY = '@music-swipe/library-written-ids';
+const ADDED_PLAYLIST_PAIRS_KEY = '@music-swipe/added-playlist-pairs';
 
 export class PlaylistWriter {
   private readonly adapter: MusicPlatformAdapter;
   private readonly storage: StorageInterface;
   private readonly libraryWrittenIds = new Set<string>();
   private libraryWrittenIdsLoaded = false;
+  // Regular-playlist pairs ("trackId|playlistId") this writer added and may undo.
+  // A pair is recorded only when the track was NOT already in the playlist, so an
+  // undo can never remove a track the user owned before the like. Persisted so a
+  // fresh writer (History / session-end) can still tell its own adds apart.
+  private readonly addedPlaylistPairs = new Set<string>();
+  private addedPlaylistPairsLoaded = false;
+  // Serializes durable-queue read-modify-write cycles. Without it, liking one track
+  // into multiple regular playlists runs the destinations concurrently and a later
+  // persistQueue overwrites an earlier one, dropping a crash-recovery entry.
+  private queueMutex: Promise<void> = Promise.resolve();
   private readonly onLibraryWritten?: (trackId: string) => void;
   // Invoked when a write fails for a non-retryable reason (e.g. PERMISSION_DENIED,
   // NOT_FOUND). Rate-limit exhaustion is intentionally NOT reported here — those
@@ -82,6 +93,33 @@ export class PlaylistWriter {
     }
   }
 
+  // Stable key identifying a single (trackId, playlistId) addition.
+  private pairKey(trackId: string, playlistId: string): string {
+    return `${trackId}|${playlistId}`;
+  }
+
+  private async ensureAddedPlaylistPairsLoaded(): Promise<void> {
+    if (this.addedPlaylistPairsLoaded) return;
+    try {
+      const raw = await this.storage.getItem(ADDED_PLAYLIST_PAIRS_KEY);
+      if (raw) {
+        const pairs = JSON.parse(raw) as string[];
+        for (const pair of pairs) this.addedPlaylistPairs.add(pair);
+      }
+    } catch {
+      // start fresh on parse error
+    }
+    this.addedPlaylistPairsLoaded = true;
+  }
+
+  private async persistAddedPlaylistPairs(): Promise<void> {
+    try {
+      await this.storage.setItem(ADDED_PLAYLIST_PAIRS_KEY, JSON.stringify([...this.addedPlaylistPairs]));
+    } catch (err) {
+      console.warn('[PlaylistWriter] persistAddedPlaylistPairs failed:', err);
+    }
+  }
+
   // Reads the persisted queue; returns an empty array on parse error or absence.
   private async readQueue(): Promise<PendingWrite[]> {
     try {
@@ -102,11 +140,42 @@ export class PlaylistWriter {
     }
   }
 
+  // Runs a queue read-modify-write critical section serialized against all others.
+  // Each call chains onto the previous mutation so concurrent destinations can't both
+  // read the same snapshot and clobber each other's persistQueue. Errors are isolated
+  // so one failed section never poisons the chain for later callers.
+  private runExclusiveQueueMutation<T>(criticalSection: () => Promise<T>): Promise<T> {
+    const result = this.queueMutex.then(criticalSection);
+    this.queueMutex = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  // Adds a (trackId, playlistId) pair to the durable queue unless already present.
+  // Serialized so parallel destination writes don't drop each other's entries.
+  private async enqueueWrite(trackId: string, playlistId: string): Promise<void> {
+    await this.runExclusiveQueueMutation(async () => {
+      const queue = await this.readQueue();
+      const alreadyQueued = queue.some(
+        (e) => e.trackId === trackId && e.playlistId === playlistId,
+      );
+      if (!alreadyQueued) {
+        queue.push({ trackId, playlistId, attempts: 0 });
+        await this.persistQueue(queue);
+      }
+    });
+  }
+
   // Removes a single entry from the persisted queue by (trackId, playlistId) identity.
+  // Serialized via the same mutex as enqueueWrite so reads and writes never interleave.
   private async removeFromQueue(trackId: string, playlistId: string): Promise<void> {
-    const queue = await this.readQueue();
-    const next = queue.filter((e) => !(e.trackId === trackId && e.playlistId === playlistId));
-    await this.persistQueue(next);
+    await this.runExclusiveQueueMutation(async () => {
+      const queue = await this.readQueue();
+      const next = queue.filter((e) => !(e.trackId === trackId && e.playlistId === playlistId));
+      await this.persistQueue(next);
+    });
   }
 
   // Core retry loop shared by executeWithBackoff and drainStoredQueue.
@@ -191,63 +260,75 @@ export class PlaylistWriter {
   // post-session dedup scan removes any extras. Liked Songs cannot duplicate
   // (the library is a set) and is additionally guarded by the live isInLibrary check.
   write(trackId: string, destinationIds: string[]): void {
-    const writes = destinationIds.map(async (playlistId) => {
-      // Liked Songs requires a pre-existing check: only record as "ours to remove"
-      // if the track was not already in the library before this swipe. The live
-      // isInLibrary check runs on every like (no stale skip), so a track the user
-      // removed from their library between sessions is re-saved.
-      if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-        // Conservative default: if the check throws, isTrackPreExistingInLibrary
-        // returns true — undo can never accidentally remove a track the user already
-        // had liked. The live check runs every time, so a track the user removed from
-        // their library between sessions is re-saved.
-        const preExisting = await this.isTrackPreExistingInLibrary(trackId);
-
-        // If the track was already in Liked Songs, leave it untouched. We never
-        // write it, so libraryWrittenIds never records it, and undo can never remove it.
-        if (preExisting) return;
-
-        const succeeded = await this.executeWithBackoff(
-          () => this.adapter.addToPlaylist(playlistId, trackId),
-          { trackId, playlistId },
-        );
-        if (succeeded) {
-          this.libraryWrittenIds.add(trackId);
-          void this.persistLibraryWrittenIds();
-          this.onLibraryWritten?.(trackId);
-        }
-        return;
-      }
-
-      // 1. Add to durable queue before attempting the network call.
-      const queue = await this.readQueue();
-      const alreadyQueued = queue.some(
-        (e) => e.trackId === trackId && e.playlistId === playlistId,
-      );
-      if (!alreadyQueued) {
-        queue.push({ trackId, playlistId, attempts: 0 });
-        await this.persistQueue(queue);
-      }
-
-      // 2. Attempt the write with exponential backoff.
-      const succeeded = await this.executeWithBackoff(async () => {
-        await this.adapter.addToPlaylist(playlistId, trackId);
-      }, { trackId, playlistId });
-
-      if (succeeded) {
-        // 3a. Success — remove from the durable queue.
-        await this.removeFromQueue(trackId, playlistId);
-      } else {
-        // 3b. All retries exhausted or non-retryable error — leave entry in queue for
-        //     next-launch recovery via drainStoredQueue.
-        console.warn(
-          `[PlaylistWriter] write failed for trackId=${trackId} playlistId=${playlistId}; kept in queue for next-launch retry`,
-        );
-      }
-    });
+    const writes = destinationIds.map((playlistId) =>
+      playlistId === LIKED_SONGS_PLAYLIST_ID
+        ? this.writeToLibrary(trackId)
+        : this.writeToRegularPlaylist(trackId, playlistId),
+    );
 
     // Intentionally not awaited — swipe UI must not be blocked.
     void Promise.all(writes);
+  }
+
+  // Saves a track to Liked Songs. Only records it as "ours to remove" when it was not
+  // already in the library (live isInLibrary check, no stale skip), so undo can never
+  // remove a track the user had liked before this session.
+  private async writeToLibrary(trackId: string): Promise<void> {
+    const preExisting = await this.isTrackPreExistingInLibrary(trackId);
+    if (preExisting) return;
+
+    const succeeded = await this.executeWithBackoff(
+      () => this.adapter.addToPlaylist(LIKED_SONGS_PLAYLIST_ID, trackId),
+      { trackId, playlistId: LIKED_SONGS_PLAYLIST_ID },
+    );
+    if (succeeded) {
+      this.libraryWrittenIds.add(trackId);
+      void this.persistLibraryWrittenIds();
+      this.onLibraryWritten?.(trackId);
+    }
+  }
+
+  // Adds a track to a regular playlist with durable-queue retry. Records the pair as
+  // "ours to remove" only when the track was not already in the playlist, mirroring the
+  // Liked Songs guard so an undo can never delete a track the user already owned.
+  private async writeToRegularPlaylist(trackId: string, playlistId: string): Promise<void> {
+    await this.ensureAddedPlaylistPairsLoaded();
+    // Snapshot pre-existence BEFORE the add. Conservative default: on check failure
+    // treat as pre-existing (never record), so undo can't delete a track we're unsure of.
+    const preExisting = await this.isTrackPreExistingInPlaylist(trackId, playlistId);
+
+    await this.enqueueWrite(trackId, playlistId);
+
+    const succeeded = await this.executeWithBackoff(
+      () => this.adapter.addToPlaylist(playlistId, trackId),
+      { trackId, playlistId },
+    );
+
+    if (!succeeded) {
+      // All retries exhausted or non-retryable — leave the entry in the queue for
+      // next-launch recovery via drainStoredQueue.
+      console.warn(
+        `[PlaylistWriter] write failed for trackId=${trackId} playlistId=${playlistId}; kept in queue for next-launch retry`,
+      );
+      return;
+    }
+
+    await this.removeFromQueue(trackId, playlistId);
+    if (!preExisting) {
+      this.addedPlaylistPairs.add(this.pairKey(trackId, playlistId));
+      void this.persistAddedPlaylistPairs();
+    }
+  }
+
+  // Checks whether the track is already in the playlist before any write. Conservative
+  // default: if the check throws, returns true (treated as pre-existing) so undo can
+  // never remove a track the writer is not sure it added.
+  private async isTrackPreExistingInPlaylist(trackId: string, playlistId: string): Promise<boolean> {
+    try {
+      return await this.adapter.isInPlaylist(playlistId, trackId);
+    } catch {
+      return true;
+    }
   }
 
   // Fire-and-forget removal for undo. Clears the written-pairs record so a future
@@ -271,9 +352,20 @@ export class PlaylistWriter {
         continue;
       }
 
-      this.adapter.removeFromPlaylist(playlistId, trackId).catch((err: unknown) => {
-        console.warn(`[PlaylistWriter] undoWrite failed for trackId=${trackId} playlistId=${playlistId}:`, err);
-      });
+      // Regular playlist: only remove what we added this session. A pre-existing track
+      // the user already owned was never recorded, so it is left untouched.
+      void (async () => {
+        await this.ensureAddedPlaylistPairsLoaded();
+        const key = this.pairKey(trackId, playlistId);
+        if (!this.addedPlaylistPairs.has(key)) return;
+        try {
+          await this.adapter.removeFromPlaylist(playlistId, trackId);
+          this.addedPlaylistPairs.delete(key);
+          void this.persistAddedPlaylistPairs();
+        } catch (err: unknown) {
+          console.warn(`[PlaylistWriter] undoWrite failed for trackId=${trackId} playlistId=${playlistId}:`, err);
+        }
+      })();
     }
   }
 
@@ -283,6 +375,7 @@ export class PlaylistWriter {
   // For Liked Songs: only removes if we added it this session — pre-existing liked
   // songs are skipped entirely (same guard as undoWrite).
   async undoWriteAsync(trackId: string, destinationIds: string[]): Promise<void> {
+    await this.ensureAddedPlaylistPairsLoaded();
     for (const playlistId of destinationIds) {
       if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
         await this.ensureLibraryWrittenIdsLoaded();
@@ -293,7 +386,13 @@ export class PlaylistWriter {
         continue;
       }
 
+      // Regular playlist: only remove what we added this session — never a pre-existing
+      // track the user already owned (which was never recorded as ours).
+      const key = this.pairKey(trackId, playlistId);
+      if (!this.addedPlaylistPairs.has(key)) continue;
       await this.adapter.removeFromPlaylist(playlistId, trackId);
+      this.addedPlaylistPairs.delete(key);
+      void this.persistAddedPlaylistPairs();
     }
   }
 

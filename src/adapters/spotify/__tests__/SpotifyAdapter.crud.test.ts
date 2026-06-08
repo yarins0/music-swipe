@@ -418,6 +418,42 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(result).toBe(false);
   });
 
+  // --- isInPlaylist ---
+
+  it('isInPlaylist() returns true and stops paginating when the track is found', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [makeTrackItem('t-1'), makeTrackItem('t-2')],
+      next: null,
+      total: 2,
+    });
+
+    const result = await adapter.isInPlaylist('pl-1', 't-2');
+
+    expect(result).toBe(true);
+    const [endpoint] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toContain('/playlists/pl-1/items');
+  });
+
+  it('isInPlaylist() returns false when the track is absent', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [makeTrackItem('t-1')],
+      next: null,
+      total: 1,
+    });
+
+    expect(await adapter.isInPlaylist('pl-1', 't-missing')).toBe(false);
+  });
+
+  it('isInPlaylist(LIKED_SONGS_PLAYLIST_ID) delegates to the library-contains check', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce([true]);
+
+    const result = await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'track-check');
+
+    expect(result).toBe(true);
+    const [endpoint] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toBe('/me/library/contains?uris=spotify%3Atrack%3Atrack-check');
+  });
+
   // --- capabilities ---
 
   it('capabilities flags match expected Spotify values', () => {

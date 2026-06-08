@@ -86,6 +86,15 @@ export interface MusicPlatformAdapter {
   saveToLibrary(trackId: string): Promise<void>;
   removeFromLibrary(trackId: string): Promise<void>;
   isInLibrary(trackId: string): Promise<boolean>;
+
+  /**
+   * Reports whether the track is already present in the playlist. Used before a write
+   * to tell a track the caller is adding apart from one the user already owned, so an
+   * undo never deletes a pre-existing track. For the Liked Songs library this is
+   * equivalent to isInLibrary.
+   */
+  isInPlaylist(playlistId: string, trackId: string): Promise<boolean>;
+
   createPlaylist(name: string): Promise<string>;
 
   /**

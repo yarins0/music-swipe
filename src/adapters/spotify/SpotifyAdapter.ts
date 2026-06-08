@@ -329,6 +329,43 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     return result[0] ?? false;
   }
 
+  /**
+   * Reports whether the track is already in the playlist. Spotify has no membership
+   * endpoint, so this paginates the playlist items and stops at the first match.
+   * Liked Songs delegates to the cheap /me/library/contains check via isInLibrary.
+   * Matches the URI as stored in the playlist (linked_from for relinked tracks),
+   * mirroring removeDuplicatesFromPlaylist.
+   */
+  async isInPlaylist(playlistId: string, trackId: string): Promise<boolean> {
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      return this.isInLibrary(trackId);
+    }
+
+    const targetUri = `spotify:track:${trackId}`;
+    const PAGE = 100;
+    let offset = 0;
+    let total = 0;
+    do {
+      const page = await spotifyFetch<SpotifyPaginatedResponse<SpotifyTrackItem>>(
+        `/playlists/${playlistId}/items?offset=${offset}&limit=${PAGE}`,
+        {},
+        this.auth,
+      );
+      total = page.total ?? 0;
+      const items = page.items ?? [];
+      for (const item of items) {
+        const track = item?.item ?? item?.track;
+        if (!track || track.type !== 'track' || !track.uri) continue;
+        const uri = track.linked_from?.uri ?? track.uri;
+        if (uri === targetUri) return true;
+      }
+      if (items.length === 0) break; // guard against an inflated total
+      offset += PAGE;
+    } while (offset < total);
+
+    return false;
+  }
+
   async createPlaylist(name: string): Promise<string> {
     const data = await spotifyFetch<SpotifyNewPlaylistResponse>(
       '/me/playlists',

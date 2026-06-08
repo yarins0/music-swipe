@@ -219,6 +219,23 @@ describe('adapter contract — MockAdapter', () => {
       await adapter.removeFromLibrary('mock-track-1');
       expect(adapter.calls.removeFromLibrary).toContain('mock-track-1');
     });
+
+    it('isInPlaylist() returns false for a track not in the playlist', async () => {
+      const adapter = new MockAdapter();
+      expect(await adapter.isInPlaylist('mock-playlist-1', 'mock-track-1')).toBe(false);
+    });
+
+    it('isInPlaylist() returns true after the track is added to the playlist', async () => {
+      const adapter = new MockAdapter();
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
+      expect(await adapter.isInPlaylist('mock-playlist-1', 'mock-track-1')).toBe(true);
+    });
+
+    it('isInPlaylist(LIKED_SONGS_PLAYLIST_ID) reflects library membership', async () => {
+      const adapter = new MockAdapter({ likedTrackIds: new Set(['mock-track-1']) });
+      expect(await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-1')).toBe(true);
+      expect(await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-2')).toBe(false);
+    });
   });
 
   describe('playlist creation', () => {

@@ -60,7 +60,7 @@ The backend `GET /swipes` returns hydrated track metadata under `track` (`track:
 **Fix:** Only treat `400`/`401` (`invalid_grant`) as auth-expired. For 5xx / network errors, throw a retryable error (`PlatformErrorCode.UNKNOWN` or a new `NETWORK_ERROR`) **without** calling `onAuthExpired`. Combine with H1's single-flight so a failed shared refresh rejects all waiters consistently.
 **Tests:** Unit test: 500 from token endpoint → throws, `onAuthExpired` NOT called; 400 → `onAuthExpired` called once.
 
-### ☐ H3 — PlaylistWriter durable-queue read-modify-write race → lost crash-recovery entries (HIGH)
+### ☑ H3 — PlaylistWriter durable-queue read-modify-write race → lost crash-recovery entries (HIGH)
 **File:** `src/services/PlaylistWriter.ts:193-251` (esp. `destinationIds.map(async …)` at 194 and readQueue→push→persistQueue at 222-230)
 **Verified:** yes.
 For regular (non-Liked-Songs) destinations the queue is mutated read-modify-write with no serialization. Worse, within a single `write()` the `.map(async …)` runs all destinations concurrently, so liking one track into 2+ regular playlists races the queue against itself: both read the same snapshot, each appends only its own entry, the second `persistQueue` overwrites the first → a queue entry is lost. The add itself still fires (step 2 is independent), so the like usually lands — what's lost is the durable retry guarantee: if that add then fails, `drainStoredQueue` won't retry it.
@@ -74,7 +74,7 @@ The only throttle is on `/auth/register` (`auth.ts:7`). `/swipes`, `/sessions`, 
 **Fix:** Add a global `express-rate-limit` in `index.ts` keyed on `req.userId` (after auth middleware) with an IP fallback for unauthenticated routes. Pick limits that fit real client behavior (e.g. session start fires a burst).
 **Tests:** Integration test hitting `/sessions` past the limit → 429.
 
-### ☐ H5 — Undo of a like can delete a track the user already owned (MEDIUM-HIGH)
+### ☑ H5 — Undo of a like can delete a track the user already owned (MEDIUM-HIGH)
 **File:** `src/services/PlaylistWriter.ts:255-298, 316-318` (`undoWrite`/`undoWriteAsync`/`undoSuperLike`)
 **Verified:** yes. Probability note: requires the track to already exist in a chosen *regular* destination playlist before the like.
 Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this session). Regular playlists have **no** such guard — undo unconditionally calls `removeFromPlaylist(playlistId, trackId)` (line 274/296), and Spotify removes *all* occurrences of the URI.
@@ -98,7 +98,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 **Files:** `src/stores/authStore.ts:113-127` (`clearAuth`) · `src/services/PlaylistWriter.ts:27-28`
 **Verified:** yes.
 `clearAuth` resets swipe/session stores but not the PlaylistWriter AsyncStorage keys (`@music-swipe/playlist-write-queue`, `@music-swipe/library-written-ids`). On next login `drainStoredQueue` replays the prior user's adds against the new account.
-**Fix:** Add a static `PlaylistWriter.clearStoredState(storage?)` that removes both keys; call it from `clearAuth` alongside the SecureStore deletes.
+**Fix:** Add a static `PlaylistWriter.clearStoredState(storage?)` that removes both keys; call it from `clearAuth` alongside the SecureStore deletes. NOTE: H5 added a third persisted key `@music-swipe/added-playlist-pairs` (the regular-playlist undo guard) — clear it here too.
 
 ### ☐ M4 — Swipe upsert and pending-reconciliation run in separate transactions (MEDIUM)
 **File:** `backend/src/routes/swipes.ts:265-289` (+ reconcile at ~56-102)

@@ -44,12 +44,21 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     saveToLibrary: jest.fn().mockResolvedValue(undefined),
     removeFromLibrary: jest.fn().mockResolvedValue(undefined),
     isInLibrary: jest.fn().mockResolvedValue(false),
+    isInPlaylist: jest.fn().mockResolvedValue(false),
     createPlaylist: jest.fn().mockResolvedValue('new-playlist-id'),
     removeDuplicatesFromPlaylist: jest.fn().mockResolvedValue(0),
     openPlatformDeepLink: jest.fn().mockResolvedValue(undefined),
     openPlaylistInApp: jest.fn().mockResolvedValue(undefined),
   };
   return { ...base, ...overrides } as jest.Mocked<MusicPlatformAdapter>;
+}
+
+const ADDED_PLAYLIST_PAIRS_KEY = '@music-swipe/added-playlist-pairs';
+
+// Seeds the persisted added-pairs guard so undo paths treat the given pairs as
+// "ours to remove" without needing a preceding write() in the test body.
+function storageWithAddedPairs(pairs: string[]): Record<string, string> {
+  return { [ADDED_PLAYLIST_PAIRS_KEY]: JSON.stringify(pairs) };
 }
 
 // In-memory StorageInterface stub — mimics AsyncStorage without native modules.
@@ -372,9 +381,11 @@ describe('PlaylistWriter', () => {
   });
 
   describe('undoWrite()', () => {
-    it('calls removeFromPlaylist for each destination', async () => {
+    it('calls removeFromPlaylist for each destination we added this session', async () => {
       const adapter = buildMockAdapter();
-      const storage = buildMockStorage();
+      const storage = buildMockStorage(
+        storageWithAddedPairs(['track-1|playlist-a', 'track-1|playlist-b']),
+      );
       const writer = new PlaylistWriter(adapter, storage);
 
       writer.undoWrite('track-1', ['playlist-a', 'playlist-b']);
@@ -383,6 +394,17 @@ describe('PlaylistWriter', () => {
       expect(adapter.removeFromPlaylist).toHaveBeenCalledTimes(2);
       expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
       expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-b', 'track-1');
+    });
+
+    it('does NOT call removeFromPlaylist for a pair we never recorded (pre-existing track guard)', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage(); // no recorded pairs
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
     });
 
     it('is fire-and-forget — returns void synchronously', () => {
@@ -397,7 +419,7 @@ describe('PlaylistWriter', () => {
       const adapter = buildMockAdapter({
         removeFromPlaylist: jest.fn().mockRejectedValue(new Error('remove failed')),
       });
-      const storage = buildMockStorage();
+      const storage = buildMockStorage(storageWithAddedPairs(['track-1|playlist-a']));
       const writer = new PlaylistWriter(adapter, storage);
 
       writer.undoWrite('track-1', ['playlist-a']);
@@ -583,9 +605,9 @@ describe('PlaylistWriter', () => {
   });
 
   describe('undoWriteAsync()', () => {
-    it('awaits removeFromPlaylist for a regular playlist destination', async () => {
+    it('awaits removeFromPlaylist for a regular playlist destination we added', async () => {
       const adapter = buildMockAdapter();
-      const storage = buildMockStorage();
+      const storage = buildMockStorage(storageWithAddedPairs(['track-1|playlist-a']));
       const writer = new PlaylistWriter(adapter, storage);
 
       await writer.undoWriteAsync('track-1', ['playlist-a']);
@@ -593,9 +615,21 @@ describe('PlaylistWriter', () => {
       expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
     });
 
+    it('skips a regular destination we never recorded (pre-existing track guard)', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage(); // no recorded pairs
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.undoWriteAsync('track-1', ['playlist-a']);
+
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
+    });
+
     it('removes from multiple regular destinations in order', async () => {
       const adapter = buildMockAdapter();
-      const storage = buildMockStorage();
+      const storage = buildMockStorage(
+        storageWithAddedPairs(['track-1|playlist-a', 'track-1|playlist-b']),
+      );
       const writer = new PlaylistWriter(adapter, storage);
 
       await writer.undoWriteAsync('track-1', ['playlist-a', 'playlist-b']);
@@ -633,7 +667,7 @@ describe('PlaylistWriter', () => {
       const adapter = buildMockAdapter({
         removeFromPlaylist: jest.fn().mockRejectedValue(new Error('Spotify 500')),
       });
-      const storage = buildMockStorage();
+      const storage = buildMockStorage(storageWithAddedPairs(['track-1|playlist-a']));
       const writer = new PlaylistWriter(adapter, storage);
 
       await expect(writer.undoWriteAsync('track-1', ['playlist-a'])).rejects.toThrow('Spotify 500');
@@ -827,6 +861,65 @@ describe('PlaylistWriter', () => {
       await PlaylistWriter.drainStoredQueue(adapter, storage);
 
       expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('write() — durable-queue serialization (H3)', () => {
+    it('keeps a failed entry queued when a sibling destination write succeeds concurrently', async () => {
+      // playlist-a fails non-retryably (stays queued); playlist-b succeeds (dequeued).
+      // The two destinations mutate the queue concurrently — serialization is what stops
+      // playlist-b's persist from clobbering playlist-a's entry.
+      const addToPlaylist = jest.fn(async (playlistId: string) => {
+        if (playlistId === 'playlist-a') throw new Error('add failed');
+      });
+      const adapter = buildMockAdapter({ addToPlaylist });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', ['playlist-a', 'playlist-b']);
+      await jest.runAllTimersAsync();
+
+      const raw = await storage.getItem('@music-swipe/playlist-write-queue');
+      const queue: PendingWrite[] = raw ? (JSON.parse(raw) as PendingWrite[]) : [];
+      expect(queue).toContainEqual(
+        expect.objectContaining({ trackId: 'track-1', playlistId: 'playlist-a' }),
+      );
+      expect(queue.some((e) => e.playlistId === 'playlist-b')).toBe(false);
+    });
+  });
+
+  describe('write()/undoWrite() — regular-playlist pre-existence guard (H5)', () => {
+    it('records the pair and removes it on undo when the track was not pre-existing', async () => {
+      const adapter = buildMockAdapter({ isInPlaylist: jest.fn().mockResolvedValue(false) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      const raw = await storage.getItem('@music-swipe/added-playlist-pairs');
+      expect(JSON.parse(raw!)).toContain('track-1|playlist-a');
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+    });
+
+    it('does not record (and undo does not remove) when the track was already in the playlist', async () => {
+      const adapter = buildMockAdapter({ isInPlaylist: jest.fn().mockResolvedValue(true) });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
+      // The add still fires (documented re-add behavior) but we never claim ownership.
+      expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+      expect(await storage.getItem('@music-swipe/added-playlist-pairs')).toBeNull();
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
     });
   });
 });
