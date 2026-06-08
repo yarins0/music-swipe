@@ -47,13 +47,13 @@ The backend `GET /swipes` returns hydrated track metadata under `track` (`track:
 **Fix:** Add `.onFinalize((_e, success) => { if (!success && !isAnimating.value) { spring translateX/translateY/rotation back to 0 using the existing snapBack config } })`. Keep the `isAnimating` guard so it never fights an in-progress fly-off.
 **Tests:** Unit test the gesture builder if feasible, or document a manual repro (background the app mid-drag → card recenters).
 
-### ☐ H1 — Spotify token-refresh concurrent burst → forced logout (HIGH)
+### ☑ H1 — Spotify token-refresh concurrent burst → forced logout (HIGH)
 **File:** `src/adapters/spotify/spotifyFetch.ts:66-69` (+ context `src/auth/AuthGateway.ts:6-22`)
 **Verified:** yes (narrowed). The `auth` context uses getters reading live store state, so the *sequential* second-refresh case is already handled (per the in-code comment). The residual bug is concurrency: there is **no in-flight dedup**. On session start, multiple `spotifyFetch` calls (playlists + liked-count + devices) fire in parallel; if the token is inside the 5-min proactive buffer, each calls `refreshSpotifyToken` with the same refresh token. PKCE rotates the refresh token, so the first succeeds and the rest send the now-revoked token → non-OK → `onAuthExpired()` → `clearAuth()` → logged out mid-session.
 **Fix:** Single-flight the refresh. Hold one module-level `inFlightRefresh: Promise<string> | null`; concurrent callers await the same promise; clear it in `finally`. Apply to both the proactive path (line 67) and the reactive 401 path (line 87).
 **Tests:** Unit test `spotifyFetch` with N concurrent calls inside the buffer (mocked token endpoint) → assert exactly one refresh call and zero `onAuthExpired` calls.
 
-### ☐ H2 — `onAuthExpired` fires on any non-OK refresh → transient outage = permanent logout (HIGH)
+### ☑ H2 — `onAuthExpired` fires on any non-OK refresh → transient outage = permanent logout (HIGH)
 **File:** `src/adapters/spotify/spotifyFetch.ts:35-38`
 **Verified:** yes.
 `refreshSpotifyToken` treats every non-OK token-endpoint response (including transient 5xx / network blips) as auth-expired and calls `onAuthExpired()`, discarding the refresh token permanently.

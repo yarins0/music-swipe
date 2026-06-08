@@ -17,7 +17,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
+async function performTokenRefresh(auth: SpotifyAuthContext): Promise<string> {
   const clientId = process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID ?? '';
 
   const body = new URLSearchParams({
@@ -26,15 +26,31 @@ async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
     client_id: clientId,
   });
 
-  const response = await fetch(SPOTIFY_TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
+  let response: Response;
+  try {
+    response = await fetch(SPOTIFY_TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+  } catch {
+    // Network failure reaching the token endpoint is transient, not an auth problem.
+    // Preserve auth (do NOT call onAuthExpired) so a retry can succeed once connectivity returns.
+    throw new PlatformError(PlatformErrorCode.NETWORK_ERROR, 'Network error reaching Spotify token endpoint');
+  }
 
   if (!response.ok) {
-    await auth.onAuthExpired();
-    throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED, 'Refresh token expired or revoked');
+    // Only a revoked/expired refresh token (400/401 invalid_grant) is a true auth-expiry.
+    // Any other non-OK status (5xx, etc.) is a transient outage — surface a retryable error
+    // WITHOUT discarding the refresh token, otherwise a brief blip becomes a permanent logout.
+    if (response.status === 400 || response.status === 401) {
+      await auth.onAuthExpired();
+      throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED, 'Refresh token expired or revoked');
+    }
+    throw new PlatformError(
+      PlatformErrorCode.NETWORK_ERROR,
+      `Spotify token endpoint returned ${response.status}`,
+    );
   }
 
   const data = (await response.json()) as {
@@ -46,6 +62,21 @@ async function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
   const newExpiresAt = Date.now() + data.expires_in * 1000;
   await auth.onTokenRefreshed(data.access_token, newExpiresAt, data.refresh_token);
   return data.access_token;
+}
+
+// Single-flight guard: concurrent callers (the session-start burst of parallel spotifyFetch
+// calls — playlists + liked-count + devices) share one refresh. Without this, each would POST
+// the same PKCE refresh token; Spotify rotates the token on use, so all but the first send a
+// now-revoked token, fail, and force a logout mid-session.
+let inFlightRefresh: Promise<string> | null = null;
+
+function refreshSpotifyToken(auth: SpotifyAuthContext): Promise<string> {
+  if (inFlightRefresh) return inFlightRefresh;
+  // Cleared in finally (success or failure) so a failed refresh never poisons later attempts.
+  inFlightRefresh = performTokenRefresh(auth).finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
 }
 
 function mapHttpError(status: number, body: string): never {
@@ -85,8 +116,10 @@ export async function spotifyFetch<T = unknown>(
     if (response.status === 401) {
       try {
         currentToken = await refreshSpotifyToken(auth);
-      } catch {
-        // refreshSpotifyToken already called onAuthExpired
+      } catch (error) {
+        // Preserve the real cause: a transient NETWORK_ERROR must not masquerade as AUTH_EXPIRED.
+        // If the refresh genuinely expired auth, it already called onAuthExpired before throwing.
+        if (error instanceof PlatformError) throw error;
         throw new PlatformError(PlatformErrorCode.AUTH_EXPIRED);
       }
 
