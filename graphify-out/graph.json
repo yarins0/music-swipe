@@ -3743,7 +3743,7 @@
       "source_file": "src/config.ts",
       "source_location": "L1",
       "id": "src_config_ts",
-      "community": 68,
+      "community": 44,
       "norm_label": "config.ts"
     },
     {
@@ -4985,7 +4985,7 @@
       "source_file": "src/auth/useSpotifyAuth.ts",
       "source_location": "L1",
       "id": "src_auth_usespotifyauth_ts",
-      "community": 68,
+      "community": 44,
       "norm_label": "usespotifyauth.ts"
     },
     {
@@ -4994,7 +4994,7 @@
       "source_file": "src/auth/useSpotifyAuth.ts",
       "source_location": "L8",
       "id": "auth_usespotifyauth_discovery",
-      "community": 68,
+      "community": 44,
       "norm_label": "discovery"
     },
     {
@@ -5003,7 +5003,7 @@
       "source_file": "src/auth/useSpotifyAuth.ts",
       "source_location": "L13",
       "id": "auth_usespotifyauth_scopes",
-      "community": 68,
+      "community": 44,
       "norm_label": "scopes"
     },
     {
@@ -5012,7 +5012,7 @@
       "source_file": "src/auth/useSpotifyAuth.ts",
       "source_location": "L27",
       "id": "auth_usespotifyauth_usespotifyauthreturn",
-      "community": 68,
+      "community": 44,
       "norm_label": "usespotifyauthreturn"
     },
     {
@@ -7809,7 +7809,7 @@
       "label": "createStyles()",
       "file_type": "code",
       "source_file": "src/swipe/SwipeEngine.tsx",
-      "source_location": "L542",
+      "source_location": "L556",
       "id": "swipe_swipeengine_createstyles",
       "community": 42,
       "norm_label": "createstyles()"
@@ -8099,7 +8099,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L1",
       "id": "src_tests_stores_authstore_test_ts",
-      "community": 44,
+      "community": 68,
       "norm_label": "authstore.test.ts"
     },
     {
@@ -8108,7 +8108,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L10",
       "id": "stores_authstore_test_mockdeleteitem",
-      "community": 44,
+      "community": 68,
       "norm_label": "mockdeleteitem"
     },
     {
@@ -8117,7 +8117,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L11",
       "id": "stores_authstore_test_mocksetitem",
-      "community": 44,
+      "community": 68,
       "norm_label": "mocksetitem"
     },
     {
@@ -8126,7 +8126,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L13",
       "id": "stores_authstore_test_secure_store_keys",
-      "community": 44,
+      "community": 68,
       "norm_label": "secure_store_keys"
     },
     {
@@ -8135,7 +8135,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L63",
       "id": "stores_authstore_test_state",
-      "community": 44,
+      "community": 68,
       "norm_label": "state"
     },
     {
@@ -8144,7 +8144,7 @@
       "source_file": "src/__tests__/stores/authStore.test.ts",
       "source_location": "L84",
       "id": "stores_authstore_test_calledkeys",
-      "community": 44,
+      "community": 68,
       "norm_label": "calledkeys"
     },
     {
@@ -9498,13 +9498,13 @@
       "norm_label": "\u2611 h5 \u2014 undo of a like can delete a track the user already owned (medium-high)"
     },
     {
-      "label": "\u2610 M1 \u2014 `playTrackAt` stale-result race sets seek state for the wrong track (MEDIUM)",
+      "label": "\u2611 M1 \u2014 `playTrackAt` stale-result race sets seek state for the wrong track (MEDIUM)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L85",
       "id": "docs_code_review_2026_06_08_m1_playtrackat_stale_result_race_sets_seek_state_for_the_wrong_track_medium",
       "community": 35,
-      "norm_label": "\u2610 m1 \u2014 `playtrackat` stale-result race sets seek state for the wrong track (medium)"
+      "norm_label": "\u2611 m1 \u2014 `playtrackat` stale-result race sets seek state for the wrong track (medium)"
     },
     {
       "label": "\u2610 M2 \u2014 \"Save as playlist\" shows success before writes land (MEDIUM)",
@@ -15914,9 +15914,9 @@
       "source_file": "backend/src/index.ts",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_index_ts",
-      "target": "backend_src_middleware_ratelimit_ts",
-      "confidence_score": 1.0
+      "target": "backend_src_middleware_ratelimit_ts"
     },
     {
       "relation": "imports",
@@ -15925,9 +15925,9 @@
       "source_file": "backend/src/index.ts",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_index_ts",
-      "target": "middleware_ratelimit_globalratelimiter",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_globalratelimiter"
     },
     {
       "relation": "contains",
@@ -16325,9 +16325,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_parsepositiveint",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_parsepositiveint"
     },
     {
       "relation": "contains",
@@ -16335,9 +16335,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_normaliseip",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_normaliseip"
     },
     {
       "relation": "contains",
@@ -16345,9 +16345,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L34",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_resolveclientkey",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_resolveclientkey"
     },
     {
       "relation": "contains",
@@ -16355,9 +16355,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_ratelimiteroptions",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_ratelimiteroptions"
     },
     {
       "relation": "contains",
@@ -16365,9 +16365,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_createratelimiter",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_createratelimiter"
     },
     {
       "relation": "contains",
@@ -16375,9 +16375,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L59",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_middleware_ratelimit_ts",
-      "target": "middleware_ratelimit_globalratelimiter",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_globalratelimiter"
     },
     {
       "relation": "imports_from",
@@ -16386,9 +16386,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_ratelimit_test_ts",
-      "target": "backend_src_middleware_ratelimit_ts",
-      "confidence_score": 1.0
+      "target": "backend_src_middleware_ratelimit_ts"
     },
     {
       "relation": "calls",
@@ -16397,9 +16397,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "middleware_ratelimit_createratelimiter",
-      "target": "middleware_ratelimit_parsepositiveint",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_parsepositiveint"
     },
     {
       "relation": "calls",
@@ -16408,9 +16408,9 @@
       "source_file": "backend/src/middleware/rateLimit.ts",
       "source_location": "L35",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "middleware_ratelimit_resolveclientkey",
-      "target": "middleware_ratelimit_normaliseip",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_normaliseip"
     },
     {
       "relation": "imports",
@@ -16419,9 +16419,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_ratelimit_test_ts",
-      "target": "middleware_ratelimit_createratelimiter",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_createratelimiter"
     },
     {
       "relation": "calls",
@@ -16430,9 +16430,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_ratelimit_test_buildapp",
-      "target": "middleware_ratelimit_createratelimiter",
-      "confidence_score": 1.0
+      "target": "middleware_ratelimit_createratelimiter"
     },
     {
       "relation": "contains",
@@ -16825,9 +16825,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_ratelimit_test_ts",
-      "target": "backend_src_routes_sessions_ts",
-      "confidence_score": 1.0
+      "target": "backend_src_routes_sessions_ts"
     },
     {
       "relation": "imports_from",
@@ -17424,9 +17424,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_ratelimit_test_ts",
-      "target": "tests_ratelimit_test_buildapp",
-      "confidence_score": 1.0
+      "target": "tests_ratelimit_test_buildapp"
     },
     {
       "relation": "contains",
@@ -17434,9 +17434,9 @@
       "source_file": "backend/src/__tests__/rateLimit.test.ts",
       "source_location": "L53",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_ratelimit_test_ts",
-      "target": "tests_ratelimit_test_app",
-      "confidence_score": 1.0
+      "target": "tests_ratelimit_test_app"
     },
     {
       "relation": "contains",
@@ -29103,5 +29103,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3f356a4b5708281301470760241c42572e07a2cb"
+  "built_at_commit": "c0f021edb8ebbbc019cde500adbd0a58bf547ff1"
 }

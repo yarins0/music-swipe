@@ -1,7 +1,7 @@
 # Graph Report - music-swipe  (2026-06-08)
 
 ## Corpus Check
-- 130 files · ~81,007 words
+- 130 files · ~81,153 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3f356a4b`
+- Built from commit: `c0f021ed`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -281,8 +281,8 @@ Cohesion: 0.11
 Nodes (14): LinkRowProps, pickerStyles, SectionProps, SettingRowProps, SettingsScreen(), styles, StylesType, THEME_OPTIONS (+6 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.14
-Nodes (15): RootLayout(), styles, AuthLayout(), AuthActions, AuthState, KEYS, calledKeys, mockDeleteItem (+7 more)
+Cohesion: 0.15
+Nodes (13): RootLayout(), styles, AuthLayout(), discovery, SCOPES, UseSpotifyAuthReturn, AuthActions, AuthState (+5 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.07
@@ -362,8 +362,8 @@ Cohesion: 0.12
 Nodes (13): PlatformError, PlatformErrorCode, createSpotifyAdapter(), createSpotifyAuthContext(), performTokenRefresh(), refreshSpotifyToken(), SpotifyAuthContext, err (+5 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.40
-Nodes (3): discovery, SCOPES, UseSpotifyAuthReturn
+Cohesion: 0.33
+Nodes (5): calledKeys, mockDeleteItem, mockSetItem, SECURE_STORE_KEYS, state
 
 ### Community 69 - "Community 69"
 Cohesion: 0.29
