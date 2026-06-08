@@ -67,7 +67,7 @@ For regular (non-Liked-Songs) destinations the queue is mutated read-modify-writ
 **Fix:** Serialize queue mutations behind a single in-memory promise chain (a `private queueMutex: Promise<void>` that each mutation `await`s then extends), or do an atomic read-append-write inside one critical section. Keep mutations off the swipe hot path (still fire-and-forget).
 **Tests (required — PlaylistWriter rule):** sequence test — like one track into `mock-playlist-1` + `mock-playlist-2` concurrently, force the first add to fail, drain timers, assert the failed entry survives in the persisted queue. Plus call-level coverage.
 
-### ☐ H4 — Backend API has no rate limiting except `/auth/register` (HIGH)
+### ☑ H4 — Backend API has no rate limiting except `/auth/register` (HIGH)
 **Files:** `backend/src/index.ts`, `backend/src/routes/{swipes,sessions,users}.ts`
 **Verified:** yes.
 The only throttle is on `/auth/register` (`auth.ts:7`). `/swipes`, `/sessions`, `/users` are unthrottled; each `GET /sessions` fans out to several sequential Supabase queries.

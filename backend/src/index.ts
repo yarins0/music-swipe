@@ -7,6 +7,7 @@ import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import sessionsRouter from './routes/sessions';
 import swipesRouter from './routes/swipes';
+import { globalRateLimiter } from './middleware/rateLimit';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -19,6 +20,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? [
 app.use(helmet());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
+app.use(globalRateLimiter);
 
 app.use('/auth', authRouter);
 app.use('/users', usersRouter);
