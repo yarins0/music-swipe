@@ -82,7 +82,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 **Fix:** Mirror the Liked-Songs guard for regular playlists: record per-session added `(trackId, playlistId)` pairs (a `Set<string>` keyed `trackId|playlistId`, persisted alongside `libraryWrittenIds`) when `write` succeeds, and only `removeFromPlaylist` on undo for pairs we actually added this session. Consider whether the dedup-removal design (comment at lines 188-192) should also snapshot pre-existence.
 **Tests (required):** sequence test — pre-seed `mock-playlist-1` with track X, like X into it, undo, assert X still present (one copy) in `MockAdapter.playlistContents`.
 
-### ☐ M1 — `playTrackAt` stale-result race sets seek state for the wrong track (MEDIUM)
+### ☑ M1 — `playTrackAt` stale-result race sets seek state for the wrong track (MEDIUM)
 **File:** `src/swipe/SwipeEngine.tsx:233-267`
 **Verified:** logic.
 `playTrackAt` is async and fire-and-forgot from the index effect. Fast swiping can resolve `play(trackA)` after `play(trackB)`, so `setIsSeekEnabled` (and the position poll loop + segment dots) reflect trackA while the user is on trackB.

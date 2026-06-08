@@ -218,6 +218,11 @@ export function SwipeEngine({
     });
   }, [trackPlayer, currentTrack, applyPosition]);
 
+  // Tracks the most recently initiated play index. Set synchronously in the play
+  // effect below BEFORE playTrackAt runs, so an in-flight play() can detect that a
+  // newer track has since started and discard its now-stale result (see playTrackAt).
+  const lastPlayedIndex = useRef<number>(-1);
+
   // Play the track at queue[idx] and update seek availability. Gated behind the
   // Auto-play Music preference — when off, the card stays silent and there is
   // nothing to seek within, so isSeekEnabled stays false.
@@ -231,8 +236,18 @@ export function SwipeEngine({
       }
       try {
         const result = await trackPlayer.play(track);
+        // Fast swiping can start a newer track's play() before this one resolves;
+        // if play(trackA) settles after play(trackB), applying trackA's result would
+        // set seek state (and the position-poll loop + segment dots) for the wrong
+        // card. lastPlayedIndex.current holds the latest initiated index — bail when
+        // it no longer matches the captured idx so the stale result can't clobber it.
+        if (lastPlayedIndex.current !== idx) return;
         setIsSeekEnabled(result.strategy === 'adapter');
       } catch (err) {
+        // Same stale-result guard on the failure path: a late rejection from a
+        // superseded track must not reset seek state (or pop the deep-link alert)
+        // for the track now on screen.
+        if (lastPlayedIndex.current !== idx) return;
         setIsSeekEnabled(false);
         if (err instanceof PlatformError && err.code === PlatformErrorCode.NO_ACTIVE_DEVICE) {
           console.log('[SwipeEngine] NO_ACTIVE_DEVICE during play — opening Spotify deep link');
@@ -249,7 +264,6 @@ export function SwipeEngine({
   );
 
   // Track initial play on mount / when currentIndex changes
-  const lastPlayedIndex = useRef<number>(-1);
   useEffect(() => {
     if (currentTrack && lastPlayedIndex.current !== currentIndex) {
       lastPlayedIndex.current = currentIndex;
