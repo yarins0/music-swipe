@@ -475,46 +475,6 @@ export default function SwipeScreen(): React.ReactElement {
   }, [sessionId, router]);
 
   // -------------------------------------------------------------------------
-  // onEntireSession: fire-and-forget add, awaitable sequential remove with loading
-  // -------------------------------------------------------------------------
-  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
-
-  const handleEntireSession = useCallback(
-    (added: string[], removed: string[], confirmedRemove: boolean): void => {
-      if (!confirmedRemove && removed.length > 0) return;
-
-      const store = useSwipeStore.getState();
-      const activeEntry = store.sessions.find((e) => e.sessionId === store.activeSessionId);
-      const likedTrackIds = (activeEntry?.likedSwipes ?? []).map((r) => r.track.id);
-
-      for (const pid of added) {
-        for (const trackId of likedTrackIds) {
-          playlistWriterRef.current?.write(trackId, [pid]);
-        }
-      }
-
-      if (removed.length > 0 && adapterRef.current) {
-        const adapter = adapterRef.current;
-        setIsBulkRemoving(true);
-        (async () => {
-          try {
-            for (const pid of removed) {
-              for (const trackId of likedTrackIds) {
-                await adapter.removeFromPlaylist(pid, trackId);
-              }
-            }
-          } catch {
-            Alert.alert('Error', 'Some tracks could not be removed. Please try manually.');
-          } finally {
-            setIsBulkRemoving(false);
-          }
-        })();
-      }
-    },
-    [],
-  );
-
-  // -------------------------------------------------------------------------
   // Lazy paging
   // -------------------------------------------------------------------------
   const loadMoreTracks = useCallback(async (): Promise<void> => {
@@ -559,16 +519,6 @@ export default function SwipeScreen(): React.ReactElement {
     );
   }
 
-  if (isBulkRemoving) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.brand}>MusicSwipe</Text>
-        <ActivityIndicator size="large" color={activeColors.primary} />
-        <Text style={styles.loadingText}>Removing tracks…</Text>
-      </View>
-    );
-  }
-
   return (
     <SwipeEngine
       trackPlayer={trackPlayerRef.current!}
@@ -580,7 +530,6 @@ export default function SwipeScreen(): React.ReactElement {
       totalTracks={totalTracks}
       onSessionEnd={handleSessionEnd}
       onNeedMoreTracks={() => void loadMoreTracks()}
-      onEntireSession={handleEntireSession}
     />
   );
 }

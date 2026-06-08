@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Switch,
   StyleSheet,
-  Alert,
   Animated,
   useColorScheme,
 } from 'react-native';
@@ -293,17 +292,6 @@ export default function SettingsScreen(): React.ReactElement {
   }, []);
 
   const handleLogOut = () => setLogoutModalVisible(true);
-
-  const handleReconnect = () => {
-    Alert.alert(
-      'Reconnect Spotify',
-      'You will be signed out and redirected to log in again.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reconnect', onPress: () => void clearAuth() },
-      ],
-    );
-  };
 
   return (
     <View style={styles.screen}>

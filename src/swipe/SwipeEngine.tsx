@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -11,13 +10,11 @@ import { Image } from 'expo-image';
 import { type Colors } from '@/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { TabHeader } from '@/components/TabHeader';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSwipeStore } from '@/stores/swipeStore';
 import { SwipeCard } from '@/swipe/SwipeCard';
 import { SwipeFrontCard } from '@/swipe/SwipeFrontCard';
 import { ButtonBar } from '@/swipe/ButtonBar';
-import { DestinationEditor } from '@/swipe/DestinationEditor';
 import type { TrackPlayer } from '@/player/TrackPlayer';
 import type { PlaylistWriter } from '@/services/PlaylistWriter';
 import type { BackendSync } from '@/services/BackendSync';
@@ -76,8 +73,6 @@ interface SwipeEngineProps {
    * The screen owns the fetch + appendFreshTracks; the engine only signals "buffer low".
    */
   onNeedMoreTracks?: () => void;
-  /** When provided, replaces the internal entire-session handler. */
-  onEntireSession?: (added: string[], removed: string[], confirmedRemove: boolean) => void;
 }
 export function SwipeEngine({
   trackPlayer,
@@ -89,7 +84,6 @@ export function SwipeEngine({
   totalTracks,
   onSessionEnd,
   onNeedMoreTracks,
-  onEntireSession: onEntireSessionProp,
 }: SwipeEngineProps): React.ReactElement {
   const {
     queue,
@@ -103,7 +97,6 @@ export function SwipeEngine({
     recordSwipe,
     undo,
     injectSecondPass,
-    setActiveDestinations,
   } = useSwipeStore();
 
   const { activeColors } = useTheme();
@@ -139,8 +132,6 @@ export function SwipeEngine({
   }, []);
   // Per-track destination override (null = use session default)
   const [perTrackOverrideIds, setPerTrackOverrideIds] = useState<string[] | null>(null);
-  // Destination editor modal visibility
-  const [showDestEditor, setShowDestEditor] = useState(false);
 
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const sourcePlaylistId = useSessionStore((s) => s.sourcePlaylistId);
@@ -448,51 +439,6 @@ export function SwipeEngine({
     ? () => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }
     : undefined;
 
-  // DestinationEditor handlers
-  const handleThisTrack = useCallback((playlistIds: string[]): void => {
-    setPerTrackOverrideIds(playlistIds);
-    setShowDestEditor(false);
-  }, []);
-
-  const handleFromNowOn = useCallback(
-    (playlistIds: string[]): void => {
-      setActiveDestinations(playlistIds);
-      setShowDestEditor(false);
-    },
-    [setActiveDestinations],
-  );
-
-  const handleEntireSession = useCallback(
-    (added: string[], removed: string[], confirmedRemove: boolean): void => {
-      if (!confirmedRemove && removed.length > 0) return;
-
-      // Apply retroactive adds/removes to session default
-      const newDestinations = [
-        ...activeDestinationIds.filter((id) => !removed.includes(id)),
-        ...added.filter((id) => !activeDestinationIds.includes(id)),
-      ];
-      setActiveDestinations(newDestinations);
-      setShowDestEditor(false);
-
-      // Forward to screen-level handler for adapter-backed retroactive writes
-      onEntireSessionProp?.(added, removed, confirmedRemove);
-    },
-    [activeDestinationIds, setActiveDestinations, onEntireSessionProp],
-  );
-
-  // The pencil button lives in the TabHeader's right slot — conventional location for
-  // a screen-level action and keeps it next to the "Source → Dest" subtitle it edits.
-  const destEditorButton = (
-    <Pressable
-      onPress={() => setShowDestEditor(true)}
-      accessibilityRole="button"
-      accessibilityLabel="Edit destination playlists"
-      style={styles.headerActionButton}
-    >
-      <Ionicons name="create-outline" size={20} color={activeColors.onSurfaceVariant} />
-    </Pressable>
-  );
-
   if (!currentTrack) {
     // hasMoreTracks means the user out-ran an in-flight lazy page; hasPendingSecondPass
     // means the decide-later re-shows are about to be appended. In either case show a
@@ -588,19 +534,6 @@ export function SwipeEngine({
         isDecideLaterEnabled
         isFilterMode={isFilterMode}
       />
-
-      {/* Destination editor modal */}
-      {showDestEditor && (
-        <DestinationEditor
-          availablePlaylists={availablePlaylists}
-          sessionDestinationIds={activeDestinationIds}
-          perTrackOverrideIds={perTrackOverrideIds}
-          onClose={() => setShowDestEditor(false)}
-          onThisTrack={handleThisTrack}
-          onFromNowOn={handleFromNowOn}
-          onEntireSession={handleEntireSession}
-        />
-      )}
       </View>
     </View>
   );
@@ -657,9 +590,6 @@ function createStyles(c: Colors) {
       position: 'absolute',
       width: '100%',
       height: '100%',
-    },
-    headerActionButton: {
-      padding: 8,
     },
     empty: {
       flex: 1,
