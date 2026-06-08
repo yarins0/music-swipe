@@ -40,7 +40,7 @@ The backend `GET /swipes` returns hydrated track metadata under `track` (`track:
 **Fix:** Map from `s.track`. Align field names with the backend `TrackResponse` shape (see `backend/src/routes/trackResponse.ts` and the nested `track` object built in `BackendSync.sendBatch` lines 123-135: `uri,title,artist,artists,album,albumArtUrl,durationMs,previewUrl`). Update the local response type to `{ swipes: { spotifyTrackId: string; track: TrackResponse | null }[] }`.
 **Tests:** Add a contract test asserting the `GET /swipes` JSON shape the mapper expects (guard against future drift). Manually verify a defer→reopen round-trip shows real metadata.
 
-### ☐ C2 — Cancelled pan gesture never springs back; card can freeze (HIGH; was flagged Critical)
+### ☑ C2 — Cancelled pan gesture never springs back; card can freeze (HIGH; was flagged Critical)
 **File:** `src/swipe/useSwipeGesture.ts:136-184`
 **Verified:** yes (structural). Frequency note: only triggers on gesture *cancellation*, not the normal swipe/release path — uncommon but leaves a visibly broken deck when it happens.
 `Gesture.Pan()` defines only `.onUpdate` and `.onEnd`. RNGH fires `.onEnd` only on a normal end; an interrupted/cancelled gesture fires `.onFinalize` (`success=false`), which is unhandled. A mid-drag cancellation (OS pointer-cancel, navigation interrupt, a competing gesture winning) leaves `translateX/Y/rotation` at the dragged offset with neither fly-off nor snap-back running. The card stays frozen until the next `track.id` change triggers `resetCard` via effect.
