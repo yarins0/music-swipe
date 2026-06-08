@@ -55,8 +55,8 @@ function computeOptimisticStats(session: SessionEntry | null): SessionStats {
 // ---------------------------------------------------------------------------
 
 function StatCard({ label, value, progress }: { label: string; value: number; progress: number }) {
-  const { activeColors, isDark } = useTheme();
-  const statStyles = useMemo(() => createStatStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const statStyles = useMemo(() => createStatStyles(activeColors), [activeColors]);
 
   return (
     <View style={statStyles.card}>
@@ -79,8 +79,8 @@ interface LikedTrackRowProps {
 }
 
 function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false }: LikedTrackRowProps) {
-  const { activeColors, isDark } = useTheme();
-  const trackStyles = useMemo(() => createTrackStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const trackStyles = useMemo(() => createTrackStyles(activeColors), [activeColors]);
 
   return (
     <View style={trackStyles.row}>
@@ -116,8 +116,8 @@ function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false
 export default function SessionEndScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const isFilterMode = useSessionStore((s) => s.isFilterMode);
@@ -128,7 +128,7 @@ export default function SessionEndScreen(): React.ReactElement {
   const completeActiveSession = useSwipeStore((s) => s.completeActiveSession);
   const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
 
-  const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(activeSession));
+  const [stats] = useState<SessionStats>(() => computeOptimisticStats(activeSession));
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);

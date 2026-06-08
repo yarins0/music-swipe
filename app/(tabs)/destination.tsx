@@ -26,8 +26,8 @@ export default function DestinationPickerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { playlistId, playlistName } = useLocalSearchParams<{ playlistId: string; playlistName: string }>();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const setSource = useSessionStore((s) => s.setSource);
   const setDestinations = useSessionStore((s) => s.setDestinations);

@@ -140,7 +140,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☐ L7 — `spotifyFetch` blanket-overrides `Content-Type` (LOW)
 **File:** `src/adapters/spotify/spotifyFetch.ts:71-79`. `options.headers` is spread before the hardcoded `Content-Type: application/json`, so a caller can never override it. **Fix:** spread `options.headers` last, or only set the header when a body is present.
 
-### ☐ L8 — Style memo deps use `[isDark]` but read `activeColors` (LOW)
+### ☑ L8 — Style memo deps use `[isDark]` but read `activeColors` (LOW)
 **Files:** `SwipeEngine.tsx`, `SwipeCard.tsx`, `ButtonBar.tsx`, `DestinationEditor.tsx`. Stale styles if a palette changes without a brightness flip. **Fix:** depend on `activeColors`. (Convention, no impact today.)
 
 ### ☐ L9 — Other small items (LOW)

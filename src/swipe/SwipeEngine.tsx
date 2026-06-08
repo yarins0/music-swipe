@@ -106,8 +106,8 @@ export function SwipeEngine({
     setActiveDestinations,
   } = useSwipeStore();
 
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   // More source-playlist pages remain to lazily load when the paging cursor hasn't
   // reached the reported total. Drives both the prefetch trigger and the session-end guard.

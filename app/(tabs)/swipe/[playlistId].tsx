@@ -45,8 +45,8 @@ export default function SwipeScreen(): React.ReactElement {
   const playlistId = rawPlaylistId ? decodeURIComponent(rawPlaylistId) : rawPlaylistId;
   const router = useRouter();
 
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const { destinationPlaylistIds } = useSessionStore();
@@ -213,7 +213,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void flush();
-  }, [phase, buildServices, getResumeTarget]);
+  }, [phase, buildServices, getResumeTarget, playlistId]);
 
   // ---------------------------------------------------------------------------
   // Token refresh helper — re-registers with backend using current Spotify token
@@ -292,7 +292,6 @@ export default function SwipeScreen(): React.ReactElement {
       try {
         const adapter = adapterRef.current!;
         const resume = getResumeTarget();
-        const isResuming = resume !== null;
 
         const pageSize = getPageSize(playlistId);
         const startOffset = resume ? resume.resumeOffset : 0;

@@ -14,7 +14,7 @@ interface SpotifyMeResponse {
   id: string;
   display_name: string | null;
   email: string | null;
-  images?: Array<{ url: string; width: number | null; height: number | null }>;
+  images?: { url: string; width: number | null; height: number | null }[];
 }
 
 interface SpotifyNewPlaylistResponse {

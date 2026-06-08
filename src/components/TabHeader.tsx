@@ -13,8 +13,8 @@ interface TabHeaderProps {
 
 export function TabHeader({ title, subtitle, rightAction }: TabHeaderProps): React.ReactElement {
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>

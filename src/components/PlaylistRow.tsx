@@ -19,8 +19,8 @@ export function PlaylistRow({
   isSelected = false,
   showCheckbox = false,
 }: PlaylistRowProps) {
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const isLikedSongs = playlist.id === LIKED_SONGS_PLAYLIST_ID;
 

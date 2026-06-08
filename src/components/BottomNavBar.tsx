@@ -75,8 +75,8 @@ export function BottomNavBar(): React.ReactElement {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const tabWidth = screenWidth / TAB_COUNT;
   const activeIndex = resolveActiveIndex(pathname);

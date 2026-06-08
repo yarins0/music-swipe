@@ -40,8 +40,8 @@ function ContactRow({ icon, label, subtitle, onPress, styles, activeColors }: Co
 export default function ContactScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const handleSendFeedback = () => {
     void Linking.openURL(

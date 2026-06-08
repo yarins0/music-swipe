@@ -7,11 +7,9 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/stores/authStore';
 import { createSpotifyAdapter } from '@/auth/AuthGateway';
 import { getUserPlaylists, resolvePlaylistFromUrl } from '@/playlist/PlaylistResolver';
 import { PlaylistRow } from '@/components/PlaylistRow';
@@ -27,9 +25,8 @@ type Section = { title: string; data: Playlist[] };
 export default function SourcePickerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);

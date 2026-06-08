@@ -1,4 +1,4 @@
-import { Redirect, Slot, usePathname, useSegments } from 'expo-router';
+import { Redirect, Slot, usePathname } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNavBar } from '@/components/BottomNavBar';

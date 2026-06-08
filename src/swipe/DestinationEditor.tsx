@@ -32,8 +32,8 @@ export function DestinationEditor({
   onFromNowOn,
   onEntireSession,
 }: DestinationEditorProps): React.ReactElement {
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const [activeScope, setActiveScope] = useState<Scope>('this-track');
   const [selectedIds, setSelectedIds] = useState<string[]>(

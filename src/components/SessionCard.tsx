@@ -61,8 +61,8 @@ export function SessionCard({
   onRemoveTrack,
   removingIds,
 }: SessionCardProps): React.ReactElement {
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const resumable = isResumable(session);
   const progress = session.totalTracks > 0 ? session.resumeOffset / session.totalTracks : 0;

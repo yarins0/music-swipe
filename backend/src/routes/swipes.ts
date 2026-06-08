@@ -65,7 +65,7 @@ async function reconcilePendingDecisions(
   }
 
   const sessionToPlaylist = new Map<string, string>(
-    ((sessionsResult.data ?? []) as Array<{ id: string; source_playlist_id: string }>).map((s) => [
+    ((sessionsResult.data ?? []) as { id: string; source_playlist_id: string }[]).map((s) => [
       s.id,
       s.source_playlist_id,
     ]),
@@ -86,11 +86,11 @@ async function reconcilePendingDecisions(
     return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
   }
 
-  const danglingIds = ((pendingResult.data ?? []) as Array<{
+  const danglingIds = ((pendingResult.data ?? []) as {
     id: string;
     session_id: string;
     spotify_track_id: string;
-  }>)
+  }[])
     .filter((row) => {
       const playlistId = sessionToPlaylist.get(row.session_id);
       return playlistId !== undefined && decidedTracksByPlaylist.get(playlistId)?.has(row.spotify_track_id);
@@ -208,7 +208,7 @@ async function fetchAndVerifySessions(
     return { ok: false, status: 500, error: 'Failed to verify session ownership' };
   }
 
-  const rows = (result.data ?? []) as Array<{ id: string; user_id: string; source_playlist_id?: string }>;
+  const rows = (result.data ?? []) as { id: string; user_id: string; source_playlist_id?: string }[];
   const sessionMap = new Map(rows.map((s) => [s.id, s.user_id]));
 
   for (const sessionId of sessionIds) {
@@ -384,7 +384,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     }
 
     const decidedTrackIds = new Set(
-      ((decidedResult.data ?? []) as Array<{ spotify_track_id: string }>).map(
+      ((decidedResult.data ?? []) as { spotify_track_id: string }[]).map(
         (r) => r.spotify_track_id,
       ),
     );
@@ -415,10 +415,10 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    for (const dest of (destResult.data ?? []) as Array<{
+    for (const dest of (destResult.data ?? []) as {
       swipe_id: string;
       spotify_playlist_id: string;
-    }>) {
+    }[]) {
       const existing = destinationsBySwipe.get(dest.swipe_id) ?? [];
       existing.push(dest.spotify_playlist_id);
       destinationsBySwipe.set(dest.swipe_id, existing);

@@ -25,8 +25,8 @@ function PolicySection({ title, body, styles }: PolicySectionProps): React.React
 export default function PrivacyPolicyScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <View style={styles.screen}>

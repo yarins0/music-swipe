@@ -77,8 +77,8 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
 export interface MockCalls {
   play: string[];
   seek: number[];
-  addToPlaylist: Array<{ playlistId: string; trackId: string }>;
-  removeFromPlaylist: Array<{ playlistId: string; trackId: string }>;
+  addToPlaylist: { playlistId: string; trackId: string }[];
+  removeFromPlaylist: { playlistId: string; trackId: string }[];
   saveToLibrary: string[];
   removeFromLibrary: string[];
   isInLibrary: string[];

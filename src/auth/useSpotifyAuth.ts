@@ -88,8 +88,6 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       });
 
       if (!tokenResponse.ok) {
-        const body = await tokenResponse.text();
-        //console.log('TOKEN EXCHANGE FAILED:', tokenResponse.status, body);
         throw new Error('Token exchange failed');
       }
 
@@ -114,8 +112,6 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       });
 
       if (!registerResponse.ok) {
-        const body = await registerResponse.text();
-        //console.log('REGISTER FAILED:', registerResponse.status, body);
         throw new Error('Backend registration failed');
       }
 

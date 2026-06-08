@@ -8,8 +8,8 @@ import { useTheme } from '@/hooks/useTheme';
 export default function LoginScreen() {
   const { login, isLoading, error } = useSpotifyAuth();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>

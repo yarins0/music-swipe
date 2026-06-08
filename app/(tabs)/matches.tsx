@@ -41,8 +41,8 @@ export default function MatchesScreen(): React.ReactElement {
     }, [hydrate]),
   );
 
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());

@@ -1,5 +1,5 @@
 import { SpotifyAdapter } from '../SpotifyAdapter';
-import { PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '../../interface';
+import { LIKED_SONGS_PLAYLIST_ID } from '../../interface';
 import { spotifyFetch } from '../spotifyFetch';
 
 jest.mock('../spotifyFetch');
