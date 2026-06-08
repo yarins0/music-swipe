@@ -16,6 +16,7 @@ import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { type Colors } from '@/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { BACKEND_URL } from '@/config';
+import { mapPendingSwipesToTracks, type PendingSwipeResponse } from '@/services/restorePendingTracks';
 
 // Spotify caps a single page at 100 items for playlists and 50 for the saved-tracks
 // ("Liked Songs") endpoint; SpotifyAdapter silently clamps anything larger. Paging by
@@ -261,32 +262,13 @@ export default function SwipeScreen(): React.ReactElement {
           return [];
         }
 
-        const data = (await response.json()) as {
-          swipes: {
-            spotifyTrackId: string;
-            metadata?: {
-              title?: string;
-              artist?: string;
-              album?: string;
-              albumArtUrl?: string;
-              durationMs?: number;
-              previewUrl?: string | null;
-            };
-          }[];
-        };
+        const data = (await response.json()) as { swipes: PendingSwipeResponse[] };
 
-        // Map backend metadata directly to Track shape
-        return (data.swipes ?? []).map((s) => ({
-          id: s.spotifyTrackId,
-          uri: `spotify:track:${s.spotifyTrackId}`,
-          title: s.metadata?.title ?? s.spotifyTrackId,
-          artist: s.metadata?.artist ?? '',
-          artists: s.metadata?.artist ? [s.metadata.artist] : [],
-          album: s.metadata?.album ?? '',
-          albumArtUrl: s.metadata?.albumArtUrl ?? '',
-          durationMs: s.metadata?.durationMs ?? 0,
-          previewUrl: s.metadata?.previewUrl ?? null,
-        }));
+        // Map the backend `track` metadata to the internal Track shape. The
+        // platform URI fallback (for swipes whose track was never cached
+        // server-side) is supplied here so the platform literal stays out of
+        // business logic — see restorePendingTracks.ts.
+        return mapPendingSwipesToTracks(data.swipes ?? [], (id) => `spotify:track:${id}`);
       } catch (err) {
         console.warn('[SwipeScreen] fetchPendingTracks error:', err);
         return [];
