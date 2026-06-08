@@ -418,40 +418,51 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(result).toBe(false);
   });
 
-  // --- isInPlaylist ---
+  // --- getPlaylistTrackIds ---
 
-  it('isInPlaylist() returns true and stops paginating when the track is found', async () => {
+  it('getPlaylistTrackIds() returns the set of track ids from a regular playlist', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({
       items: [makeTrackItem('t-1'), makeTrackItem('t-2')],
       next: null,
       total: 2,
     });
 
-    const result = await adapter.isInPlaylist('pl-1', 't-2');
+    const ids = await adapter.getPlaylistTrackIds('pl-1');
 
-    expect(result).toBe(true);
+    expect(ids).toEqual(new Set(['t-1', 't-2']));
     const [endpoint] = mockSpotifyFetch.mock.calls[0];
     expect(endpoint).toContain('/playlists/pl-1/items');
   });
 
-  it('isInPlaylist() returns false when the track is absent', async () => {
+  it('getPlaylistTrackIds() paginates until all pages are read', async () => {
+    // A regular playlist pages at 100; total > 100 forces a second fetch (offset < total).
+    const page = (count: number, startId: number) => ({
+      items: Array.from({ length: count }, (_, i) => makeTrackItem(`t-${startId + i}`)),
+      next: null,
+      total: 150,
+    });
+    mockSpotifyFetch
+      .mockResolvedValueOnce(page(100, 0))
+      .mockResolvedValueOnce(page(50, 100));
+
+    const ids = await adapter.getPlaylistTrackIds('pl-1');
+
+    expect(ids.size).toBe(150);
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID) reads the /me/tracks endpoint', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({
       items: [makeTrackItem('t-1')],
       next: null,
       total: 1,
     });
 
-    expect(await adapter.isInPlaylist('pl-1', 't-missing')).toBe(false);
-  });
+    const ids = await adapter.getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID);
 
-  it('isInPlaylist(LIKED_SONGS_PLAYLIST_ID) delegates to the library-contains check', async () => {
-    mockSpotifyFetch.mockResolvedValueOnce([true]);
-
-    const result = await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'track-check');
-
-    expect(result).toBe(true);
+    expect(ids).toEqual(new Set(['t-1']));
     const [endpoint] = mockSpotifyFetch.mock.calls[0];
-    expect(endpoint).toBe('/me/library/contains?uris=spotify%3Atrack%3Atrack-check');
+    expect(endpoint).toContain('/me/tracks');
   });
 
   // --- capabilities ---

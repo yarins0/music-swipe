@@ -220,21 +220,33 @@ describe('adapter contract — MockAdapter', () => {
       expect(adapter.calls.removeFromLibrary).toContain('mock-track-1');
     });
 
-    it('isInPlaylist() returns false for a track not in the playlist', async () => {
+    it('getPlaylistTrackIds() returns an empty set for an untouched playlist', async () => {
       const adapter = new MockAdapter();
-      expect(await adapter.isInPlaylist('mock-playlist-1', 'mock-track-1')).toBe(false);
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(new Set());
     });
 
-    it('isInPlaylist() returns true after the track is added to the playlist', async () => {
+    it('getPlaylistTrackIds() reflects tracks added to the playlist', async () => {
       const adapter = new MockAdapter();
       await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
-      expect(await adapter.isInPlaylist('mock-playlist-1', 'mock-track-1')).toBe(true);
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-2');
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(
+        new Set(['mock-track-1', 'mock-track-2']),
+      );
     });
 
-    it('isInPlaylist(LIKED_SONGS_PLAYLIST_ID) reflects library membership', async () => {
+    it('getPlaylistTrackIds() returns a copy that does not mutate fixture state', async () => {
+      const adapter = new MockAdapter();
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
+      const ids = await adapter.getPlaylistTrackIds('mock-playlist-1');
+      ids.add('intruder');
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(new Set(['mock-track-1']));
+    });
+
+    it('getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID) returns the saved-track ids', async () => {
       const adapter = new MockAdapter({ likedTrackIds: new Set(['mock-track-1']) });
-      expect(await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-1')).toBe(true);
-      expect(await adapter.isInPlaylist(LIKED_SONGS_PLAYLIST_ID, 'mock-track-2')).toBe(false);
+      expect(await adapter.getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID)).toEqual(
+        new Set(['mock-track-1']),
+      );
     });
   });
 

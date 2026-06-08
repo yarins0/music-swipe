@@ -88,12 +88,12 @@ export interface MusicPlatformAdapter {
   isInLibrary(trackId: string): Promise<boolean>;
 
   /**
-   * Reports whether the track is already present in the playlist. Used before a write
-   * to tell a track the caller is adding apart from one the user already owned, so an
-   * undo never deletes a pre-existing track. For the Liked Songs library this is
-   * equivalent to isInLibrary.
+   * Returns the set of track ids currently in the playlist. Used to build a per-session
+   * membership cache so a write can skip adding a track that is already present (no
+   * duplicates) and tell a track the caller added apart from one the user already owned.
+   * For the Liked Songs library this returns the saved-track ids.
    */
-  isInPlaylist(playlistId: string, trackId: string): Promise<boolean>;
+  getPlaylistTrackIds(playlistId: string): Promise<Set<string>>;
 
   createPlaylist(name: string): Promise<string>;
 

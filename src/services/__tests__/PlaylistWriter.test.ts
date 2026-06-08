@@ -44,7 +44,7 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     saveToLibrary: jest.fn().mockResolvedValue(undefined),
     removeFromLibrary: jest.fn().mockResolvedValue(undefined),
     isInLibrary: jest.fn().mockResolvedValue(false),
-    isInPlaylist: jest.fn().mockResolvedValue(false),
+    getPlaylistTrackIds: jest.fn(async (_playlistId: string) => new Set<string>()),
     createPlaylist: jest.fn().mockResolvedValue('new-playlist-id'),
     removeDuplicatesFromPlaylist: jest.fn().mockResolvedValue(0),
     openPlatformDeepLink: jest.fn().mockResolvedValue(undefined),
@@ -157,24 +157,27 @@ describe('PlaylistWriter', () => {
       expect(entry).toBeUndefined();
     });
 
-    it('re-attempts addToPlaylist for the same pair on a repeat write (no cross-session dedup)', async () => {
+    it('skips a repeat write of the same pair within a session (membership cache prevents a duplicate)', async () => {
       const adapter = buildMockAdapter();
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
-      // First write — goes through
+      // First write — track not yet in the playlist, so it is added.
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
       expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
+      // The membership cache was fetched once for this destination.
+      expect(adapter.getPlaylistTrackIds).toHaveBeenCalledTimes(1);
 
       adapter.addToPlaylist.mockClear();
 
-      // Second write of the same pair — must re-attempt. The cross-session dedup
-      // skip was removed so a destination edited between sessions is corrected;
-      // any resulting duplicates are cleaned by the optional post-session scan.
+      // Second write of the same pair — the cached membership now contains the track, so
+      // the add is skipped (no duplicate) and no second fetch is made. Cross-session
+      // re-add of an edited destination is covered by the sequence tests (fresh writer).
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
-      expect(adapter.addToPlaylist).toHaveBeenCalledTimes(1);
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+      expect(adapter.getPlaylistTrackIds).toHaveBeenCalledTimes(1);
     });
 
     it('re-attempts addToPlaylist on a write that follows an undoWrite', async () => {
@@ -890,7 +893,7 @@ describe('PlaylistWriter', () => {
 
   describe('write()/undoWrite() — regular-playlist pre-existence guard (H5)', () => {
     it('records the pair and removes it on undo when the track was not pre-existing', async () => {
-      const adapter = buildMockAdapter({ isInPlaylist: jest.fn().mockResolvedValue(false) });
+      const adapter = buildMockAdapter({ getPlaylistTrackIds: jest.fn(async (_playlistId: string) => new Set<string>()) });
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
@@ -905,15 +908,37 @@ describe('PlaylistWriter', () => {
       expect(adapter.removeFromPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
     });
 
-    it('does not record (and undo does not remove) when the track was already in the playlist', async () => {
-      const adapter = buildMockAdapter({ isInPlaylist: jest.fn().mockResolvedValue(true) });
+    it('skips the add and does not record (or undo) when the track was already in the playlist', async () => {
+      const adapter = buildMockAdapter({
+        getPlaylistTrackIds: jest.fn(async (_playlistId: string) => new Set(['track-1'])),
+      });
       const storage = buildMockStorage();
       const writer = new PlaylistWriter(adapter, storage);
 
       writer.write('track-1', ['playlist-a']);
       await jest.runAllTimersAsync();
 
-      // The add still fires (documented re-add behavior) but we never claim ownership.
+      // Already present — no duplicate add, and we never claim ownership.
+      expect(adapter.addToPlaylist).not.toHaveBeenCalled();
+      expect(await storage.getItem('@music-swipe/added-playlist-pairs')).toBeNull();
+
+      writer.undoWrite('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+      expect(adapter.removeFromPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('adds the like but does not record ownership when the membership fetch fails', async () => {
+      // On a fetch failure the like must still land (never dropped), but we must not claim
+      // ownership — so a later undo can't delete a track we were unsure we added.
+      const adapter = buildMockAdapter({
+        getPlaylistTrackIds: jest.fn().mockRejectedValue(new Error('fetch failed')),
+      });
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      writer.write('track-1', ['playlist-a']);
+      await jest.runAllTimersAsync();
+
       expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
       expect(await storage.getItem('@music-swipe/added-playlist-pairs')).toBeNull();
 

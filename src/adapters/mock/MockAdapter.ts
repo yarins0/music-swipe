@@ -82,7 +82,7 @@ export interface MockCalls {
   saveToLibrary: string[];
   removeFromLibrary: string[];
   isInLibrary: string[];
-  isInPlaylist: { playlistId: string; trackId: string }[];
+  getPlaylistTrackIds: string[];
   createPlaylist: string[];
   removeDuplicatesFromPlaylist: string[];
   openPlatformDeepLink: string[];
@@ -100,7 +100,7 @@ export class MockAdapter implements MusicPlatformAdapter {
     saveToLibrary: [],
     removeFromLibrary: [],
     isInLibrary: [],
-    isInPlaylist: [],
+    getPlaylistTrackIds: [],
     createPlaylist: [],
     removeDuplicatesFromPlaylist: [],
     openPlatformDeepLink: [],
@@ -249,12 +249,13 @@ export class MockAdapter implements MusicPlatformAdapter {
     return this.fixtures.likedTrackIds.has(trackId);
   }
 
-  async isInPlaylist(playlistId: string, trackId: string): Promise<boolean> {
-    this.calls.isInPlaylist.push({ playlistId, trackId });
+  async getPlaylistTrackIds(playlistId: string): Promise<Set<string>> {
+    this.calls.getPlaylistTrackIds.push(playlistId);
+    // Return a copy so the writer's per-session cache cannot mutate fixture state.
     if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-      return this.fixtures.likedTrackIds.has(trackId);
+      return new Set(this.fixtures.likedTrackIds);
     }
-    return this.playlistContents.get(playlistId)?.has(trackId) ?? false;
+    return new Set(this.playlistContents.get(playlistId) ?? []);
   }
 
   async createPlaylist(name: string): Promise<string> {

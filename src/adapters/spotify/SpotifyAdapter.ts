@@ -330,40 +330,26 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
   }
 
   /**
-   * Reports whether the track is already in the playlist. Spotify has no membership
-   * endpoint, so this paginates the playlist items and stops at the first match.
-   * Liked Songs delegates to the cheap /me/library/contains check via isInLibrary.
-   * Matches the URI as stored in the playlist (linked_from for relinked tracks),
-   * mirroring removeDuplicatesFromPlaylist.
+   * Returns the set of track ids in the playlist by paginating its items once.
+   * Reuses getPlaylistTracks (which already handles the Liked Songs vs regular endpoints
+   * and filters out non-track/local items). Used to build the writer's per-session
+   * membership cache — one scan per destination instead of a check per like.
    */
-  async isInPlaylist(playlistId: string, trackId: string): Promise<boolean> {
-    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-      return this.isInLibrary(trackId);
-    }
-
-    const targetUri = `spotify:track:${trackId}`;
-    const PAGE = 100;
+  async getPlaylistTrackIds(playlistId: string): Promise<Set<string>> {
+    const ids = new Set<string>();
+    // /me/tracks caps at 50; /playlists/{id}/items accepts up to 100.
+    const PAGE = playlistId === LIKED_SONGS_PLAYLIST_ID ? 50 : 100;
     let offset = 0;
     let total = 0;
     do {
-      const page = await spotifyFetch<SpotifyPaginatedResponse<SpotifyTrackItem>>(
-        `/playlists/${playlistId}/items?offset=${offset}&limit=${PAGE}`,
-        {},
-        this.auth,
-      );
-      total = page.total ?? 0;
-      const items = page.items ?? [];
-      for (const item of items) {
-        const track = item?.item ?? item?.track;
-        if (!track || track.type !== 'track' || !track.uri) continue;
-        const uri = track.linked_from?.uri ?? track.uri;
-        if (uri === targetUri) return true;
-      }
-      if (items.length === 0) break; // guard against an inflated total
+      const { tracks, total: pageTotal } = await this.getPlaylistTracks(playlistId, offset, PAGE);
+      total = pageTotal;
+      for (const track of tracks) ids.add(track.id);
+      if (tracks.length === 0) break; // guard against an inflated total
       offset += PAGE;
     } while (offset < total);
 
-    return false;
+    return ids;
   }
 
   async createPlaylist(name: string): Promise<string> {

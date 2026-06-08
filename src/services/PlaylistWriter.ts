@@ -39,6 +39,13 @@ export class PlaylistWriter {
   // fresh writer (History / session-end) can still tell its own adds apart.
   private readonly addedPlaylistPairs = new Set<string>();
   private addedPlaylistPairsLoaded = false;
+  // Per-session cache of each regular playlist's track-id set, keyed by playlistId.
+  // Storing the in-flight promise makes the first like to a playlist the single fetch
+  // that all concurrent likes share; later likes are O(1) lookups. The set is mutated
+  // as we add/undo so it stays consistent within the session. Lets write() skip an add
+  // when the track is already present (no duplicates) and tells the undo guard apart a
+  // track we added from one the user already owned.
+  private readonly membershipCache = new Map<string, Promise<Set<string> | null>>();
   // Serializes durable-queue read-modify-write cycles. Without it, liking one track
   // into multiple regular playlists runs the destinations concurrently and a later
   // persistQueue overwrites an earlier one, dropping a crash-recovery entry.
@@ -254,11 +261,12 @@ export class PlaylistWriter {
   // Fires addToPlaylist for each destination in parallel — fire-and-forget (no await at call site).
   // Persists each entry to AsyncStorage before the network call so that a crash
   // between write() and the API response can be recovered via drainStoredQueue.
-  // No cross-session write deduplication: a like always re-attempts the add, so a
-  // destination playlist the user edited between sessions is corrected. Regular
-  // playlists may accumulate duplicates (Spotify permits them); the optional
-  // post-session dedup scan removes any extras. Liked Songs cannot duplicate
-  // (the library is a set) and is additionally guarded by the live isInLibrary check.
+  // Duplicate prevention: a per-session membership cache (built from the playlist's live
+  // contents on the first like) lets the add be skipped when the track is already there,
+  // so MusicSwipe never creates duplicates. The cache is rebuilt each session, so a
+  // destination the user edited between sessions is still corrected. Pre-existing
+  // duplicates the cache can't see are cleaned by the session-end dedup feature. Liked
+  // Songs cannot duplicate (the library is a set) and is guarded by the live isInLibrary check.
   write(trackId: string, destinationIds: string[]): void {
     const writes = destinationIds.map((playlistId) =>
       playlistId === LIKED_SONGS_PLAYLIST_ID
@@ -288,14 +296,16 @@ export class PlaylistWriter {
     }
   }
 
-  // Adds a track to a regular playlist with durable-queue retry. Records the pair as
-  // "ours to remove" only when the track was not already in the playlist, mirroring the
-  // Liked Songs guard so an undo can never delete a track the user already owned.
+  // Adds a track to a regular playlist with durable-queue retry. Skips the add when the
+  // track is already in the playlist (no duplicates). Records the pair as "ours to
+  // remove" only when we know it was absent before our add, mirroring the Liked Songs
+  // guard so an undo can never delete a track the user already owned.
   private async writeToRegularPlaylist(trackId: string, playlistId: string): Promise<void> {
     await this.ensureAddedPlaylistPairsLoaded();
-    // Snapshot pre-existence BEFORE the add. Conservative default: on check failure
-    // treat as pre-existing (never record), so undo can't delete a track we're unsure of.
-    const preExisting = await this.isTrackPreExistingInPlaylist(trackId, playlistId);
+    const membership = await this.getMembership(playlistId);
+
+    // Already present — don't create a duplicate, and don't claim ownership.
+    if (membership?.has(trackId)) return;
 
     await this.enqueueWrite(trackId, playlistId);
 
@@ -314,21 +324,41 @@ export class PlaylistWriter {
     }
 
     await this.removeFromQueue(trackId, playlistId);
-    if (!preExisting) {
+    // Record ownership only when membership was known (fetch succeeded) and the track was
+    // absent — on a fetch failure (membership null) we still added it but never claim it,
+    // so undo can't delete a track we were unsure about. Pre-existing duplicates from a
+    // failed fetch are handled by the session-end dedup feature.
+    if (membership) {
+      membership.add(trackId);
       this.addedPlaylistPairs.add(this.pairKey(trackId, playlistId));
       void this.persistAddedPlaylistPairs();
     }
   }
 
-  // Checks whether the track is already in the playlist before any write. Conservative
-  // default: if the check throws, returns true (treated as pre-existing) so undo can
-  // never remove a track the writer is not sure it added.
-  private async isTrackPreExistingInPlaylist(trackId: string, playlistId: string): Promise<boolean> {
-    try {
-      return await this.adapter.isInPlaylist(playlistId, trackId);
-    } catch {
-      return true;
+  // Returns the playlist's track-id set, fetched once per session and shared by every
+  // concurrent caller (the cached promise is the single-flight guard). Resolves to null
+  // when the fetch fails, so the caller still adds the track (never drops a like) without
+  // risking a wrong undo. The cache entry is dropped on failure so a later like can retry.
+  private getMembership(playlistId: string): Promise<Set<string> | null> {
+    let cached = this.membershipCache.get(playlistId);
+    if (!cached) {
+      cached = this.adapter
+        .getPlaylistTrackIds(playlistId)
+        .catch((err: unknown) => {
+          this.membershipCache.delete(playlistId);
+          console.warn(`[PlaylistWriter] getPlaylistTrackIds failed for playlistId=${playlistId}:`, err);
+          return null;
+        });
+      this.membershipCache.set(playlistId, cached);
     }
+    return cached;
+  }
+
+  // Keeps the membership cache consistent after an undo so a later re-like re-adds the
+  // track. Only updates an already-loaded entry — never triggers a fetch.
+  private forgetMembership(trackId: string, playlistId: string): void {
+    const cached = this.membershipCache.get(playlistId);
+    if (cached) void cached.then((set) => set?.delete(trackId));
   }
 
   // Fire-and-forget removal for undo. Clears the written-pairs record so a future
@@ -362,6 +392,7 @@ export class PlaylistWriter {
           await this.adapter.removeFromPlaylist(playlistId, trackId);
           this.addedPlaylistPairs.delete(key);
           void this.persistAddedPlaylistPairs();
+          this.forgetMembership(trackId, playlistId);
         } catch (err: unknown) {
           console.warn(`[PlaylistWriter] undoWrite failed for trackId=${trackId} playlistId=${playlistId}:`, err);
         }
@@ -393,6 +424,7 @@ export class PlaylistWriter {
       await this.adapter.removeFromPlaylist(playlistId, trackId);
       this.addedPlaylistPairs.delete(key);
       void this.persistAddedPlaylistPairs();
+      this.forgetMembership(trackId, playlistId);
     }
   }
 
