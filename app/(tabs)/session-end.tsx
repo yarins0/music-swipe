@@ -217,9 +217,33 @@ export default function SessionEndScreen(): React.ReactElement {
       const adapter = getAdapter();
       const playlistName = sourcePlaylistName ? `MusicSwipe – ${sourcePlaylistName}` : 'MusicSwipe Session';
       const newPlaylistId = await adapter.createPlaylist(playlistName);
+
+      // Record any non-retryable write failure so "Saved ✓" is only shown when the
+      // tracks actually landed. Rate-limit exhaustion is NOT reported here — those
+      // writes stay in the durable queue and retry automatically on next launch.
+      let hadWriteError = false;
+      const writer = new PlaylistWriter(adapter, undefined, undefined, () => {
+        hadWriteError = true;
+      });
+
+      // Await every write so the button stays in its pending spinner until the tracks
+      // land. The previous fire-and-forget loop flipped to "Saved ✓" the instant the
+      // empty playlist was created, so a silently-failing write showed success over a
+      // partial or empty playlist.
+      await Promise.all(
+        likedTracks.map((record) => writer.writeAndWait(record.track.id, [newPlaylistId])),
+      );
+
+      // The playlist exists and most tracks landed; mark saved so a retry tap can't
+      // create a second duplicate playlist. Surface any writes that did not land —
+      // the durable queue will retry them on next launch.
       setSavedPlaylistId(newPlaylistId);
-      const writer = new PlaylistWriter(adapter);
-      for (const record of likedTracks) writer.write(record.track.id, [newPlaylistId]);
+      if (hadWriteError) {
+        Alert.alert(
+          'Some tracks pending',
+          'Your playlist was created, but a few tracks could not be added yet. They will be retried automatically.',
+        );
+      }
     } catch (err) {
       console.warn('[SessionEnd] createPlaylist failed:', err);
       Alert.alert('Error', 'Could not create playlist. Please try again.');

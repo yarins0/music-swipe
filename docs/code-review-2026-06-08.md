@@ -88,7 +88,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 `playTrackAt` is async and fire-and-forgot from the index effect. Fast swiping can resolve `play(trackA)` after `play(trackB)`, so `setIsSeekEnabled` (and the position poll loop + segment dots) reflect trackA while the user is on trackB.
 **Fix:** Capture the index/track at call time; before `setIsSeekEnabled`, bail if `currentIndex` has changed (compare against a ref) — mirror the stale-guard pattern the seek handlers already use (`positionRef`).
 
-### ☐ M2 — "Save as playlist" shows success before writes land (MEDIUM)
+### ☑ M2 — "Save as playlist" shows success before writes land (MEDIUM)
 **File:** `app/(tabs)/session-end.tsx:~222` (`handleSaveAsPlaylist`)
 **Verified:** logic.
 `writer.write(...)` is fire-and-forget in a loop, then the button flips to "Saved ✓" in `finally`. Queued writes can later fail silently → success shown for an empty/partial playlist.

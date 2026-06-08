@@ -419,4 +419,25 @@ describe('PlaylistWriter – stateful action sequences', () => {
       expect(adapter.playlistContents.get(DEST1)?.size).toBe(1);
     });
   });
+
+  // ─────────────────────────────────────────────
+  // 9. M2 — writeAndWait resolves only after writes land
+  // ─────────────────────────────────────────────
+  describe('writeAndWait — awaitable completion (M2)', () => {
+    it('awaiting writeAndWait is enough — no flush needed for the track to be present', async () => {
+      // The session-end "Save as playlist" button relies on this: once writeAndWait
+      // resolves, the playlist genuinely contains the track, so showing "Saved ✓" is
+      // truthful. (No flush() — the await alone must have drained the write.)
+      const { adapter, writer } = setup();
+      await writer.writeAndWait('t1', [DEST1]);
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+    });
+
+    it('lands the track in every destination before resolving', async () => {
+      const { adapter, writer } = setup();
+      await writer.writeAndWait('t1', [DEST1, DEST2]);
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+      expect(adapter.playlistContents.get(DEST2)?.has('t1')).toBe(true);
+    });
+  });
 });

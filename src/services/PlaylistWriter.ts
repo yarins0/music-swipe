@@ -268,14 +268,23 @@ export class PlaylistWriter {
   // duplicates the cache can't see are cleaned by the session-end dedup feature. Liked
   // Songs cannot duplicate (the library is a set) and is guarded by the live isInLibrary check.
   write(trackId: string, destinationIds: string[]): void {
+    // Intentionally not awaited — the swipe hot path must never be blocked.
+    void this.writeAndWait(trackId, destinationIds);
+  }
+
+  // Awaitable variant of write(): resolves once every destination's add has settled
+  // (added, skipped as a duplicate, left in the durable queue for next-launch retry,
+  // or reported via onWriteError). The swipe UI uses the fire-and-forget write();
+  // callers that must reflect true completion before claiming success — e.g. the
+  // session-end "Save as playlist" button — await this so they can't show success over
+  // an empty or partially-written playlist. Failures still surface through onWriteError.
+  async writeAndWait(trackId: string, destinationIds: string[]): Promise<void> {
     const writes = destinationIds.map((playlistId) =>
       playlistId === LIKED_SONGS_PLAYLIST_ID
         ? this.writeToLibrary(trackId)
         : this.writeToRegularPlaylist(trackId, playlistId),
     );
-
-    // Intentionally not awaited — swipe UI must not be blocked.
-    void Promise.all(writes);
+    await Promise.all(writes);
   }
 
   // Saves a track to Liked Songs. Only records it as "ours to remove" when it was not

@@ -218,6 +218,36 @@ describe('PlaylistWriter', () => {
     });
   });
 
+  describe('writeAndWait() — awaitable variant (M2)', () => {
+    it('resolves after addToPlaylist completes for every destination', async () => {
+      const adapter = buildMockAdapter();
+      const storage = buildMockStorage();
+      const writer = new PlaylistWriter(adapter, storage);
+
+      await writer.writeAndWait('track-1', ['playlist-a', 'playlist-b']);
+
+      expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-a', 'track-1');
+      expect(adapter.addToPlaylist).toHaveBeenCalledWith('playlist-b', 'track-1');
+    });
+
+    it('reports a non-retryable write failure via onWriteError before resolving', async () => {
+      const authError = new PlatformError(PlatformErrorCode.AUTH_EXPIRED, 'auth expired');
+      const addToPlaylist = jest.fn().mockRejectedValue(authError);
+      const adapter = buildMockAdapter({ addToPlaylist });
+      const storage = buildMockStorage();
+      const onWriteError = jest.fn();
+      const writer = new PlaylistWriter(adapter, storage, undefined, onWriteError);
+
+      await writer.writeAndWait('track-1', ['playlist-a']);
+
+      expect(onWriteError).toHaveBeenCalledTimes(1);
+      expect(onWriteError).toHaveBeenCalledWith(authError, {
+        trackId: 'track-1',
+        playlistId: 'playlist-a',
+      });
+    });
+  });
+
   describe('executeWithBackoff — retry on RATE_LIMITED', () => {
     it('retries on RATE_LIMITED and eventually succeeds', async () => {
       const rateLimitedError = new PlatformError(PlatformErrorCode.RATE_LIMITED, 'rate limited');
