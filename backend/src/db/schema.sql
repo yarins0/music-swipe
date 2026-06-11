@@ -59,6 +59,10 @@ CREATE TABLE IF NOT EXISTS swipes (
   user_id          UUID        REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   spotify_track_id TEXT        NOT NULL,
   status           TEXT        NOT NULL CHECK (status IN ('liked', 'super_liked', 'skipped', 'pending')),
+  -- Whether WE added this track to Liked Songs (not pre-existing). Persisted so a
+  -- restored super-like / Liked-Songs row can still be removed on cancel after a
+  -- device clear (migration 0003).
+  liked_songs_written_by_us BOOLEAN NOT NULL DEFAULT false,
   swiped_at        TIMESTAMPTZ DEFAULT now(),
   UNIQUE (session_id, spotify_track_id)
 );
@@ -79,20 +83,32 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user    ON sessions(user_id);
 -- ---------------------------------------------------------------------------
 -- upsert_swipes(p_user_id, p_swipes)
 --
--- Atomically upserts a batch of swipes and replaces their swipe_destinations,
--- all within a single transaction. Called from the Express backend via
--- supabase.rpc('upsert_swipes', { p_user_id, p_swipes }).
+-- Atomically upserts a batch of swipes, replaces their swipe_destinations, and
+-- reconciles dangling 'pending' rows — all within a single transaction. Called
+-- from the Express backend via supabase.rpc('upsert_swipes', { p_user_id, p_swipes }).
 --
--- p_swipes JSON array shape (track is OPTIONAL — see migration 0002):
+-- This is the consolidated final definition (migrations 0001–0004). A fresh
+-- database built from this file alone is identical to one built by applying the
+-- migrations in order.
+--
+-- p_swipes JSON array shape (track + likedSongsWrittenByUs are OPTIONAL):
 --   [{ "sessionId": uuid, "spotifyTrackId": text, "status": text,
 --      "destinationPlaylistIds": text[],
+--      "likedSongsWrittenByUs": boolean,                       -- migration 0003
 --      "track": { "uri": text, "title": text, "artist": text, "artists": text[],
 --                 "album": text, "albumArtUrl": text, "durationMs": int,
---                 "previewUrl": text } }, ...]
+--                 "previewUrl": text } }, ...]                  -- migration 0002
 --
--- When present (non-null title), track metadata is upserted into `tracks`
--- (deduped by UNIQUE(spotify_track_id)) before the swipe upsert, in the same
--- transaction. Returned counts are SWIPES ONLY.
+-- - When "track" is present (non-null title), its metadata is upserted into
+--   `tracks` (deduped by UNIQUE(spotify_track_id)) before the swipe upsert.
+-- - "likedSongsWrittenByUs" is kept sticky-true on conflict so an out-of-order
+--   or later plain re-post never clears a confirmed library write.
+-- - After the upserts, dangling 'pending' rows for any track decided in this
+--   batch (same user, same source playlist, different session) are deleted in
+--   the same transaction (migration 0004), so a later decide-later fetch can't
+--   resurface a track that was already decided.
+--
+-- Returned counts are SWIPES ONLY.
 --
 -- Returns: { "inserted": n, "updated": m }
 -- ---------------------------------------------------------------------------
@@ -103,24 +119,26 @@ CREATE OR REPLACE FUNCTION upsert_swipes(
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  v_inserted   INT := 0;
-  v_updated    INT := 0;
-  v_item       JSONB;
-  v_track      JSONB;
-  v_swipe_id   UUID;
-  v_session_id UUID;
-  v_track_id   TEXT;
-  v_status     TEXT;
-  v_dest_ids   TEXT[];
-  v_dest_id    TEXT;
-  v_artists    TEXT[];
-  v_xmax       BIGINT;
+  v_inserted    INT := 0;
+  v_updated     INT := 0;
+  v_item        JSONB;
+  v_track       JSONB;
+  v_swipe_id    UUID;
+  v_session_id  UUID;
+  v_track_id    TEXT;
+  v_status      TEXT;
+  v_dest_ids    TEXT[];
+  v_dest_id     TEXT;
+  v_artists     TEXT[];
+  v_lib_written BOOLEAN;
+  v_xmax        BIGINT;
 BEGIN
   FOR v_item IN SELECT jsonb_array_elements(p_swipes)
   LOOP
     v_session_id := (v_item->>'sessionId')::UUID;
     v_track_id   := v_item->>'spotifyTrackId';
     v_status     := v_item->>'status';
+    v_lib_written := COALESCE((v_item->>'likedSongsWrittenByUs')::BOOLEAN, false);
 
     -- Build destination array; treat missing/null as empty.
     SELECT ARRAY(
@@ -171,12 +189,15 @@ BEGIN
     END IF;
 
     -- Upsert the swipe row. ON CONFLICT targets the unique constraint on
-    -- (session_id, spotify_track_id). We read xmax immediately after the
-    -- INSERT ... RETURNING to distinguish insert (xmax = 0) from update.
-    INSERT INTO swipes (session_id, user_id, spotify_track_id, status)
-    VALUES (v_session_id, p_user_id, v_track_id, v_status)
+    -- (session_id, spotify_track_id). The library-written flag is sticky-true so
+    -- an out-of-order or later plain re-post never clears a confirmed write.
+    INSERT INTO swipes (session_id, user_id, spotify_track_id, status, liked_songs_written_by_us)
+    VALUES (v_session_id, p_user_id, v_track_id, v_status, v_lib_written)
     ON CONFLICT (session_id, spotify_track_id)
-    DO UPDATE SET status = EXCLUDED.status
+    DO UPDATE SET
+      status = EXCLUDED.status,
+      liked_songs_written_by_us =
+        swipes.liked_songs_written_by_us OR EXCLUDED.liked_songs_written_by_us
     RETURNING id, xmax INTO v_swipe_id, v_xmax;
 
     IF v_xmax = 0 THEN
@@ -194,6 +215,30 @@ BEGIN
       VALUES (v_swipe_id, v_dest_id);
     END LOOP;
   END LOOP;
+
+  -- Reconcile dangling 'pending' rows in the SAME transaction as the upserts (M4).
+  -- For every track decided in this batch, drop any leftover 'pending' row for the
+  -- same user whose session targets the SAME source playlist — those are stale
+  -- defer rows from an earlier session that the GET decide-later fetch would
+  -- otherwise resurface. The rows just upserted above are already decided, so the
+  -- status='pending' guard excludes them. Pending rows for other playlists are
+  -- left untouched.
+  WITH decided AS (
+    SELECT DISTINCT
+      sess.source_playlist_id AS playlist_id,
+      elem->>'spotifyTrackId'  AS track_id
+    FROM jsonb_array_elements(p_swipes) AS elem
+    JOIN sessions sess ON sess.id = (elem->>'sessionId')::UUID
+    WHERE elem->>'status' IN ('liked', 'super_liked', 'skipped')
+      AND sess.source_playlist_id IS NOT NULL
+  )
+  DELETE FROM swipes s
+  USING sessions sess, decided d
+  WHERE s.user_id = p_user_id
+    AND s.status = 'pending'
+    AND s.session_id = sess.id
+    AND sess.source_playlist_id = d.playlist_id
+    AND s.spotify_track_id = d.track_id;
 
   RETURN jsonb_build_object('inserted', v_inserted, 'updated', v_updated);
 END;
