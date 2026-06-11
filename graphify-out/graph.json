@@ -9579,13 +9579,13 @@
       "norm_label": "\u2611 l1 \u2014 adapter-boundary leak in playlistresolver (low, arch)"
     },
     {
-      "label": "\u2610 L2 \u2014 Production logging of scopes / deep-link URIs (LOW, security hygiene)",
+      "label": "\u2611 L2 \u2014 Production logging of scopes / deep-link URIs (LOW, security hygiene)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L125",
       "id": "docs_code_review_2026_06_08_l2_production_logging_of_scopes_deep_link_uris_low_security_hygiene",
       "community": 35,
-      "norm_label": "\u2610 l2 \u2014 production logging of scopes / deep-link uris (low, security hygiene)"
+      "norm_label": "\u2611 l2 \u2014 production logging of scopes / deep-link uris (low, security hygiene)"
     },
     {
       "label": "\u2610 L3 \u2014 `flushPending` drops payloads on failure (LOW)",
@@ -20137,9 +20137,9 @@
       "source_file": "src/adapters/mock/MockAdapter.ts",
       "source_location": "L297",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mock_mockadapter_mockadapter",
-      "target": "mock_mockadapter_mockadapter_parseplaylistreference",
-      "confidence_score": 1.0
+      "target": "mock_mockadapter_mockadapter_parseplaylistreference"
     },
     {
       "relation": "imports",
@@ -20788,9 +20788,9 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L462",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "spotify_spotifyadapter_spotifyadapter",
-      "target": "spotify_spotifyadapter_spotifyadapter_parseplaylistreference",
-      "confidence_score": 1.0
+      "target": "spotify_spotifyadapter_spotifyadapter_parseplaylistreference"
     },
     {
       "relation": "imports",
@@ -29404,5 +29404,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3f7da5e9c1573824785571c4a5a7c522bef43373"
+  "built_at_commit": "ecdb986b35e01bd61246e7e63f8beb695322043b"
 }
