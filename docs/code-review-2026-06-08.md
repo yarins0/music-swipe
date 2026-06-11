@@ -100,7 +100,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 `clearAuth` resets swipe/session stores but not the PlaylistWriter AsyncStorage keys (`@music-swipe/playlist-write-queue`, `@music-swipe/library-written-ids`). On next login `drainStoredQueue` replays the prior user's adds against the new account.
 **Fix:** Add a static `PlaylistWriter.clearStoredState(storage?)` that removes both keys; call it from `clearAuth` alongside the SecureStore deletes. NOTE: H5 added a third persisted key `@music-swipe/added-playlist-pairs` (the regular-playlist undo guard) — clear it here too.
 
-### ☐ M4 — Swipe upsert and pending-reconciliation run in separate transactions (MEDIUM)
+### ☑ M4 — Swipe upsert and pending-reconciliation run in separate transactions (MEDIUM)
 **File:** `backend/src/routes/swipes.ts:265-289` (+ reconcile at ~56-102)
 **Verified:** logic.
 `upsert_swipes` RPC commits, then a separate batch DELETE reconciles dangling pending rows. A crash/failure between them leaves stale `pending` rows that resurface in a later decide-later fetch; the 500-on-delete path can also cause client retry double-counting.
