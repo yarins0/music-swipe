@@ -5505,7 +5505,7 @@
       "label": "MatchRecord",
       "file_type": "code",
       "source_file": "src/matches/useMatchesStore.ts",
-      "source_location": "L4",
+      "source_location": "L5",
       "id": "matches_usematchesstore_matchrecord",
       "community": 12,
       "norm_label": "matchrecord"
@@ -5514,7 +5514,7 @@
       "label": "UseMatchesStoreResult",
       "file_type": "code",
       "source_file": "src/matches/useMatchesStore.ts",
-      "source_location": "L16",
+      "source_location": "L17",
       "id": "matches_usematchesstore_usematchesstoreresult",
       "community": 12,
       "norm_label": "usematchesstoreresult"
@@ -5523,7 +5523,7 @@
       "label": "useMatchesStore()",
       "file_type": "code",
       "source_file": "src/matches/useMatchesStore.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "id": "matches_usematchesstore_usematchesstore",
       "community": 38,
       "norm_label": "usematchesstore()"
@@ -5532,7 +5532,7 @@
       "label": "BackendSwipeItem",
       "file_type": "code",
       "source_file": "src/matches/useMatchesStore.ts",
-      "source_location": "L44",
+      "source_location": "L51",
       "id": "matches_usematchesstore_backendswipeitem",
       "community": 12,
       "norm_label": "backendswipeitem"
@@ -5541,7 +5541,7 @@
       "label": "fetchFromBackend()",
       "file_type": "code",
       "source_file": "src/matches/useMatchesStore.ts",
-      "source_location": "L67",
+      "source_location": "L74",
       "id": "matches_usematchesstore_fetchfrombackend",
       "community": 12,
       "norm_label": "fetchfrombackend()"
@@ -9507,13 +9507,13 @@
       "norm_label": "\u2611 m4 \u2014 swipe upsert and pending-reconciliation run in separate transactions (medium)"
     },
     {
-      "label": "\u2610 M5 \u2014 `useMatchesStore` recomputes unmemoized on every render (MEDIUM, perf)",
+      "label": "\u2611 M5 \u2014 `useMatchesStore` recomputes unmemoized on every render (MEDIUM, perf)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L109",
       "id": "docs_code_review_2026_06_08_m5_usematchesstore_recomputes_unmemoized_on_every_render_medium_perf",
       "community": 35,
-      "norm_label": "\u2610 m5 \u2014 `usematchesstore` recomputes unmemoized on every render (medium, perf)"
+      "norm_label": "\u2611 m5 \u2014 `usematchesstore` recomputes unmemoized on every render (medium, perf)"
     },
     {
       "label": "\u2610 M6 \u2014 `TrackPlayer.play` flattens all errors to `strategy:'none'` (MEDIUM)",
@@ -29193,5 +29193,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "63b14f32d819a56274faae699f6c5e46e9307e37"
+  "built_at_commit": "1a1fa0a3e9f772064cc9d5e5f74a0e1ea68ff163"
 }

@@ -1,7 +1,7 @@
 # Graph Report - music-swipe  (2026-06-11)
 
 ## Corpus Check
-- 131 files · ~81,548 words
+- 131 files · ~81,889 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63b14f32`
+- Built from commit: `1a1fa0a3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
