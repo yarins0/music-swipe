@@ -1340,7 +1340,7 @@
       "source_file": "app/(auth)/login.tsx",
       "source_location": "L1",
       "id": "app_auth_login_tsx",
-      "community": 30,
+      "community": 33,
       "norm_label": "login.tsx"
     },
     {
@@ -1349,7 +1349,7 @@
       "source_file": "app/(auth)/login.tsx",
       "source_location": "L8",
       "id": "auth_login_loginscreen",
-      "community": 44,
+      "community": 33,
       "norm_label": "loginscreen()"
     },
     {
@@ -1358,7 +1358,7 @@
       "source_file": "app/(auth)/login.tsx",
       "source_location": "L45",
       "id": "auth_login_createstyles",
-      "community": 30,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -1412,7 +1412,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L1",
       "id": "app_tabs_index_tsx",
-      "community": 0,
+      "community": 30,
       "norm_label": "index.tsx"
     },
     {
@@ -1421,7 +1421,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L23",
       "id": "tabs_index_section",
-      "community": 0,
+      "community": 30,
       "norm_label": "section"
     },
     {
@@ -1439,7 +1439,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
       "id": "tabs_index_createstyles",
-      "community": 0,
+      "community": 30,
       "norm_label": "createstyles()"
     },
     {
@@ -1889,7 +1889,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L1",
       "id": "app_tabs_swipe_playlistid_tsx",
-      "community": 40,
+      "community": 27,
       "norm_label": "[playlistid].tsx"
     },
     {
@@ -1898,7 +1898,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L28",
       "id": "swipe_playlistid_getpagesize",
-      "community": 40,
+      "community": 27,
       "norm_label": "getpagesize()"
     },
     {
@@ -1907,7 +1907,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L32",
       "id": "swipe_playlistid_initphase",
-      "community": 40,
+      "community": 27,
       "norm_label": "initphase"
     },
     {
@@ -1916,7 +1916,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L41",
       "id": "swipe_playlistid_swipescreen",
-      "community": 40,
+      "community": 27,
       "norm_label": "swipescreen()"
     },
     {
@@ -1925,7 +1925,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L537",
       "id": "swipe_playlistid_phaselabel",
-      "community": 40,
+      "community": 27,
       "norm_label": "phaselabel()"
     },
     {
@@ -1934,7 +1934,7 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L548",
       "id": "swipe_playlistid_createstyles",
-      "community": 40,
+      "community": 27,
       "norm_label": "createstyles()"
     },
     {
@@ -3698,7 +3698,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L1",
       "id": "src_theme_ts",
-      "community": 30,
+      "community": 33,
       "norm_label": "theme.ts"
     },
     {
@@ -3707,7 +3707,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L56",
       "id": "src_theme_colors",
-      "community": 30,
+      "community": 58,
       "norm_label": "colors"
     },
     {
@@ -3716,7 +3716,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L19",
       "id": "src_theme_lightcolors",
-      "community": 30,
+      "community": 33,
       "norm_label": "lightcolors"
     },
     {
@@ -3725,7 +3725,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L37",
       "id": "src_theme_darkcolors",
-      "community": 30,
+      "community": 33,
       "norm_label": "darkcolors"
     },
     {
@@ -3734,7 +3734,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L58",
       "id": "src_theme_getcolors",
-      "community": 30,
+      "community": 33,
       "norm_label": "getcolors()"
     },
     {
@@ -3743,7 +3743,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L62",
       "id": "src_theme_spacing",
-      "community": 30,
+      "community": 33,
       "norm_label": "spacing"
     },
     {
@@ -3842,7 +3842,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L61",
       "id": "adapters_interface_musicplatformadapter",
-      "community": 19,
+      "community": 64,
       "norm_label": "musicplatformadapter"
     },
     {
@@ -4107,6 +4107,15 @@
       "norm_label": ".openplaylistinapp()"
     },
     {
+      "label": ".parsePlaylistReference()",
+      "file_type": "code",
+      "source_file": "src/adapters/mock/MockAdapter.ts",
+      "source_location": "L297",
+      "id": "mock_mockadapter_mockadapter_parseplaylistreference",
+      "community": 10,
+      "norm_label": ".parseplaylistreference()"
+    },
+    {
       "label": "mappers.ts",
       "file_type": "code",
       "source_file": "src/adapters/spotify/mappers.ts",
@@ -4193,7 +4202,7 @@
       "source_file": "src/adapters/spotify/mappers.ts",
       "source_location": "L71",
       "id": "spotify_mappers_mapspotifyplaylist",
-      "community": 21,
+      "community": 3,
       "norm_label": "mapspotifyplaylist()"
     },
     {
@@ -4263,7 +4272,7 @@
       "label": "SpotifyAdapter",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L40",
+      "source_location": "L46",
       "id": "spotify_spotifyadapter_spotifyadapter",
       "community": 3,
       "norm_label": "spotifyadapter"
@@ -4272,7 +4281,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L54",
+      "source_location": "L60",
       "id": "spotify_spotifyadapter_spotifyadapter_constructor",
       "community": 3,
       "norm_label": ".constructor()"
@@ -4281,7 +4290,7 @@
       "label": ".getActiveDeviceId()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L63",
+      "source_location": "L69",
       "id": "spotify_spotifyadapter_spotifyadapter_getactivedeviceid",
       "community": 3,
       "norm_label": ".getactivedeviceid()"
@@ -4290,7 +4299,7 @@
       "label": ".isAuthenticated()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L81",
+      "source_location": "L87",
       "id": "spotify_spotifyadapter_spotifyadapter_isauthenticated",
       "community": 3,
       "norm_label": ".isauthenticated()"
@@ -4299,7 +4308,7 @@
       "label": ".refreshAuth()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L85",
+      "source_location": "L91",
       "id": "spotify_spotifyadapter_spotifyadapter_refreshauth",
       "community": 3,
       "norm_label": ".refreshauth()"
@@ -4308,7 +4317,7 @@
       "label": ".getUserProfile()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L89",
+      "source_location": "L95",
       "id": "spotify_spotifyadapter_spotifyadapter_getuserprofile",
       "community": 3,
       "norm_label": ".getuserprofile()"
@@ -4317,7 +4326,7 @@
       "label": ".getUserId()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L101",
+      "source_location": "L107",
       "id": "spotify_spotifyadapter_spotifyadapter_getuserid",
       "community": 3,
       "norm_label": ".getuserid()"
@@ -4326,7 +4335,7 @@
       "label": ".getUserPlaylists()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L105",
+      "source_location": "L111",
       "id": "spotify_spotifyadapter_spotifyadapter_getuserplaylists",
       "community": 3,
       "norm_label": ".getuserplaylists()"
@@ -4335,7 +4344,7 @@
       "label": ".getPlaylistById()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L153",
+      "source_location": "L159",
       "id": "spotify_spotifyadapter_spotifyadapter_getplaylistbyid",
       "community": 3,
       "norm_label": ".getplaylistbyid()"
@@ -4344,7 +4353,7 @@
       "label": ".getPlaylistTracks()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L168",
+      "source_location": "L174",
       "id": "spotify_spotifyadapter_spotifyadapter_getplaylisttracks",
       "community": 3,
       "norm_label": ".getplaylisttracks()"
@@ -4353,7 +4362,7 @@
       "label": ".play()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L203",
+      "source_location": "L209",
       "id": "spotify_spotifyadapter_spotifyadapter_play",
       "community": 3,
       "norm_label": ".play()"
@@ -4362,7 +4371,7 @@
       "label": ".pause()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L226",
+      "source_location": "L232",
       "id": "spotify_spotifyadapter_spotifyadapter_pause",
       "community": 3,
       "norm_label": ".pause()"
@@ -4371,7 +4380,7 @@
       "label": ".seek()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L243",
+      "source_location": "L249",
       "id": "spotify_spotifyadapter_spotifyadapter_seek",
       "community": 3,
       "norm_label": ".seek()"
@@ -4380,7 +4389,7 @@
       "label": ".getCurrentTrack()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L259",
+      "source_location": "L265",
       "id": "spotify_spotifyadapter_spotifyadapter_getcurrenttrack",
       "community": 3,
       "norm_label": ".getcurrenttrack()"
@@ -4389,7 +4398,7 @@
       "label": ".getCurrentPositionMs()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L265",
+      "source_location": "L271",
       "id": "spotify_spotifyadapter_spotifyadapter_getcurrentpositionms",
       "community": 3,
       "norm_label": ".getcurrentpositionms()"
@@ -4398,7 +4407,7 @@
       "label": ".addToPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L274",
+      "source_location": "L280",
       "id": "spotify_spotifyadapter_spotifyadapter_addtoplaylist",
       "community": 3,
       "norm_label": ".addtoplaylist()"
@@ -4407,7 +4416,7 @@
       "label": ".removeFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L289",
+      "source_location": "L295",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromplaylist",
       "community": 3,
       "norm_label": ".removefromplaylist()"
@@ -4416,7 +4425,7 @@
       "label": ".saveToLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L304",
+      "source_location": "L310",
       "id": "spotify_spotifyadapter_spotifyadapter_savetolibrary",
       "community": 3,
       "norm_label": ".savetolibrary()"
@@ -4425,7 +4434,7 @@
       "label": ".removeFromLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L313",
+      "source_location": "L319",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromlibrary",
       "community": 3,
       "norm_label": ".removefromlibrary()"
@@ -4434,7 +4443,7 @@
       "label": ".isInLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L322",
+      "source_location": "L328",
       "id": "spotify_spotifyadapter_spotifyadapter_isinlibrary",
       "community": 3,
       "norm_label": ".isinlibrary()"
@@ -4443,7 +4452,7 @@
       "label": ".getPlaylistTrackIds()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L338",
+      "source_location": "L344",
       "id": "spotify_spotifyadapter_spotifyadapter_getplaylisttrackids",
       "community": 3,
       "norm_label": ".getplaylisttrackids()"
@@ -4452,7 +4461,7 @@
       "label": ".createPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L355",
+      "source_location": "L361",
       "id": "spotify_spotifyadapter_spotifyadapter_createplaylist",
       "community": 3,
       "norm_label": ".createplaylist()"
@@ -4461,7 +4470,7 @@
       "label": ".removeDuplicatesFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L395",
+      "source_location": "L401",
       "id": "spotify_spotifyadapter_spotifyadapter_removeduplicatesfromplaylist",
       "community": 3,
       "norm_label": ".removeduplicatesfromplaylist()"
@@ -4470,7 +4479,7 @@
       "label": ".openPlatformDeepLink()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L447",
+      "source_location": "L453",
       "id": "spotify_spotifyadapter_spotifyadapter_openplatformdeeplink",
       "community": 3,
       "norm_label": ".openplatformdeeplink()"
@@ -4479,10 +4488,19 @@
       "label": ".openPlaylistInApp()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L452",
+      "source_location": "L458",
       "id": "spotify_spotifyadapter_spotifyadapter_openplaylistinapp",
       "community": 3,
       "norm_label": ".openplaylistinapp()"
+    },
+    {
+      "label": ".parsePlaylistReference()",
+      "file_type": "code",
+      "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
+      "source_location": "L462",
+      "id": "spotify_spotifyadapter_spotifyadapter_parseplaylistreference",
+      "community": 3,
+      "norm_label": ".parseplaylistreference()"
     },
     {
       "label": "spotifyFetch.ts",
@@ -4661,7 +4679,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L1",
       "id": "src_adapters_spotify_tests_spotifyadapter_playback_test_ts",
-      "community": 67,
+      "community": 19,
       "norm_label": "spotifyadapter.playback.test.ts"
     },
     {
@@ -4670,7 +4688,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L7",
       "id": "tests_spotifyadapter_playback_test_mockspotifyfetch",
-      "community": 67,
+      "community": 19,
       "norm_label": "mockspotifyfetch"
     },
     {
@@ -4679,7 +4697,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L9",
       "id": "tests_spotifyadapter_playback_test_makeauth",
-      "community": 67,
+      "community": 19,
       "norm_label": "makeauth()"
     },
     {
@@ -4841,7 +4859,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L1",
       "id": "src_adapters_tests_spotify_spotifyfetch_test_ts",
-      "community": 65,
+      "community": 67,
       "norm_label": "spotifyfetch.test.ts"
     },
     {
@@ -4850,7 +4868,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L4",
       "id": "spotify_spotifyfetch_test_mockfetch",
-      "community": 65,
+      "community": 67,
       "norm_label": "mockfetch"
     },
     {
@@ -4859,7 +4877,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L10",
       "id": "spotify_spotifyfetch_test_buildauth",
-      "community": 65,
+      "community": 67,
       "norm_label": "buildauth()"
     },
     {
@@ -4868,7 +4886,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L19",
       "id": "spotify_spotifyfetch_test_makeresponse",
-      "community": 65,
+      "community": 67,
       "norm_label": "makeresponse()"
     },
     {
@@ -4877,7 +4895,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L41",
       "id": "spotify_spotifyfetch_test_auth",
-      "community": 65,
+      "community": 67,
       "norm_label": "auth"
     },
     {
@@ -4886,7 +4904,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L95",
       "id": "spotify_spotifyfetch_test_promise",
-      "community": 65,
+      "community": 67,
       "norm_label": "promise"
     },
     {
@@ -4895,7 +4913,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L99",
       "id": "spotify_spotifyfetch_test_assertion",
-      "community": 65,
+      "community": 67,
       "norm_label": "assertion"
     },
     {
@@ -4904,7 +4922,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L1",
       "id": "src_auth_authgateway_ts",
-      "community": 40,
+      "community": 30,
       "norm_label": "authgateway.ts"
     },
     {
@@ -4913,7 +4931,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L6",
       "id": "auth_authgateway_createspotifyauthcontext",
-      "community": 40,
+      "community": 30,
       "norm_label": "createspotifyauthcontext()"
     },
     {
@@ -4922,7 +4940,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L24",
       "id": "auth_authgateway_createspotifyadapter",
-      "community": 40,
+      "community": 30,
       "norm_label": "createspotifyadapter()"
     },
     {
@@ -4967,7 +4985,7 @@
       "source_file": "src/auth/useSpotifyAuth.ts",
       "source_location": "L33",
       "id": "auth_usespotifyauth_usespotifyauth",
-      "community": 44,
+      "community": 33,
       "norm_label": "usespotifyauth()"
     },
     {
@@ -5165,7 +5183,7 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L1",
       "id": "src_components_playlistaccessguard_tsx",
-      "community": 63,
+      "community": 19,
       "norm_label": "playlistaccessguard.tsx"
     },
     {
@@ -5174,7 +5192,7 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L5",
       "id": "components_playlistaccessguard_playlistaccessguardprops",
-      "community": 63,
+      "community": 19,
       "norm_label": "playlistaccessguardprops"
     },
     {
@@ -5183,7 +5201,7 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L11",
       "id": "components_playlistaccessguard_playlistaccessguard",
-      "community": 63,
+      "community": 19,
       "norm_label": "playlistaccessguard()"
     },
     {
@@ -5192,7 +5210,7 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L30",
       "id": "components_playlistaccessguard_styles",
-      "community": 63,
+      "community": 19,
       "norm_label": "styles"
     },
     {
@@ -5237,7 +5255,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L1",
       "id": "src_components_sessioncard_tsx",
-      "community": 62,
+      "community": 57,
       "norm_label": "sessioncard.tsx"
     },
     {
@@ -5246,7 +5264,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L10",
       "id": "components_sessioncard_stylestype",
-      "community": 62,
+      "community": 57,
       "norm_label": "stylestype"
     },
     {
@@ -5255,7 +5273,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L12",
       "id": "components_sessioncard_sessioncardprops",
-      "community": 62,
+      "community": 57,
       "norm_label": "sessioncardprops"
     },
     {
@@ -5264,7 +5282,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L23",
       "id": "components_sessioncard_formatdate",
-      "community": 62,
+      "community": 57,
       "norm_label": "formatdate()"
     },
     {
@@ -5273,7 +5291,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L27",
       "id": "components_sessioncard_likedrowprops",
-      "community": 62,
+      "community": 57,
       "norm_label": "likedrowprops"
     },
     {
@@ -5282,7 +5300,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L35",
       "id": "components_sessioncard_likedrow",
-      "community": 62,
+      "community": 57,
       "norm_label": "likedrow()"
     },
     {
@@ -5291,7 +5309,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L56",
       "id": "components_sessioncard_sessioncard",
-      "community": 62,
+      "community": 57,
       "norm_label": "sessioncard()"
     },
     {
@@ -5300,7 +5318,7 @@
       "source_file": "src/components/SessionCard.tsx",
       "source_location": "L130",
       "id": "components_sessioncard_createstyles",
-      "community": 62,
+      "community": 57,
       "norm_label": "createstyles()"
     },
     {
@@ -5309,7 +5327,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L1",
       "id": "src_components_tabheader_tsx",
-      "community": 30,
+      "community": 58,
       "norm_label": "tabheader.tsx"
     },
     {
@@ -5318,7 +5336,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L7",
       "id": "components_tabheader_tabheaderprops",
-      "community": 30,
+      "community": 58,
       "norm_label": "tabheaderprops"
     },
     {
@@ -5336,7 +5354,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L36",
       "id": "components_tabheader_createstyles",
-      "community": 30,
+      "community": 58,
       "norm_label": "createstyles()"
     },
     {
@@ -5399,7 +5417,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L1",
       "id": "src_deeplink_platformdeeplink_ts",
-      "community": 40,
+      "community": 43,
       "norm_label": "platformdeeplink.ts"
     },
     {
@@ -5408,7 +5426,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L3",
       "id": "deeplink_platformdeeplink_openplatformdeeplink",
-      "community": 40,
+      "community": 43,
       "norm_label": "openplatformdeeplink()"
     },
     {
@@ -5417,7 +5435,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L1",
       "id": "src_deeplink_tests_platformdeeplink_test_ts",
-      "community": 40,
+      "community": 43,
       "norm_label": "platformdeeplink.test.ts"
     },
     {
@@ -5426,7 +5444,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L6",
       "id": "tests_platformdeeplink_test_mockopenurl",
-      "community": 40,
+      "community": 43,
       "norm_label": "mockopenurl"
     },
     {
@@ -5435,7 +5453,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L1",
       "id": "src_hooks_usetheme_ts",
-      "community": 30,
+      "community": 33,
       "norm_label": "usetheme.ts"
     },
     {
@@ -5444,7 +5462,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L6",
       "id": "hooks_usetheme_themeresult",
-      "community": 30,
+      "community": 33,
       "norm_label": "themeresult"
     },
     {
@@ -5705,7 +5723,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L1",
       "id": "src_player_trackplayer_ts",
-      "community": 19,
+      "community": 64,
       "norm_label": "trackplayer.ts"
     },
     {
@@ -5714,7 +5732,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L9",
       "id": "player_trackplayer_playbackresult",
-      "community": 19,
+      "community": 64,
       "norm_label": "playbackresult"
     },
     {
@@ -5777,7 +5795,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L1",
       "id": "src_player_tests_trackplayer_test_ts",
-      "community": 19,
+      "community": 64,
       "norm_label": "trackplayer.test.ts"
     },
     {
@@ -5786,7 +5804,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L9",
       "id": "tests_trackplayer_test_sample_track",
-      "community": 19,
+      "community": 64,
       "norm_label": "sample_track"
     },
     {
@@ -5795,7 +5813,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L26",
       "id": "tests_trackplayer_test_createplayerwithplay",
-      "community": 19,
+      "community": 64,
       "norm_label": "createplayerwithplay()"
     },
     {
@@ -5804,7 +5822,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L33",
       "id": "tests_trackplayer_test_player",
-      "community": 19,
+      "community": 64,
       "norm_label": "player"
     },
     {
@@ -5813,7 +5831,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L41",
       "id": "tests_trackplayer_test_error",
-      "community": 19,
+      "community": 64,
       "norm_label": "error"
     },
     {
@@ -5844,19 +5862,10 @@
       "norm_label": "getuserplaylists()"
     },
     {
-      "label": "extractSpotifyPlaylistId()",
-      "file_type": "code",
-      "source_file": "src/playlist/PlaylistResolver.ts",
-      "source_location": "L34",
-      "id": "playlist_playlistresolver_extractspotifyplaylistid",
-      "community": 0,
-      "norm_label": "extractspotifyplaylistid()"
-    },
-    {
       "label": "resolvePlaylistFromUrl()",
       "file_type": "code",
       "source_file": "src/playlist/PlaylistResolver.ts",
-      "source_location": "L46",
+      "source_location": "L30",
       "id": "playlist_playlistresolver_resolveplaylistfromurl",
       "community": 0,
       "norm_label": "resolveplaylistfromurl()"
@@ -5865,7 +5874,7 @@
       "label": "getPendingTracks()",
       "file_type": "code",
       "source_file": "src/playlist/PlaylistResolver.ts",
-      "source_location": "L67",
+      "source_location": "L52",
       "id": "playlist_playlistresolver_getpendingtracks",
       "community": 0,
       "norm_label": "getpendingtracks()"
@@ -5876,7 +5885,7 @@
       "source_file": "src/services/BackendSync.ts",
       "source_location": "L1",
       "id": "src_services_backendsync_ts",
-      "community": 19,
+      "community": 15,
       "norm_label": "backendsync.ts"
     },
     {
@@ -5957,7 +5966,7 @@
       "source_file": "src/services/PlaylistWriter.ts",
       "source_location": "L1",
       "id": "src_services_playlistwriter_ts",
-      "community": 19,
+      "community": 9,
       "norm_label": "playlistwriter.ts"
     },
     {
@@ -5984,7 +5993,7 @@
       "source_file": "src/services/PlaylistWriter.ts",
       "source_location": "L22",
       "id": "services_playlistwriter_writeerrorcontext",
-      "community": 19,
+      "community": 9,
       "norm_label": "writeerrorcontext"
     },
     {
@@ -6299,7 +6308,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L1",
       "id": "src_services_sessiontracker_ts",
-      "community": 57,
+      "community": 41,
       "norm_label": "sessiontracker.ts"
     },
     {
@@ -6308,7 +6317,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L9",
       "id": "services_sessiontracker_sessionmeta",
-      "community": 57,
+      "community": 41,
       "norm_label": "sessionmeta"
     },
     {
@@ -6317,7 +6326,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L20",
       "id": "services_sessiontracker_sessionpatch",
-      "community": 57,
+      "community": 41,
       "norm_label": "sessionpatch"
     },
     {
@@ -6630,7 +6639,7 @@
       "label": "storageWithAddedPairs()",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L60",
+      "source_location": "L61",
       "id": "tests_playlistwriter_test_storagewithaddedpairs",
       "community": 9,
       "norm_label": "storagewithaddedpairs()"
@@ -6639,7 +6648,7 @@
       "label": "buildMockStorage()",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L65",
+      "source_location": "L66",
       "id": "tests_playlistwriter_test_buildmockstorage",
       "community": 9,
       "norm_label": "buildmockstorage()"
@@ -6648,7 +6657,7 @@
       "label": "adapter",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L87",
+      "source_location": "L88",
       "id": "tests_playlistwriter_test_adapter",
       "community": 9,
       "norm_label": "adapter"
@@ -6657,7 +6666,7 @@
       "label": "storage",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L88",
+      "source_location": "L89",
       "id": "tests_playlistwriter_test_storage",
       "community": 9,
       "norm_label": "storage"
@@ -6666,7 +6675,7 @@
       "label": "writer",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L89",
+      "source_location": "L90",
       "id": "tests_playlistwriter_test_writer",
       "community": 9,
       "norm_label": "writer"
@@ -6675,7 +6684,7 @@
       "label": "result",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L107",
+      "source_location": "L108",
       "id": "tests_playlistwriter_test_result",
       "community": 9,
       "norm_label": "result"
@@ -6684,7 +6693,7 @@
       "label": "callOrder",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L115",
+      "source_location": "L116",
       "id": "tests_playlistwriter_test_callorder",
       "community": 9,
       "norm_label": "callorder"
@@ -6693,7 +6702,7 @@
       "label": "addToPlaylist",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L117",
+      "source_location": "L118",
       "id": "tests_playlistwriter_test_addtoplaylist",
       "community": 9,
       "norm_label": "addtoplaylist"
@@ -6702,7 +6711,7 @@
       "label": "store",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L122",
+      "source_location": "L123",
       "id": "tests_playlistwriter_test_store",
       "community": 9,
       "norm_label": "store"
@@ -6711,7 +6720,7 @@
       "label": "firstSetItem",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L138",
+      "source_location": "L139",
       "id": "tests_playlistwriter_test_firstsetitem",
       "community": 9,
       "norm_label": "firstsetitem"
@@ -6720,7 +6729,7 @@
       "label": "firstAdd",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L139",
+      "source_location": "L140",
       "id": "tests_playlistwriter_test_firstadd",
       "community": 9,
       "norm_label": "firstadd"
@@ -6729,7 +6738,7 @@
       "label": "entry",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L156",
+      "source_location": "L157",
       "id": "tests_playlistwriter_test_entry",
       "community": 9,
       "norm_label": "entry"
@@ -6738,7 +6747,7 @@
       "label": "rateLimitedError",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L204",
+      "source_location": "L205",
       "id": "tests_playlistwriter_test_ratelimitederror",
       "community": 9,
       "norm_label": "ratelimitederror"
@@ -6747,7 +6756,7 @@
       "label": "queue",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L215",
+      "source_location": "L216",
       "id": "tests_playlistwriter_test_queue",
       "community": 9,
       "norm_label": "queue"
@@ -6756,7 +6765,7 @@
       "label": "authError",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L234",
+      "source_location": "L235",
       "id": "tests_playlistwriter_test_autherror",
       "community": 9,
       "norm_label": "autherror"
@@ -6765,7 +6774,7 @@
       "label": "onWriteError",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L238",
+      "source_location": "L239",
       "id": "tests_playlistwriter_test_onwriteerror",
       "community": 9,
       "norm_label": "onwriteerror"
@@ -6774,7 +6783,7 @@
       "label": "genericError",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L335",
+      "source_location": "L336",
       "id": "tests_playlistwriter_test_genericerror",
       "community": 9,
       "norm_label": "genericerror"
@@ -6783,7 +6792,7 @@
       "label": "onLibraryWritten",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L610",
+      "source_location": "L611",
       "id": "tests_playlistwriter_test_onlibrarywritten",
       "community": 9,
       "norm_label": "onlibrarywritten"
@@ -6792,7 +6801,7 @@
       "label": "regularCalls",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L816",
+      "source_location": "L817",
       "id": "tests_playlistwriter_test_regularcalls",
       "community": 9,
       "norm_label": "regularcalls"
@@ -6801,7 +6810,7 @@
       "label": "storedQueue",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L835",
+      "source_location": "L836",
       "id": "tests_playlistwriter_test_storedqueue",
       "community": 9,
       "norm_label": "storedqueue"
@@ -6810,7 +6819,7 @@
       "label": "drainPromise",
       "file_type": "code",
       "source_file": "src/services/__tests__/PlaylistWriter.test.ts",
-      "source_location": "L868",
+      "source_location": "L869",
       "id": "tests_playlistwriter_test_drainpromise",
       "community": 9,
       "norm_label": "drainpromise"
@@ -7109,7 +7118,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L35",
       "id": "stores_sessiontypes_sessionstatus",
-      "community": 57,
+      "community": 41,
       "norm_label": "sessionstatus"
     },
     {
@@ -7118,7 +7127,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L48",
       "id": "stores_sessiontypes_sessionentry",
-      "community": 62,
+      "community": 57,
       "norm_label": "sessionentry"
     },
     {
@@ -7127,7 +7136,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L70",
       "id": "stores_sessiontypes_isresumable",
-      "community": 62,
+      "community": 57,
       "norm_label": "isresumable()"
     },
     {
@@ -7262,7 +7271,7 @@
       "source_file": "src/stores/swipeStore.ts",
       "source_location": "L597",
       "id": "stores_swipestore_useactivesession",
-      "community": 27,
+      "community": 38,
       "norm_label": "useactivesession()"
     },
     {
@@ -7721,7 +7730,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L1",
       "id": "src_swipe_buttonbar_tsx",
-      "community": 30,
+      "community": 58,
       "norm_label": "buttonbar.tsx"
     },
     {
@@ -7730,7 +7739,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L7",
       "id": "swipe_buttonbar_buttonbarprops",
-      "community": 30,
+      "community": 58,
       "norm_label": "buttonbarprops"
     },
     {
@@ -7748,7 +7757,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L92",
       "id": "swipe_buttonbar_createstyles",
-      "community": 30,
+      "community": 58,
       "norm_label": "createstyles()"
     },
     {
@@ -7775,7 +7784,7 @@
       "source_file": "src/swipe/SwipeCard.tsx",
       "source_location": "L30",
       "id": "swipe_swipecard_swipecard",
-      "community": 58,
+      "community": 31,
       "norm_label": "swipecard()"
     },
     {
@@ -7838,7 +7847,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L1",
       "id": "src_swipe_swipefrontcard_tsx",
-      "community": 58,
+      "community": 20,
       "norm_label": "swipefrontcard.tsx"
     },
     {
@@ -7847,7 +7856,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L10",
       "id": "swipe_swipefrontcard_swipefrontcardprops",
-      "community": 58,
+      "community": 20,
       "norm_label": "swipefrontcardprops"
     },
     {
@@ -7856,7 +7865,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L43",
       "id": "swipe_swipefrontcard_swipefrontcard",
-      "community": 58,
+      "community": 20,
       "norm_label": "swipefrontcard()"
     },
     {
@@ -7865,7 +7874,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L94",
       "id": "swipe_swipefrontcard_styles",
-      "community": 58,
+      "community": 20,
       "norm_label": "styles"
     },
     {
@@ -7910,7 +7919,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L1",
       "id": "src_swipe_useswipegesture_ts",
-      "community": 58,
+      "community": 20,
       "norm_label": "useswipegesture.ts"
     },
     {
@@ -7919,7 +7928,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L28",
       "id": "swipe_useswipegesture_snap_back_config",
-      "community": 58,
+      "community": 20,
       "norm_label": "snap_back_config"
     },
     {
@@ -7928,7 +7937,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L40",
       "id": "swipe_useswipegesture_swipedirection",
-      "community": 58,
+      "community": 20,
       "norm_label": "swipedirection"
     },
     {
@@ -7946,7 +7955,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L79",
       "id": "swipe_useswipegesture_useswipegestureoptions",
-      "community": 58,
+      "community": 20,
       "norm_label": "useswipegestureoptions"
     },
     {
@@ -7955,7 +7964,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L94",
       "id": "swipe_useswipegesture_useswipegestureresult",
-      "community": 58,
+      "community": 20,
       "norm_label": "useswipegestureresult"
     },
     {
@@ -7964,7 +7973,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L131",
       "id": "swipe_useswipegesture_useswipegesture",
-      "community": 58,
+      "community": 20,
       "norm_label": "useswipegesture()"
     },
     {
@@ -8094,19 +8103,10 @@
       "norm_label": "likedsongs"
     },
     {
-      "label": "id",
-      "file_type": "code",
-      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
-      "source_location": "L24",
-      "id": "playlist_playlistresolver_test_id",
-      "community": 0,
-      "norm_label": "id"
-    },
-    {
       "label": "mockAdapter",
       "file_type": "code",
       "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
-      "source_location": "L58",
+      "source_location": "L24",
       "id": "playlist_playlistresolver_test_mockadapter",
       "community": 0,
       "norm_label": "mockadapter"
@@ -9570,13 +9570,13 @@
       "norm_label": "\u2611 m6 \u2014 `trackplayer.play` flattens all errors to `strategy:'none'` (medium)"
     },
     {
-      "label": "\u2610 L1 \u2014 Adapter-boundary leak in PlaylistResolver (LOW, arch)",
+      "label": "\u2611 L1 \u2014 Adapter-boundary leak in PlaylistResolver (LOW, arch)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L121",
       "id": "docs_code_review_2026_06_08_l1_adapter_boundary_leak_in_playlistresolver_low_arch",
       "community": 35,
-      "norm_label": "\u2610 l1 \u2014 adapter-boundary leak in playlistresolver (low, arch)"
+      "norm_label": "\u2611 l1 \u2014 adapter-boundary leak in playlistresolver (low, arch)"
     },
     {
       "label": "\u2610 L2 \u2014 Production logging of scopes / deep-link URIs (LOW, security hygiene)",
@@ -9669,6 +9669,24 @@
       "norm_label": "suggested fix order"
     },
     {
+      "label": "extractSpotifyPlaylistId()",
+      "file_type": "code",
+      "source_file": "src/playlist/PlaylistResolver.ts",
+      "source_location": "L34",
+      "community": 0,
+      "norm_label": "extractspotifyplaylistid()",
+      "id": "playlist_playlistresolver_extractspotifyplaylistid"
+    },
+    {
+      "label": "id",
+      "file_type": "code",
+      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
+      "source_location": "L24",
+      "community": 0,
+      "norm_label": "id",
+      "id": "playlist_playlistresolver_test_id"
+    },
+    {
       "label": "ReconcileResult",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
@@ -9754,7 +9772,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L1",
-      "community": 66,
+      "community": 58,
       "norm_label": "destinationeditor.tsx",
       "id": "src_swipe_destinationeditor_tsx"
     },
@@ -9763,7 +9781,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L14",
-      "community": 66,
+      "community": 58,
       "norm_label": "scope",
       "id": "swipe_destinationeditor_scope"
     },
@@ -9772,7 +9790,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L16",
-      "community": 66,
+      "community": 58,
       "norm_label": "destinationeditorprops",
       "id": "swipe_destinationeditor_destinationeditorprops"
     },
@@ -9781,7 +9799,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L26",
-      "community": 66,
+      "community": 58,
       "norm_label": "destinationeditor()",
       "id": "swipe_destinationeditor_destinationeditor"
     },
@@ -9790,7 +9808,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L221",
-      "community": 66,
+      "community": 58,
       "norm_label": "createstyles()",
       "id": "swipe_destinationeditor_createstyles"
     },
@@ -9799,7 +9817,7 @@
       "file_type": "code",
       "source_file": "app/(auth)/login.tsx",
       "source_location": "L41",
-      "community": 30,
+      "community": 33,
       "norm_label": "styles",
       "id": "auth_login_styles"
     },
@@ -9817,7 +9835,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
-      "community": 0,
+      "community": 30,
       "norm_label": "styles",
       "id": "tabs_index_styles"
     },
@@ -9988,7 +10006,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L686",
-      "community": 40,
+      "community": 27,
       "norm_label": "styles",
       "id": "swipe_playlistid_styles"
     },
@@ -10231,7 +10249,7 @@
       "file_type": "code",
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L32",
-      "community": 30,
+      "community": 58,
       "norm_label": "styles",
       "id": "components_tabheader_styles"
     },
@@ -10312,7 +10330,7 @@
       "file_type": "code",
       "source_file": "src/player/usePreviewPlayer.ts",
       "source_location": "L79",
-      "community": 40,
+      "community": 60,
       "norm_label": "usepreviewplayer()",
       "id": "player_usepreviewplayer_usepreviewplayer"
     },
@@ -10474,7 +10492,7 @@
       "file_type": "code",
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L88",
-      "community": 30,
+      "community": 58,
       "norm_label": "styles",
       "id": "swipe_buttonbar_styles"
     },
@@ -10483,7 +10501,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L216",
-      "community": 66,
+      "community": 58,
       "norm_label": "styles",
       "id": "swipe_destinationeditor_styles"
     },
@@ -18807,9 +18825,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "src_adapters_interface_ts",
-      "confidence_score": 1.0
+      "target": "src_adapters_interface_ts"
     },
     {
       "relation": "imports_from",
@@ -19093,9 +19111,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "adapters_interface_platformerrorcode",
-      "confidence_score": 1.0
+      "target": "adapters_interface_platformerrorcode"
     },
     {
       "relation": "imports",
@@ -19246,9 +19264,9 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_trackplayer_ts",
-      "target": "adapters_interface_platformerror",
-      "confidence_score": 1.0
+      "target": "adapters_interface_platformerror"
     },
     {
       "relation": "imports",
@@ -19257,9 +19275,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "adapters_interface_platformerror",
-      "confidence_score": 1.0
+      "target": "adapters_interface_platformerror"
     },
     {
       "relation": "imports",
@@ -19389,9 +19407,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "adapters_interface_track",
-      "confidence_score": 1.0
+      "target": "adapters_interface_track"
     },
     {
       "relation": "imports",
@@ -19752,9 +19770,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "adapters_interface_musicplatformadapter",
-      "confidence_score": 1.0
+      "target": "adapters_interface_musicplatformadapter"
     },
     {
       "relation": "imports",
@@ -20112,6 +20130,16 @@
       "confidence_score": 1.0,
       "source": "mock_mockadapter_mockadapter",
       "target": "mock_mockadapter_mockadapter_openplaylistinapp"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/adapters/mock/MockAdapter.ts",
+      "source_location": "L297",
+      "weight": 1.0,
+      "source": "mock_mockadapter_mockadapter",
+      "target": "mock_mockadapter_mockadapter_parseplaylistreference",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -20753,6 +20781,16 @@
       "confidence_score": 1.0,
       "source": "spotify_spotifyadapter_spotifyadapter",
       "target": "spotify_spotifyadapter_spotifyadapter_openplaylistinapp"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
+      "source_location": "L462",
+      "weight": 1.0,
+      "source": "spotify_spotifyadapter_spotifyadapter",
+      "target": "spotify_spotifyadapter_spotifyadapter_parseplaylistreference",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -23085,9 +23123,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "src_player_trackplayer_ts",
-      "confidence_score": 1.0
+      "target": "src_player_trackplayer_ts"
     },
     {
       "relation": "imports_from",
@@ -23157,9 +23195,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "player_trackplayer_trackplayer",
-      "confidence_score": 1.0
+      "target": "player_trackplayer_trackplayer"
     },
     {
       "relation": "imports",
@@ -23178,9 +23216,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "tests_trackplayer_test_sample_track",
-      "confidence_score": 1.0
+      "target": "tests_trackplayer_test_sample_track"
     },
     {
       "relation": "contains",
@@ -23188,9 +23226,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "tests_trackplayer_test_createplayerwithplay",
-      "confidence_score": 1.0
+      "target": "tests_trackplayer_test_createplayerwithplay"
     },
     {
       "relation": "contains",
@@ -23198,9 +23236,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L55",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "tests_trackplayer_test_player",
-      "confidence_score": 1.0
+      "target": "tests_trackplayer_test_player"
     },
     {
       "relation": "contains",
@@ -23208,9 +23246,9 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_tests_trackplayer_test_ts",
-      "target": "tests_trackplayer_test_error",
-      "confidence_score": 1.0
+      "target": "tests_trackplayer_test_error"
     },
     {
       "relation": "contains",
@@ -23231,16 +23269,6 @@
       "confidence_score": 1.0,
       "source": "src_playlist_playlistresolver_ts",
       "target": "playlist_playlistresolver_getuserplaylists"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/playlist/PlaylistResolver.ts",
-      "source_location": "L34",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_playlist_playlistresolver_ts",
-      "target": "playlist_playlistresolver_extractspotifyplaylistid"
     },
     {
       "relation": "contains",
@@ -23274,6 +23302,16 @@
       "target": "src_playlist_playlistresolver_ts"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/playlist/PlaylistResolver.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_playlist_playlistresolver_ts",
+      "target": "playlist_playlistresolver_extractspotifyplaylistid"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -23293,17 +23331,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "playlist_playlistresolver_resolveplaylistfromurl",
-      "target": "playlist_playlistresolver_extractspotifyplaylistid"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_tests_playlist_playlistresolver_test_ts",
       "target": "playlist_playlistresolver_extractspotifyplaylistid"
     },
     {
@@ -27294,21 +27321,32 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
-      "source_location": "L39",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_tests_playlist_playlistresolver_test_ts",
-      "target": "playlist_playlistresolver_test_id"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
       "source_location": "L105",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_tests_playlist_playlistresolver_test_ts",
       "target": "playlist_playlistresolver_test_mockadapter"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_tests_playlist_playlistresolver_test_ts",
+      "target": "playlist_playlistresolver_extractspotifyplaylistid"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/__tests__/playlist/PlaylistResolver.test.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_tests_playlist_playlistresolver_test_ts",
+      "target": "playlist_playlistresolver_test_id"
     },
     {
       "relation": "contains",
@@ -29366,5 +29404,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f3cf891bc24cae5f4defc2768e595b9a12484e22"
+  "built_at_commit": "3f7da5e9c1573824785571c4a5a7c522bef43373"
 }
