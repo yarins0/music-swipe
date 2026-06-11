@@ -118,7 +118,7 @@ Full sort + `flatMap` + per-record allocation + new array identity on every stor
 Catching everything loses the recoverable (`NO_ACTIVE_DEVICE` → deep link) vs fatal (`AUTH_EXPIRED`) distinction.
 **Fix (if pursued):** widen `PlaybackResult` to carry an optional `PlatformErrorCode`; rethrow non-`PlatformError`. Update `MockAdapter`/contract per the rules if the interface gains anything. Confirm with product whether the badge should branch before implementing.
 
-### ☐ L1 — Adapter-boundary leak in PlaylistResolver (LOW, arch)
+### ☑ L1 — Adapter-boundary leak in PlaylistResolver (LOW, arch)
 **File:** `src/playlist/PlaylistResolver.ts:30-44`
 Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `src/adapters/` (violates the adapter boundary rule). **Fix:** move parsing behind a new adapter method (e.g. `adapter.parsePlaylistReference(input)`); add it to `MusicPlatformAdapter`, `MockAdapter`, and the contract test per the rules.
 

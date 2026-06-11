@@ -69,6 +69,13 @@ export interface MusicPlatformAdapter {
 
   getUserPlaylists(): Promise<Playlist[]>;
   getPlaylistById(playlistId: string): Promise<Playlist>;
+
+  /**
+   * Parses a user-supplied playlist reference (a platform URL, URI, or raw id) and
+   * returns the platform playlist id, or null if the input is not a recognizable
+   * reference. Keeps platform-specific URL/URI parsing behind the adapter boundary.
+   */
+  parsePlaylistReference(input: string): string | null;
   getPlaylistTracks(
     playlistId: string,
     offset?: number,

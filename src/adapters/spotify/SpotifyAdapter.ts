@@ -37,6 +37,12 @@ interface SpotifyPlayerState {
   progress_ms: number | null;
 }
 
+// The three ways a user can reference a Spotify playlist: an open.spotify.com share
+// URL, a spotify:playlist: URI, or a raw 22-character base62 id.
+const SPOTIFY_PLAYLIST_URL_RE = /spotify\.com\/playlist\/([a-zA-Z0-9]+)/;
+const SPOTIFY_URI_RE = /^spotify:playlist:([a-zA-Z0-9]+)$/;
+const SPOTIFY_RAW_ID_RE = /^[a-zA-Z0-9]{22}$/;
+
 export class SpotifyAdapter implements MusicPlatformAdapter {
   readonly capabilities: AdapterCapabilities = {
     requiresExplicitFollow: false,
@@ -451,5 +457,19 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async openPlaylistInApp(playlistId: string): Promise<void> {
     await openPlatformDeepLink(`spotify:playlist:${playlistId}`);
+  }
+
+  parsePlaylistReference(input: string): string | null {
+    const trimmed = input.trim();
+
+    const urlMatch = trimmed.match(SPOTIFY_PLAYLIST_URL_RE);
+    if (urlMatch) return urlMatch[1];
+
+    const uriMatch = trimmed.match(SPOTIFY_URI_RE);
+    if (uriMatch) return uriMatch[1];
+
+    if (SPOTIFY_RAW_ID_RE.test(trimmed)) return trimmed;
+
+    return null;
   }
 }

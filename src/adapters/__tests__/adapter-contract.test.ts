@@ -295,6 +295,33 @@ describe('adapter contract — MockAdapter', () => {
     });
   });
 
+  describe('playlist reference parsing', () => {
+    it('parsePlaylistReference() extracts the id from a platform URI', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('mock:playlist:mock-playlist-1')).toBe('mock-playlist-1');
+    });
+
+    it('parsePlaylistReference() accepts a raw playlist id', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('mock-playlist-2')).toBe('mock-playlist-2');
+    });
+
+    it('parsePlaylistReference() trims surrounding whitespace', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('  mock-playlist-2  ')).toBe('mock-playlist-2');
+    });
+
+    it('parsePlaylistReference() returns null for an unrecognized reference', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('not-a-reference')).toBeNull();
+    });
+
+    it('parsePlaylistReference() returns null for an empty string', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('')).toBeNull();
+    });
+  });
+
   describe('deep link', () => {
     it('openPlatformDeepLink() resolves and records the uri', async () => {
       const adapter = new MockAdapter();

@@ -33,6 +33,7 @@ function buildMockAdapter(overrides: Partial<MusicPlatformAdapter> = {}): jest.M
     }),
     getUserPlaylists: jest.fn().mockResolvedValue([]),
     getPlaylistById: jest.fn().mockResolvedValue({} as Playlist),
+    parsePlaylistReference: jest.fn().mockReturnValue(null),
     getPlaylistTracks: jest.fn().mockResolvedValue({ tracks: [], total: 0 }),
     play: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn().mockResolvedValue(undefined),

@@ -473,4 +473,38 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(adapter.capabilities.supportsLibrarySave).toBe(true);
     expect(adapter.capabilities.supportsPlaylistCreation).toBe(true);
   });
+
+  // --- parsePlaylistReference ---
+
+  it('parsePlaylistReference() extracts the id from an open.spotify.com URL', () => {
+    expect(adapter.parsePlaylistReference('https://open.spotify.com/playlist/37i9dQZF1DX5Vy6DFOcx00')).toBe(
+      '37i9dQZF1DX5Vy6DFOcx00',
+    );
+  });
+
+  it('parsePlaylistReference() extracts the id from a spotify:playlist: URI', () => {
+    expect(adapter.parsePlaylistReference('spotify:playlist:37i9dQZF1DX5Vy6DFOcx00')).toBe(
+      '37i9dQZF1DX5Vy6DFOcx00',
+    );
+  });
+
+  it('parsePlaylistReference() accepts a raw 22-character base62 id', () => {
+    expect(adapter.parsePlaylistReference('37i9dQZF1DX5Vy6DFOcx00')).toBe('37i9dQZF1DX5Vy6DFOcx00');
+  });
+
+  it('parsePlaylistReference() trims surrounding whitespace before matching a raw id', () => {
+    expect(adapter.parsePlaylistReference('  37i9dQZF1DX5Vy6DFOcx00  ')).toBe('37i9dQZF1DX5Vy6DFOcx00');
+  });
+
+  it('parsePlaylistReference() returns null for an invalid URL', () => {
+    expect(adapter.parsePlaylistReference('https://example.com/foo')).toBeNull();
+  });
+
+  it('parsePlaylistReference() returns null for a string that is not a valid id', () => {
+    expect(adapter.parsePlaylistReference('not-a-playlist')).toBeNull();
+  });
+
+  it('parsePlaylistReference() returns null for an empty string', () => {
+    expect(adapter.parsePlaylistReference('')).toBeNull();
+  });
 });

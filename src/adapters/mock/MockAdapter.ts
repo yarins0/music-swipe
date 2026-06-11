@@ -293,4 +293,17 @@ export class MockAdapter implements MusicPlatformAdapter {
   async openPlaylistInApp(playlistId: string): Promise<void> {
     this.calls.openPlaylistInApp.push(playlistId);
   }
+
+  parsePlaylistReference(input: string): string | null {
+    const trimmed = input.trim();
+
+    // Mirrors the real adapter's contract using the mock reference format: a
+    // mock:playlist: URI or a raw mock-playlist-<n> id.
+    const uriMatch = trimmed.match(/^mock:playlist:([\w-]+)$/);
+    if (uriMatch) return uriMatch[1];
+
+    if (/^mock-playlist-\w+$/.test(trimmed)) return trimmed;
+
+    return null;
+  }
 }

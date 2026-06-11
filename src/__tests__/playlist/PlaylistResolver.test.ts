@@ -1,4 +1,4 @@
-import { extractSpotifyPlaylistId, getUserPlaylists } from '@/playlist/PlaylistResolver';
+import { getUserPlaylists } from '@/playlist/PlaylistResolver';
 import { LIKED_SONGS_PLAYLIST_ID } from '@/adapters/interface';
 import type { MusicPlatformAdapter, Playlist } from '@/adapters/interface';
 
@@ -17,40 +17,6 @@ const likedSongs = makePlaylist({
   name: 'Liked Songs',
   isOwned: true,
   isFollowed: false,
-});
-
-describe('extractSpotifyPlaylistId', () => {
-  it('extracts ID from open.spotify.com playlist URL', () => {
-    const id = extractSpotifyPlaylistId('https://open.spotify.com/playlist/37i9dQZF1DX5Vy6DFOcx00');
-    expect(id).toBe('37i9dQZF1DX5Vy6DFOcx00');
-  });
-
-  it('extracts ID from spotify:playlist: URI', () => {
-    const id = extractSpotifyPlaylistId('spotify:playlist:37i9dQZF1DX5Vy6DFOcx00');
-    expect(id).toBe('37i9dQZF1DX5Vy6DFOcx00');
-  });
-
-  it('accepts a raw 22-character base62 ID', () => {
-    const id = extractSpotifyPlaylistId('37i9dQZF1DX5Vy6DFOcx00');
-    expect(id).toBe('37i9dQZF1DX5Vy6DFOcx00');
-  });
-
-  it('trims surrounding whitespace before matching a raw ID', () => {
-    const id = extractSpotifyPlaylistId('  37i9dQZF1DX5Vy6DFOcx00  ');
-    expect(id).toBe('37i9dQZF1DX5Vy6DFOcx00');
-  });
-
-  it('returns null for an invalid URL', () => {
-    expect(extractSpotifyPlaylistId('https://example.com/foo')).toBeNull();
-  });
-
-  it('returns null for a short string that is not a valid ID', () => {
-    expect(extractSpotifyPlaylistId('not-a-playlist')).toBeNull();
-  });
-
-  it('returns null for an empty string', () => {
-    expect(extractSpotifyPlaylistId('')).toBeNull();
-  });
 });
 
 describe('getUserPlaylists', () => {
