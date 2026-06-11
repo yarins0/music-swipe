@@ -106,7 +106,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 `upsert_swipes` RPC commits, then a separate batch DELETE reconciles dangling pending rows. A crash/failure between them leaves stale `pending` rows that resurface in a later decide-later fetch; the 500-on-delete path can also cause client retry double-counting.
 **Fix:** Move the reconciliation DELETE into the `upsert_swipes` plpgsql function (single transaction) via a new migration, or make the endpoint idempotent on retry. (Migrations live in `backend/src/db/migrations/`, applied via Supabase SQL editor in order — see prior review's 2026-06-04 note.)
 
-### ☐ M5 — `useMatchesStore` recomputes unmemoized on every render (MEDIUM, perf)
+### ☑ M5 — `useMatchesStore` recomputes unmemoized on every render (MEDIUM, perf)
 **File:** `src/matches/useMatchesStore.ts:21-42`
 **Verified:** yes.
 Full sort + `flatMap` + per-record allocation + new array identity on every store change, defeating downstream `React.memo`. Also note the documented "matches come from the server" invariant is not enforced here (local-history derived); prior review deferred the server-reconciliation half (old M7) — keep that deferral, only fix the memoization now.
