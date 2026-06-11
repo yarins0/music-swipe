@@ -1,16 +1,16 @@
 # Graph Report - music-swipe  (2026-06-11)
 
 ## Corpus Check
-- 130 files · ~81,772 words
+- 131 files · ~81,548 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1181 nodes · 1784 edges · 66 communities (58 shown, 8 thin omitted)
+- 1181 nodes · 1784 edges · 65 communities (57 shown, 8 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a7a3b95a`
+- Built from commit: `63b14f32`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -48,7 +48,6 @@
 - [[_COMMUNITY_Community 30|Community 30]]
 - [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 32|Community 32]]
-- [[_COMMUNITY_Community 33|Community 33]]
 - [[_COMMUNITY_Community 34|Community 34]]
 - [[_COMMUNITY_Community 35|Community 35]]
 - [[_COMMUNITY_Community 36|Community 36]]
@@ -96,14 +95,14 @@
   app/(tabs)/session-end.tsx → src/hooks/useTheme.ts
 - `LikedTrackRow()` --calls--> `useTheme()`  [EXTRACTED]
   app/(tabs)/session-end.tsx → src/hooks/useTheme.ts
+- `PrivacyPolicyScreen()` --calls--> `useTheme()`  [EXTRACTED]
+  app/(tabs)/settings/privacy-policy.tsx → src/hooks/useTheme.ts
+- `TermsOfServiceScreen()` --calls--> `useTheme()`  [EXTRACTED]
+  app/(tabs)/settings/terms-of-service.tsx → src/hooks/useTheme.ts
 - `RootLayout()` --calls--> `useAuthStore`  [EXTRACTED]
   app/_layout.tsx → src/stores/authStore.ts
-- `LoginScreen()` --calls--> `useTheme()`  [EXTRACTED]
-  app/(auth)/login.tsx → src/hooks/useTheme.ts
-- `AuthLayout()` --calls--> `useAuthStore`  [EXTRACTED]
-  app/(auth)/_layout.tsx → src/stores/authStore.ts
 
-## Communities (66 total, 8 thin omitted)
+## Communities (65 total, 8 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.17
@@ -215,19 +214,15 @@ Nodes (12): skills, supabase, supabase-postgres-best-practices, computedHash, co
 
 ### Community 30 - "Community 30"
 Cohesion: 0.07
-Nodes (31): styles, PlaylistRow(), PlaylistRowProps, styles, ThemeResult, useTheme(), ContactRowProps, ContactScreen() (+23 more)
+Nodes (30): styles, AppModal(), AppModalProps, styles, PlaylistRow(), PlaylistRowProps, styles, styles (+22 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.11
-Nodes (15): openPlatformDeepLink(), SegmentNavigator(), SegmentNavigatorProps, styles, styles, SwipeCard(), SwipeCardProps, computeSeekStepMs() (+7 more)
+Cohesion: 0.09
+Nodes (22): useTheme(), SegmentNavigator(), SegmentNavigatorProps, styles, ContactScreen(), ButtonBar(), ButtonBarProps, styles (+14 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.17
 Nodes (12): devDependencies, @babel/core, babel-plugin-module-resolver, eslint-config-expo, eslint-plugin-rulesdir, husky, jest, jest-expo (+4 more)
-
-### Community 33 - "Community 33"
-Cohesion: 0.16
-Nodes (8): AppModal(), AppModalProps, styles, styles, TabHeader(), TabHeaderProps, Section, styles
 
 ### Community 34 - "Community 34"
 Cohesion: 0.20
@@ -266,8 +261,8 @@ Cohesion: 0.33
 Nodes (5): calledKeys, mockDeleteItem, mockSetItem, SECURE_STORE_KEYS, state
 
 ### Community 43 - "Community 43"
-Cohesion: 0.09
-Nodes (17): LinkRowProps, pickerStyles, SectionProps, SettingRowProps, SettingsScreen(), styles, StylesType, THEME_OPTIONS (+9 more)
+Cohesion: 0.08
+Nodes (19): openPlatformDeepLink(), LinkRowProps, pickerStyles, SectionProps, SettingRowProps, SettingsScreen(), styles, StylesType (+11 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.15
@@ -343,11 +338,11 @@ Nodes (11): mapHttpError(), performTokenRefresh(), refreshSpotifyToken(), sleep(
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `MockAdapter` connect `Community 10` to `Community 9`, `Community 19`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
 - **Why does `PlaylistWriter` connect `Community 24` to `Community 38`, `Community 40`, `Community 9`, `Community 44`, `Community 27`, `Community 31`?**
   _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **Why does `Track` connect `Community 19` to `Community 40`, `Community 9`, `Community 59`, `Community 12`, `Community 46`, `Community 15`, `Community 16`, `Community 21`, `Community 57`, `Community 58`, `Community 27`, `Community 61`, `Community 62`, `Community 31`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **What connects `name`, `slug`, `version` to the rest of the system?**
   _636 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 1` be split into smaller, more focused modules?**

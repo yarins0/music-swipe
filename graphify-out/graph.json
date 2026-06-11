@@ -1412,7 +1412,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L1",
       "id": "app_tabs_index_tsx",
-      "community": 33,
+      "community": 30,
       "norm_label": "index.tsx"
     },
     {
@@ -1421,7 +1421,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L23",
       "id": "tabs_index_section",
-      "community": 33,
+      "community": 30,
       "norm_label": "section"
     },
     {
@@ -1439,7 +1439,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
       "id": "tabs_index_createstyles",
-      "community": 33,
+      "community": 30,
       "norm_label": "createstyles()"
     },
     {
@@ -1637,7 +1637,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L40",
       "id": "settings_contact_contactscreen",
-      "community": 30,
+      "community": 31,
       "norm_label": "contactscreen()"
     },
     {
@@ -2892,28 +2892,10 @@
       "norm_label": "decided_statuses"
     },
     {
-      "label": "ReconcileResult",
-      "file_type": "code",
-      "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L12",
-      "id": "routes_swipes_reconcileresult",
-      "community": 7,
-      "norm_label": "reconcileresult"
-    },
-    {
-      "label": "reconcilePendingDecisions()",
-      "file_type": "code",
-      "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L32",
-      "id": "routes_swipes_reconcilependingdecisions",
-      "community": 7,
-      "norm_label": "reconcilependingdecisions()"
-    },
-    {
       "label": "SwipeInput",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L112",
+      "source_location": "L12",
       "id": "routes_swipes_swipeinput",
       "community": 7,
       "norm_label": "swipeinput"
@@ -2922,7 +2904,7 @@
       "label": "SwipeRow",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L126",
+      "source_location": "L26",
       "id": "routes_swipes_swiperow",
       "community": 7,
       "norm_label": "swiperow"
@@ -2931,7 +2913,7 @@
       "label": "SwipeRowWithSession",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L134",
+      "source_location": "L34",
       "id": "routes_swipes_swiperowwithsession",
       "community": 7,
       "norm_label": "swiperowwithsession"
@@ -2940,7 +2922,7 @@
       "label": "ValidationError",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L138",
+      "source_location": "L38",
       "id": "routes_swipes_validationerror",
       "community": 7,
       "norm_label": "validationerror"
@@ -2949,7 +2931,7 @@
       "label": "validateTrackMetadata()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L143",
+      "source_location": "L43",
       "id": "routes_swipes_validatetrackmetadata",
       "community": 7,
       "norm_label": "validatetrackmetadata()"
@@ -2958,7 +2940,7 @@
       "label": "validateSwipeItem()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L155",
+      "source_location": "L55",
       "id": "routes_swipes_validateswipeitem",
       "community": 7,
       "norm_label": "validateswipeitem()"
@@ -2967,7 +2949,7 @@
       "label": "validateSwipeBatch()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L176",
+      "source_location": "L76",
       "id": "routes_swipes_validateswipebatch",
       "community": 7,
       "norm_label": "validateswipebatch()"
@@ -2976,7 +2958,7 @@
       "label": "SessionVerification",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L184",
+      "source_location": "L84",
       "id": "routes_swipes_sessionverification",
       "community": 7,
       "norm_label": "sessionverification"
@@ -2985,7 +2967,7 @@
       "label": "SessionVerificationError",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L189",
+      "source_location": "L88",
       "id": "routes_swipes_sessionverificationerror",
       "community": 7,
       "norm_label": "sessionverificationerror"
@@ -2994,7 +2976,7 @@
       "label": "fetchAndVerifySessions()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L197",
+      "source_location": "L97",
       "id": "routes_swipes_fetchandverifysessions",
       "community": 7,
       "norm_label": "fetchandverifysessions()"
@@ -3003,7 +2985,7 @@
       "label": "buildRpcPayload()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L229",
+      "source_location": "L123",
       "id": "routes_swipes_buildrpcpayload",
       "community": 7,
       "norm_label": "buildrpcpayload()"
@@ -3012,7 +2994,7 @@
       "label": "{ swipes }",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L245",
+      "source_location": "L139",
       "id": "routes_swipes_swipes",
       "community": 7,
       "norm_label": "{ swipes }"
@@ -3021,7 +3003,7 @@
       "label": "sessionIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L258",
+      "source_location": "L152",
       "id": "routes_swipes_sessionids",
       "community": 7,
       "norm_label": "sessionids"
@@ -3030,7 +3012,7 @@
       "label": "{ inserted, updated }",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L276",
+      "source_location": "L170",
       "id": "routes_swipes_inserted_updated",
       "community": 7,
       "norm_label": "{ inserted, updated }"
@@ -3039,7 +3021,7 @@
       "label": "filters",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L336",
+      "source_location": "L222",
       "id": "routes_swipes_filters",
       "community": 7,
       "norm_label": "filters"
@@ -3048,7 +3030,7 @@
       "label": "swipesQuery",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L347",
+      "source_location": "L233",
       "id": "routes_swipes_swipesquery",
       "community": 7,
       "norm_label": "swipesquery"
@@ -3057,7 +3039,7 @@
       "label": "rows",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L366",
+      "source_location": "L252",
       "id": "routes_swipes_rows",
       "community": 7,
       "norm_label": "rows"
@@ -3066,7 +3048,7 @@
       "label": "decidedTrackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L386",
+      "source_location": "L272",
       "id": "routes_swipes_decidedtrackids",
       "community": 7,
       "norm_label": "decidedtrackids"
@@ -3075,7 +3057,7 @@
       "label": "seenTrackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L392",
+      "source_location": "L278",
       "id": "routes_swipes_seentrackids",
       "community": 7,
       "norm_label": "seentrackids"
@@ -3084,7 +3066,7 @@
       "label": "swipeIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L401",
+      "source_location": "L287",
       "id": "routes_swipes_swipeids",
       "community": 7,
       "norm_label": "swipeids"
@@ -3093,7 +3075,7 @@
       "label": "destinationsBySwipe",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L404",
+      "source_location": "L290",
       "id": "routes_swipes_destinationsbyswipe",
       "community": 7,
       "norm_label": "destinationsbyswipe"
@@ -3102,7 +3084,7 @@
       "label": "tracksById",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L430",
+      "source_location": "L316",
       "id": "routes_swipes_tracksbyid",
       "community": 7,
       "norm_label": "tracksbyid"
@@ -3111,7 +3093,7 @@
       "label": "trackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L431",
+      "source_location": "L317",
       "id": "routes_swipes_trackids",
       "community": 7,
       "norm_label": "trackids"
@@ -3120,7 +3102,7 @@
       "label": "result",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L445",
+      "source_location": "L331",
       "id": "routes_swipes_result",
       "community": 7,
       "norm_label": "result"
@@ -3504,55 +3486,19 @@
       "norm_label": "sessionmock"
     },
     {
-      "label": "reconcileSessionsMock",
-      "file_type": "code",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L272",
-      "id": "tests_swipes_test_reconcilesessionsmock",
-      "community": 13,
-      "norm_label": "reconcilesessionsmock"
-    },
-    {
-      "label": "pendingRowsMock",
-      "file_type": "code",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L276",
-      "id": "tests_swipes_test_pendingrowsmock",
-      "community": 13,
-      "norm_label": "pendingrowsmock"
-    },
-    {
       "label": "rpcArgs",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L361",
+      "source_location": "L340",
       "id": "tests_swipes_test_rpcargs",
       "community": 13,
       "norm_label": "rpcargs"
     },
     {
-      "label": "deleteMock",
-      "file_type": "code",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L766",
-      "id": "tests_swipes_test_deletemock",
-      "community": 13,
-      "norm_label": "deletemock"
-    },
-    {
-      "label": "reconcileFailMock",
-      "file_type": "code",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L857",
-      "id": "tests_swipes_test_reconcilefailmock",
-      "community": 13,
-      "norm_label": "reconcilefailmock"
-    },
-    {
       "label": "TRACK",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L875",
+      "source_location": "L725",
       "id": "tests_swipes_test_track",
       "community": 13,
       "norm_label": "track"
@@ -3561,7 +3507,7 @@
       "label": "swipeMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1009",
+      "source_location": "L852",
       "id": "tests_swipes_test_swipemock",
       "community": 13,
       "norm_label": "swipemock"
@@ -3570,7 +3516,7 @@
       "label": "destMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1024",
+      "source_location": "L867",
       "id": "tests_swipes_test_destmock",
       "community": 13,
       "norm_label": "destmock"
@@ -3579,7 +3525,7 @@
       "label": "tracksMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1030",
+      "source_location": "L873",
       "id": "tests_swipes_test_tracksmock",
       "community": 13,
       "norm_label": "tracksmock"
@@ -3588,7 +3534,7 @@
       "label": "pendingRow()",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1234",
+      "source_location": "L1077",
       "id": "tests_swipes_test_pendingrow",
       "community": 13,
       "norm_label": "pendingrow()"
@@ -3597,7 +3543,7 @@
       "label": "pendingMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1249",
+      "source_location": "L1092",
       "id": "tests_swipes_test_pendingmock",
       "community": 13,
       "norm_label": "pendingmock"
@@ -3606,7 +3552,7 @@
       "label": "decidedMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1257",
+      "source_location": "L1100",
       "id": "tests_swipes_test_decidedmock",
       "community": 13,
       "norm_label": "decidedmock"
@@ -3615,7 +3561,7 @@
       "label": "sessionOwnershipMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1342",
+      "source_location": "L1185",
       "id": "tests_swipes_test_sessionownershipmock",
       "community": 13,
       "norm_label": "sessionownershipmock"
@@ -3624,7 +3570,7 @@
       "label": "swipesMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1348",
+      "source_location": "L1191",
       "id": "tests_swipes_test_swipesmock",
       "community": 13,
       "norm_label": "swipesmock"
@@ -5030,7 +4976,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L1",
       "id": "src_components_appmodal_tsx",
-      "community": 33,
+      "community": 30,
       "norm_label": "appmodal.tsx"
     },
     {
@@ -5039,7 +4985,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L12",
       "id": "components_appmodal_appmodalprops",
-      "community": 33,
+      "community": 30,
       "norm_label": "appmodalprops"
     },
     {
@@ -5048,7 +4994,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L26",
       "id": "components_appmodal_appmodal",
-      "community": 33,
+      "community": 30,
       "norm_label": "appmodal()"
     },
     {
@@ -5057,7 +5003,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L85",
       "id": "components_appmodal_createstyles",
-      "community": 33,
+      "community": 30,
       "norm_label": "createstyles()"
     },
     {
@@ -5363,7 +5309,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L1",
       "id": "src_components_tabheader_tsx",
-      "community": 33,
+      "community": 30,
       "norm_label": "tabheader.tsx"
     },
     {
@@ -5372,7 +5318,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L7",
       "id": "components_tabheader_tabheaderprops",
-      "community": 33,
+      "community": 30,
       "norm_label": "tabheaderprops"
     },
     {
@@ -5381,7 +5327,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L14",
       "id": "components_tabheader_tabheader",
-      "community": 33,
+      "community": 30,
       "norm_label": "tabheader()"
     },
     {
@@ -5390,7 +5336,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L36",
       "id": "components_tabheader_createstyles",
-      "community": 33,
+      "community": 30,
       "norm_label": "createstyles()"
     },
     {
@@ -5453,7 +5399,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L1",
       "id": "src_deeplink_platformdeeplink_ts",
-      "community": 31,
+      "community": 43,
       "norm_label": "platformdeeplink.ts"
     },
     {
@@ -5462,7 +5408,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L3",
       "id": "deeplink_platformdeeplink_openplatformdeeplink",
-      "community": 31,
+      "community": 43,
       "norm_label": "openplatformdeeplink()"
     },
     {
@@ -5471,7 +5417,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L1",
       "id": "src_deeplink_tests_platformdeeplink_test_ts",
-      "community": 31,
+      "community": 43,
       "norm_label": "platformdeeplink.test.ts"
     },
     {
@@ -5480,7 +5426,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L6",
       "id": "tests_platformdeeplink_test_mockopenurl",
-      "community": 31,
+      "community": 43,
       "norm_label": "mockopenurl"
     },
     {
@@ -5507,7 +5453,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L11",
       "id": "hooks_usetheme_usetheme",
-      "community": 30,
+      "community": 31,
       "norm_label": "usetheme()"
     },
     {
@@ -7730,7 +7676,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L1",
       "id": "src_swipe_buttonbar_tsx",
-      "community": 30,
+      "community": 31,
       "norm_label": "buttonbar.tsx"
     },
     {
@@ -7739,7 +7685,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L7",
       "id": "swipe_buttonbar_buttonbarprops",
-      "community": 30,
+      "community": 31,
       "norm_label": "buttonbarprops"
     },
     {
@@ -7748,7 +7694,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L19",
       "id": "swipe_buttonbar_buttonbar",
-      "community": 30,
+      "community": 31,
       "norm_label": "buttonbar()"
     },
     {
@@ -7757,7 +7703,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L92",
       "id": "swipe_buttonbar_createstyles",
-      "community": 30,
+      "community": 31,
       "norm_label": "createstyles()"
     },
     {
@@ -9552,13 +9498,13 @@
       "norm_label": "\u2611 m3 \u2014 logout leaves the previous user's pending writes on the device (medium)"
     },
     {
-      "label": "\u2610 M4 \u2014 Swipe upsert and pending-reconciliation run in separate transactions (MEDIUM)",
+      "label": "\u2611 M4 \u2014 Swipe upsert and pending-reconciliation run in separate transactions (MEDIUM)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L103",
       "id": "docs_code_review_2026_06_08_m4_swipe_upsert_and_pending_reconciliation_run_in_separate_transactions_medium",
       "community": 35,
-      "norm_label": "\u2610 m4 \u2014 swipe upsert and pending-reconciliation run in separate transactions (medium)"
+      "norm_label": "\u2611 m4 \u2014 swipe upsert and pending-reconciliation run in separate transactions (medium)"
     },
     {
       "label": "\u2610 M5 \u2014 `useMatchesStore` recomputes unmemoized on every render (MEDIUM, perf)",
@@ -9678,6 +9624,60 @@
       "norm_label": "suggested fix order"
     },
     {
+      "label": "ReconcileResult",
+      "file_type": "code",
+      "source_file": "backend/src/routes/swipes.ts",
+      "source_location": "L12",
+      "community": 7,
+      "norm_label": "reconcileresult",
+      "id": "routes_swipes_reconcileresult"
+    },
+    {
+      "label": "reconcilePendingDecisions()",
+      "file_type": "code",
+      "source_file": "backend/src/routes/swipes.ts",
+      "source_location": "L32",
+      "community": 7,
+      "norm_label": "reconcilependingdecisions()",
+      "id": "routes_swipes_reconcilependingdecisions"
+    },
+    {
+      "label": "reconcileSessionsMock",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L272",
+      "community": 13,
+      "norm_label": "reconcilesessionsmock",
+      "id": "tests_swipes_test_reconcilesessionsmock"
+    },
+    {
+      "label": "pendingRowsMock",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L276",
+      "community": 13,
+      "norm_label": "pendingrowsmock",
+      "id": "tests_swipes_test_pendingrowsmock"
+    },
+    {
+      "label": "deleteMock",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L766",
+      "community": 13,
+      "norm_label": "deletemock",
+      "id": "tests_swipes_test_deletemock"
+    },
+    {
+      "label": "reconcileFailMock",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L857",
+      "community": 13,
+      "norm_label": "reconcilefailmock",
+      "id": "tests_swipes_test_reconcilefailmock"
+    },
+    {
       "label": ".isInPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
@@ -9709,7 +9709,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L1",
-      "community": 30,
+      "community": 31,
       "norm_label": "destinationeditor.tsx",
       "id": "src_swipe_destinationeditor_tsx"
     },
@@ -9718,7 +9718,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L14",
-      "community": 30,
+      "community": 31,
       "norm_label": "scope",
       "id": "swipe_destinationeditor_scope"
     },
@@ -9727,7 +9727,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L16",
-      "community": 30,
+      "community": 31,
       "norm_label": "destinationeditorprops",
       "id": "swipe_destinationeditor_destinationeditorprops"
     },
@@ -9736,7 +9736,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L26",
-      "community": 30,
+      "community": 31,
       "norm_label": "destinationeditor()",
       "id": "swipe_destinationeditor_destinationeditor"
     },
@@ -9745,7 +9745,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L221",
-      "community": 30,
+      "community": 31,
       "norm_label": "createstyles()",
       "id": "swipe_destinationeditor_createstyles"
     },
@@ -9772,7 +9772,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
-      "community": 33,
+      "community": 30,
       "norm_label": "styles",
       "id": "tabs_index_styles"
     },
@@ -10159,7 +10159,7 @@
       "file_type": "code",
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L81",
-      "community": 33,
+      "community": 30,
       "norm_label": "styles",
       "id": "components_appmodal_styles"
     },
@@ -10186,7 +10186,7 @@
       "file_type": "code",
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L32",
-      "community": 33,
+      "community": 30,
       "norm_label": "styles",
       "id": "components_tabheader_styles"
     },
@@ -10429,7 +10429,7 @@
       "file_type": "code",
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L88",
-      "community": 30,
+      "community": 31,
       "norm_label": "styles",
       "id": "swipe_buttonbar_styles"
     },
@@ -10438,7 +10438,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L216",
-      "community": 30,
+      "community": 31,
       "norm_label": "styles",
       "id": "swipe_destinationeditor_styles"
     },
@@ -16965,26 +16965,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L11",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_routes_swipes_ts",
-      "target": "routes_swipes_reconcileresult"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L31",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_routes_swipes_ts",
-      "target": "routes_swipes_reconcilependingdecisions"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/routes/swipes.ts",
       "source_location": "L10",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -17231,6 +17211,26 @@
       "confidence_score": 1.0,
       "source": "backend_src_tests_swipes_test_ts",
       "target": "backend_src_routes_swipes_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/routes/swipes.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_routes_swipes_ts",
+      "target": "routes_swipes_reconcileresult"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/routes/swipes.ts",
+      "source_location": "L31",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_routes_swipes_ts",
+      "target": "routes_swipes_reconcilependingdecisions"
     },
     {
       "relation": "contains",
@@ -17769,51 +17769,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L509",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_reconcilesessionsmock"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L515",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_pendingrowsmock"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
       "source_location": "L404",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "backend_src_tests_swipes_test_ts",
       "target": "tests_swipes_test_rpcargs"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L474",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_deletemock"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L580",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_reconcilefailmock"
     },
     {
       "relation": "contains",
@@ -17904,6 +17864,46 @@
       "confidence_score": 1.0,
       "source": "backend_src_tests_swipes_test_ts",
       "target": "tests_swipes_test_swipesmock"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L509",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_reconcilesessionsmock"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L515",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_pendingrowsmock"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L474",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_deletemock"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L580",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_reconcilefailmock"
     },
     {
       "relation": "contains",
@@ -23381,9 +23381,9 @@
       "source_file": "src/stores/authStore.ts",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_stores_authstore_ts",
-      "target": "src_services_playlistwriter_ts",
-      "confidence_score": 1.0
+      "target": "src_services_playlistwriter_ts"
     },
     {
       "relation": "imports_from",
@@ -23706,9 +23706,9 @@
       "source_file": "src/services/PlaylistWriter.ts",
       "source_location": "L491",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_playlistwriter_playlistwriter",
-      "target": "services_playlistwriter_playlistwriter_clearstoredstate",
-      "confidence_score": 1.0
+      "target": "services_playlistwriter_playlistwriter_clearstoredstate"
     },
     {
       "relation": "method",
@@ -23749,9 +23749,9 @@
       "source_file": "src/stores/authStore.ts",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_stores_authstore_ts",
-      "target": "services_playlistwriter_playlistwriter",
-      "confidence_score": 1.0
+      "target": "services_playlistwriter_playlistwriter"
     },
     {
       "relation": "imports",
@@ -29193,5 +29193,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a7a3b95ad9cad3ec4dc274539d9b3bce125568f1"
+  "built_at_commit": "63b14f32d819a56274faae699f6c5e46e9307e37"
 }
