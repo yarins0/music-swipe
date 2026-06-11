@@ -100,7 +100,10 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       };
 
       // Log granted scopes so we can confirm whether user-library-modify / user-library-read are included.
-      console.log('[useSpotifyAuth] Granted scopes:', tokenData.scope ?? '(not returned)');
+      // Dev-only: the scope grant is debug information that should not reach production logs.
+      if (__DEV__) {
+        console.log('[useSpotifyAuth] Granted scopes:', tokenData.scope ?? '(not returned)');
+      }
 
       const expiresAt = Date.now() + tokenData.expires_in * 1000;
 

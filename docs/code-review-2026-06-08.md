@@ -122,7 +122,7 @@ Catching everything loses the recoverable (`NO_ACTIVE_DEVICE` → deep link) vs 
 **File:** `src/playlist/PlaylistResolver.ts:30-44`
 Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `src/adapters/` (violates the adapter boundary rule). **Fix:** move parsing behind a new adapter method (e.g. `adapter.parsePlaylistReference(input)`); add it to `MusicPlatformAdapter`, `MockAdapter`, and the contract test per the rules.
 
-### ☐ L2 — Production logging of scopes / deep-link URIs (LOW, security hygiene)
+### ☑ L2 — Production logging of scopes / deep-link URIs (LOW, security hygiene)
 **Files:** `src/auth/useSpotifyAuth.ts:105` (granted scopes) · `src/deeplink/PlatformDeepLink.ts:4` (every deep-link URI). **Fix:** gate behind `__DEV__`. (Token persistence already uses `expo-secure-store` — verified, no action.)
 
 ### ☐ L3 — `flushPending` drops payloads on failure (LOW)
