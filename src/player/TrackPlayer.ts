@@ -1,3 +1,4 @@
+import { PlatformError } from '../adapters/interface';
 import type { MusicPlatformAdapter, Track } from '../adapters/interface';
 
 /**
@@ -25,13 +26,20 @@ export class TrackPlayer {
 
   /**
    * Attempts to play the given track using the adapter.
-   * Returns a PlaybackResult indicating whether playback started.
+   * Returns a PlaybackResult when playback either started or is simply
+   * unavailable for an unknown reason.
+   *
+   * PlatformErrors are rethrown rather than collapsed to 'none' so callers can
+   * tell recoverable failures (NO_ACTIVE_DEVICE → prompt the user to open
+   * Spotify) apart from fatal ones (AUTH_EXPIRED → re-auth). Only non-platform
+   * errors fall through to the generic "audio unavailable" result.
    */
   async play(track: Track): Promise<PlaybackResult> {
     try {
       await this.adapter.play(track.uri);
       return { strategy: 'adapter' };
-    } catch {
+    } catch (error) {
+      if (error instanceof PlatformError) throw error;
       return { strategy: 'none' };
     }
   }

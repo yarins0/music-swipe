@@ -112,7 +112,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 Full sort + `flatMap` + per-record allocation + new array identity on every store change, defeating downstream `React.memo`. Also note the documented "matches come from the server" invariant is not enforced here (local-history derived); prior review deferred the server-reconciliation half (old M7) — keep that deferral, only fix the memoization now.
 **Fix:** Wrap the derivation in `useMemo` keyed on `sessions`.
 
-### ☐ M6 — `TrackPlayer.play` flattens all errors to `strategy:'none'` (MEDIUM)
+### ☑ M6 — `TrackPlayer.play` flattens all errors to `strategy:'none'` (MEDIUM)
 **File:** `src/player/TrackPlayer.ts:30-37`
 **Verified:** yes. Product note: current UX intentionally collapses all failure to an "Audio unavailable" badge, so this is partly a product decision.
 Catching everything loses the recoverable (`NO_ACTIVE_DEVICE` → deep link) vs fatal (`AUTH_EXPIRED`) distinction.
