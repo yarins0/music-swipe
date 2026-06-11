@@ -53,7 +53,7 @@ function ToggleRow({ label, subtitle, value, onValueChange, styles, activeColors
         value={value}
         onValueChange={onValueChange}
         trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
-        thumbColor={activeColors.surface}
+        thumbColor={activeColors.onSurfaceVariant}
         ios_backgroundColor={activeColors.surfaceContainerHighest}
       />
     </View>
@@ -375,7 +375,7 @@ export default function SettingsScreen(): React.ReactElement {
                 value={autoPlayMusic}
                 onValueChange={setAutoPlayMusic}
                 trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
-                thumbColor={activeColors.surface}
+                thumbColor={activeColors.onSurfaceVariant}
                 ios_backgroundColor={activeColors.surfaceContainerHighest}
               />
             </Animated.View>
