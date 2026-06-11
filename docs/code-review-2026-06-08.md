@@ -94,7 +94,7 @@ Liked Songs is guarded by `libraryWrittenIds` (only removes what we added this s
 `writer.write(...)` is fire-and-forget in a loop, then the button flips to "Saved ✓" in `finally`. Queued writes can later fail silently → success shown for an empty/partial playlist.
 **Fix:** Await the writer queue drain, or surface the existing `onWriteError` callback to keep the button in a pending state until writes confirm (or report failure).
 
-### ☐ M3 — Logout leaves the previous user's pending writes on the device (MEDIUM)
+### ☑ M3 — Logout leaves the previous user's pending writes on the device (MEDIUM)
 **Files:** `src/stores/authStore.ts:113-127` (`clearAuth`) · `src/services/PlaylistWriter.ts:27-28`
 **Verified:** yes.
 `clearAuth` resets swipe/session stores but not the PlaylistWriter AsyncStorage keys (`@music-swipe/playlist-write-queue`, `@music-swipe/library-written-ids`). On next login `drainStoredQueue` replays the prior user's adds against the new account.

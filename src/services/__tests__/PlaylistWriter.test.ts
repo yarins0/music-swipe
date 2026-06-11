@@ -248,6 +248,27 @@ describe('PlaylistWriter', () => {
     });
   });
 
+  describe('clearStoredState() — logout cleanup (M3)', () => {
+    it('removes all three persisted keys so the next login starts clean', async () => {
+      const storage = buildMockStorage({
+        '@music-swipe/playlist-write-queue': JSON.stringify([
+          { trackId: 'track-1', playlistId: 'playlist-a', attempts: 0 },
+        ]),
+        '@music-swipe/library-written-ids': JSON.stringify(['track-1']),
+        '@music-swipe/added-playlist-pairs': JSON.stringify(['track-1|playlist-a']),
+      });
+
+      await PlaylistWriter.clearStoredState(storage);
+
+      expect(storage.removeItem).toHaveBeenCalledWith('@music-swipe/playlist-write-queue');
+      expect(storage.removeItem).toHaveBeenCalledWith('@music-swipe/library-written-ids');
+      expect(storage.removeItem).toHaveBeenCalledWith('@music-swipe/added-playlist-pairs');
+      expect(await storage.getItem('@music-swipe/playlist-write-queue')).toBeNull();
+      expect(await storage.getItem('@music-swipe/library-written-ids')).toBeNull();
+      expect(await storage.getItem('@music-swipe/added-playlist-pairs')).toBeNull();
+    });
+  });
+
   describe('executeWithBackoff — retry on RATE_LIMITED', () => {
     it('retries on RATE_LIMITED and eventually succeeds', async () => {
       const rateLimitedError = new PlatformError(PlatformErrorCode.RATE_LIMITED, 'rate limited');

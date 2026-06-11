@@ -484,6 +484,18 @@ export class PlaylistWriter {
     })();
   }
 
+  // Removes every persisted PlaylistWriter key from device storage: the durable
+  // write queue, the Liked-Songs ownership set, and the regular-playlist undo
+  // guard. Called on logout so the next account's first launch can't replay the
+  // previous user's pending adds (via drainStoredQueue) or undo their tracks.
+  static async clearStoredState(storage: StorageInterface = AsyncStorageDefault): Promise<void> {
+    await Promise.all([
+      storage.removeItem(QUEUE_KEY),
+      storage.removeItem(LIBRARY_WRITTEN_IDS_KEY),
+      storage.removeItem(ADDED_PLAYLIST_PAIRS_KEY),
+    ]);
+  }
+
   // Reads the persisted queue from AsyncStorage and retries each entry.
   // Entries that succeed are removed; entries that exhaust MAX_ATTEMPTS are
   // left for the next launch. Intended to run once at app startup during the
