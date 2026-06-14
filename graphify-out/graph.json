@@ -5955,7 +5955,7 @@
       "label": ".sendBatch()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L115",
+      "source_location": "L124",
       "id": "services_backendsync_backendsync_sendbatch",
       "community": 15,
       "norm_label": ".sendbatch()"
@@ -6492,31 +6492,22 @@
       "norm_label": "p2"
     },
     {
-      "label": "fetchMock2",
+      "label": "retryMock",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L306",
-      "id": "tests_backendsync_test_fetchmock2",
+      "id": "tests_backendsync_test_retrymock",
       "community": 15,
-      "norm_label": "fetchmock2"
+      "norm_label": "retrymock"
     },
     {
       "label": "flushMock",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L327",
+      "source_location": "L352",
       "id": "tests_backendsync_test_flushmock",
       "community": 15,
       "norm_label": "flushmock"
-    },
-    {
-      "label": "retryMock",
-      "file_type": "code",
-      "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L344",
-      "id": "tests_backendsync_test_retrymock",
-      "community": 15,
-      "norm_label": "retrymock"
     },
     {
       "label": "PlaylistWriter.sequences.test.ts",
@@ -9588,13 +9579,13 @@
       "norm_label": "\u2611 l2 \u2014 production logging of scopes / deep-link uris (low, security hygiene)"
     },
     {
-      "label": "\u2610 L3 \u2014 `flushPending` drops payloads on failure (LOW)",
+      "label": "\u2611 L3 \u2014 `flushPending` drops payloads on failure (LOW)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L128",
       "id": "docs_code_review_2026_06_08_l3_flushpending_drops_payloads_on_failure_low",
       "community": 35,
-      "norm_label": "\u2610 l3 \u2014 `flushpending` drops payloads on failure (low)"
+      "norm_label": "\u2611 l3 \u2014 `flushpending` drops payloads on failure (low)"
     },
     {
       "label": "\u2610 L4 \u2014 `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW \u2014 idempotent)",
@@ -9667,6 +9658,15 @@
       "id": "docs_code_review_2026_06_08_suggested_fix_order",
       "community": 35,
       "norm_label": "suggested fix order"
+    },
+    {
+      "label": "fetchMock2",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L306",
+      "community": 15,
+      "norm_label": "fetchmock2",
+      "id": "tests_backendsync_test_fetchmock2"
     },
     {
       "label": "extractSpotifyPlaylistId()",
@@ -24711,11 +24711,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L168",
+      "source_location": "L344",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_fetchmock2"
+      "target": "tests_backendsync_test_retrymock"
     },
     {
       "relation": "contains",
@@ -24731,11 +24731,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L344",
+      "source_location": "L168",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_retrymock"
+      "target": "tests_backendsync_test_fetchmock2"
     },
     {
       "relation": "contains",
@@ -29404,5 +29404,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ecdb986b35e01bd61246e7e63f8beb695322043b"
+  "built_at_commit": "ef271c25bf008bf5c2b5b679497b5daf0b0bc662"
 }
