@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  AppStateStatus,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -29,6 +38,15 @@ function getPageSize(playlistId: string): number {
   return playlistId === LIKED_SONGS_PLAYLIST_ID ? LIKED_SONGS_PAGE_SIZE : PLAYLIST_PAGE_SIZE;
 }
 
+// Deep-link target handed to PlatformDeepLink when no active playback device is found.
+// Kept as a constant so the launch URI isn't duplicated across the trigger sites.
+const PLATFORM_DEEP_LINK_TARGET = 'spotify:';
+
+const DEVICE_MISSING_TITLE = 'No active device';
+const DEVICE_MISSING_MESSAGE =
+  'Open your music app and start playing something, then come back and tap Retry.';
+const RETRY_BUTTON_LABEL = 'Retry';
+
 type InitPhase =
   | 'hydrating'
   | 'flushing'
@@ -36,6 +54,10 @@ type InitPhase =
   | 'fetching_queue'
   | 'opening_session'
   | 'ready'
+  // Actionable, retryable terminal state: playlist load failed because the platform
+  // reported NO_ACTIVE_DEVICE. Distinct from 'error' so the UI can offer Retry and
+  // auto-recover on foreground instead of stranding the user on a dead screen.
+  | 'device_missing'
   | 'error';
 
 export default function SwipeScreen(): React.ReactElement {
@@ -71,6 +93,14 @@ export default function SwipeScreen(): React.ReactElement {
   const backendSyncRef = useRef<BackendSync | null>(null);
 
   const [phase, setPhase] = useState<InitPhase>('hydrating');
+  // Mirror of `phase` for the AppState listener, which is subscribed once on mount and
+  // would otherwise close over a stale phase value. Lets the foreground handler decide
+  // whether to auto-retry without re-subscribing on every phase change.
+  const phaseRef = useRef<InitPhase>('hydrating');
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [availablePlaylists, setAvailablePlaylists] = useState<Playlist[]>([]);
@@ -321,14 +351,16 @@ export default function SwipeScreen(): React.ReactElement {
       } catch (err) {
         console.error('[SwipeScreen] fetchQueue failed:', err);
         if (err instanceof PlatformError && err.code === PlatformErrorCode.NO_ACTIVE_DEVICE) {
-          console.log('[SwipeScreen] NO_ACTIVE_DEVICE — opening Spotify deep link');
-          void openPlatformDeepLink('spotify:');
-          Alert.alert(
-            'Open Spotify',
-            'Start playing something in Spotify, then come back to MusicSwipe.',
-            [{ text: 'OK' }],
-          );
-        } else if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
+          console.log('[SwipeScreen] NO_ACTIVE_DEVICE — opening platform deep link');
+          void openPlatformDeepLink(PLATFORM_DEEP_LINK_TARGET);
+          Alert.alert(DEVICE_MISSING_TITLE, DEVICE_MISSING_MESSAGE, [{ text: 'OK' }]);
+          // Land on the dedicated retryable phase rather than the generic error screen,
+          // so the user gets a Retry affordance and the AppState listener can auto-recover
+          // when they return from the music app. Returning here skips the generic fallthrough.
+          setPhase('device_missing');
+          return;
+        }
+        if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
           setErrorMessage('Spotify permissions need updating. Please log out and log back in to continue.');
           setPhase('error');
           return;
@@ -438,20 +470,40 @@ export default function SwipeScreen(): React.ReactElement {
   }, [phase, playlistId, destinationPlaylistIds, initSession, refreshSupabaseToken, getResumeTarget]);
 
   // -------------------------------------------------------------------------
-  // AppState listener — flush pending swipes on foreground reconnect
+  // Retry — re-run the playlist fetch (phase 4) after a NO_ACTIVE_DEVICE failure.
+  // Services are already built and pending tracks already fetched, so rewinding to
+  // 'fetching_queue' replays only the adapter load that failed. Guarded so it only
+  // fires from the retryable device-missing state.
+  // -------------------------------------------------------------------------
+  const handleRetryFetch = useCallback((): void => {
+    if (phaseRef.current !== 'device_missing') return;
+    setErrorMessage(null);
+    setPhase('fetching_queue');
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // AppState listener — on foreground: flush pending swipes, and auto-recover from
+  // a NO_ACTIVE_DEVICE failure by replaying the fetch (the user has likely just
+  // started playback in their music app and tabbed back).
   // -------------------------------------------------------------------------
   useEffect(() => {
     const handleAppStateChange = (nextState: AppStateStatus): void => {
-      if (nextState === 'active' && backendSyncRef.current) {
+      if (nextState !== 'active') return;
+
+      if (backendSyncRef.current) {
         backendSyncRef.current.flushPending().catch((err: unknown) => {
           console.warn('[SwipeScreen] AppState flush failed:', err);
         });
       }
+
+      // Auto-retry the playlist load only when currently stranded on device_missing,
+      // so returning from the music app recovers the screen without a manual tap.
+      handleRetryFetch();
     };
 
     const sub = AppState.addEventListener('change', handleAppStateChange);
     return () => sub.remove();
-  }, []);
+  }, [handleRetryFetch]);
 
   // -------------------------------------------------------------------------
   // Session end callback (queue exhausted) — navigate to session-end screen.
@@ -505,6 +557,22 @@ export default function SwipeScreen(): React.ReactElement {
       <View style={styles.center}>
         <Text style={styles.brand}>MusicSwipe</Text>
         <Text style={styles.errorText}>{errorMessage ?? 'An error occurred.'}</Text>
+      </View>
+    );
+  }
+
+  if (phase === 'device_missing') {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.brand}>MusicSwipe</Text>
+        <Text style={styles.errorText}>{DEVICE_MISSING_MESSAGE}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          accessibilityRole="button"
+          onPress={handleRetryFetch}
+        >
+          <Text style={styles.retryButtonText}>{RETRY_BUTTON_LABEL}</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -571,6 +639,17 @@ function createStyles(c: Colors) {
       textAlign: 'center',
       paddingHorizontal: 32,
       fontFamily: 'Outfit_400Regular',
+    },
+    retryButton: {
+      backgroundColor: c.primary,
+      paddingVertical: 12,
+      paddingHorizontal: 32,
+      borderRadius: 50,
+    },
+    retryButtonText: {
+      color: c.background,
+      fontSize: 15,
+      fontFamily: 'Outfit_700Bold',
     },
   });
 }

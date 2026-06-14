@@ -134,7 +134,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L5 — Missing null-art guard in SessionCard (LOW)
 **File:** `src/components/SessionCard.tsx:~38`. Passes `uri: null` to `expo-image` for null-art restored tracks (PlaylistRow and session-end guard this; SessionCard's `LikedRow` doesn't). **Fix:** add the placeholder branch like the others.
 
-### ☐ L6 — `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)
+### ☑ L6 — `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)
 **File:** `app/(tabs)/swipe/[playlistId].tsx:~344`. Fires the deep link + alert but doesn't set a retryable phase or re-fetch on return → stuck on "Loading playlist…". **Fix:** set an actionable error phase with Retry, or re-run `fetchQueue` on `AppState` `active`.
 
 ### ☐ L7 — `spotifyFetch` blanket-overrides `Content-Type` (LOW)
