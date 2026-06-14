@@ -1385,7 +1385,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L1",
       "id": "app_tabs_destination_tsx",
-      "community": 30,
+      "community": 33,
       "norm_label": "destination.tsx"
     },
     {
@@ -1394,7 +1394,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L25",
       "id": "tabs_destination_destinationpickerscreen",
-      "community": 27,
+      "community": 33,
       "norm_label": "destinationpickerscreen()"
     },
     {
@@ -1403,7 +1403,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L314",
       "id": "tabs_destination_createstyles",
-      "community": 30,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -1412,7 +1412,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L1",
       "id": "app_tabs_index_tsx",
-      "community": 30,
+      "community": 0,
       "norm_label": "index.tsx"
     },
     {
@@ -1421,7 +1421,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L23",
       "id": "tabs_index_section",
-      "community": 30,
+      "community": 0,
       "norm_label": "section"
     },
     {
@@ -1430,7 +1430,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L25",
       "id": "tabs_index_sourcepickerscreen",
-      "community": 44,
+      "community": 0,
       "norm_label": "sourcepickerscreen()"
     },
     {
@@ -1439,7 +1439,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
       "id": "tabs_index_createstyles",
-      "community": 30,
+      "community": 0,
       "norm_label": "createstyles()"
     },
     {
@@ -1529,7 +1529,7 @@
       "source_file": "app/(tabs)/session-end.tsx",
       "source_location": "L116",
       "id": "tabs_session_end_sessionendscreen",
-      "community": 27,
+      "community": 38,
       "norm_label": "sessionendscreen()"
     },
     {
@@ -1781,7 +1781,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L1",
       "id": "app_tabs_settings_privacy_policy_tsx",
-      "community": 42,
+      "community": 33,
       "norm_label": "privacy-policy.tsx"
     },
     {
@@ -1790,7 +1790,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L8",
       "id": "settings_privacy_policy_stylestype",
-      "community": 42,
+      "community": 33,
       "norm_label": "stylestype"
     },
     {
@@ -1799,7 +1799,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L10",
       "id": "settings_privacy_policy_policysectionprops",
-      "community": 42,
+      "community": 33,
       "norm_label": "policysectionprops"
     },
     {
@@ -1808,7 +1808,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L16",
       "id": "settings_privacy_policy_policysection",
-      "community": 42,
+      "community": 33,
       "norm_label": "policysection()"
     },
     {
@@ -1817,7 +1817,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L25",
       "id": "settings_privacy_policy_privacypolicyscreen",
-      "community": 42,
+      "community": 33,
       "norm_label": "privacypolicyscreen()"
     },
     {
@@ -1826,7 +1826,7 @@
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L87",
       "id": "settings_privacy_policy_createstyles",
-      "community": 42,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -1835,7 +1835,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L1",
       "id": "app_tabs_settings_terms_of_service_tsx",
-      "community": 48,
+      "community": 33,
       "norm_label": "terms-of-service.tsx"
     },
     {
@@ -1844,7 +1844,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L8",
       "id": "settings_terms_of_service_stylestype",
-      "community": 48,
+      "community": 33,
       "norm_label": "stylestype"
     },
     {
@@ -1853,7 +1853,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L10",
       "id": "settings_terms_of_service_tossectionprops",
-      "community": 48,
+      "community": 33,
       "norm_label": "tossectionprops"
     },
     {
@@ -1862,7 +1862,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L16",
       "id": "settings_terms_of_service_tossection",
-      "community": 48,
+      "community": 33,
       "norm_label": "tossection()"
     },
     {
@@ -1871,7 +1871,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L25",
       "id": "settings_terms_of_service_termsofservicescreen",
-      "community": 48,
+      "community": 33,
       "norm_label": "termsofservicescreen()"
     },
     {
@@ -1880,7 +1880,7 @@
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L92",
       "id": "settings_terms_of_service_createstyles",
-      "community": 48,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -1889,52 +1889,52 @@
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L1",
       "id": "app_tabs_swipe_playlistid_tsx",
-      "community": 27,
+      "community": 64,
       "norm_label": "[playlistid].tsx"
     },
     {
       "label": "getPageSize()",
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
-      "source_location": "L28",
+      "source_location": "L37",
       "id": "swipe_playlistid_getpagesize",
-      "community": 27,
+      "community": 64,
       "norm_label": "getpagesize()"
     },
     {
       "label": "InitPhase",
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
-      "source_location": "L32",
+      "source_location": "L50",
       "id": "swipe_playlistid_initphase",
-      "community": 27,
+      "community": 64,
       "norm_label": "initphase"
     },
     {
       "label": "SwipeScreen()",
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
-      "source_location": "L41",
+      "source_location": "L63",
       "id": "swipe_playlistid_swipescreen",
-      "community": 27,
+      "community": 64,
       "norm_label": "swipescreen()"
     },
     {
       "label": "phaseLabel()",
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
-      "source_location": "L537",
+      "source_location": "L605",
       "id": "swipe_playlistid_phaselabel",
-      "community": 27,
+      "community": 64,
       "norm_label": "phaselabel()"
     },
     {
       "label": "createStyles()",
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
-      "source_location": "L548",
+      "source_location": "L616",
       "id": "swipe_playlistid_createstyles",
-      "community": 27,
+      "community": 64,
       "norm_label": "createstyles()"
     },
     {
@@ -2895,7 +2895,7 @@
       "label": "SwipeInput",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L12",
+      "source_location": "L20",
       "id": "routes_swipes_swipeinput",
       "community": 7,
       "norm_label": "swipeinput"
@@ -2904,7 +2904,7 @@
       "label": "SwipeRow",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L26",
+      "source_location": "L34",
       "id": "routes_swipes_swiperow",
       "community": 7,
       "norm_label": "swiperow"
@@ -2913,7 +2913,7 @@
       "label": "SwipeRowWithSession",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L34",
+      "source_location": "L42",
       "id": "routes_swipes_swiperowwithsession",
       "community": 7,
       "norm_label": "swiperowwithsession"
@@ -2922,7 +2922,7 @@
       "label": "ValidationError",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L38",
+      "source_location": "L46",
       "id": "routes_swipes_validationerror",
       "community": 7,
       "norm_label": "validationerror"
@@ -2931,7 +2931,7 @@
       "label": "validateTrackMetadata()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L43",
+      "source_location": "L51",
       "id": "routes_swipes_validatetrackmetadata",
       "community": 7,
       "norm_label": "validatetrackmetadata()"
@@ -2940,7 +2940,7 @@
       "label": "validateSwipeItem()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L55",
+      "source_location": "L63",
       "id": "routes_swipes_validateswipeitem",
       "community": 7,
       "norm_label": "validateswipeitem()"
@@ -2949,7 +2949,7 @@
       "label": "validateSwipeBatch()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L76",
+      "source_location": "L84",
       "id": "routes_swipes_validateswipebatch",
       "community": 7,
       "norm_label": "validateswipebatch()"
@@ -2958,7 +2958,7 @@
       "label": "SessionVerification",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L84",
+      "source_location": "L92",
       "id": "routes_swipes_sessionverification",
       "community": 7,
       "norm_label": "sessionverification"
@@ -2967,7 +2967,7 @@
       "label": "SessionVerificationError",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L88",
+      "source_location": "L96",
       "id": "routes_swipes_sessionverificationerror",
       "community": 7,
       "norm_label": "sessionverificationerror"
@@ -2976,7 +2976,7 @@
       "label": "fetchAndVerifySessions()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L97",
+      "source_location": "L105",
       "id": "routes_swipes_fetchandverifysessions",
       "community": 7,
       "norm_label": "fetchandverifysessions()"
@@ -2985,7 +2985,7 @@
       "label": "buildRpcPayload()",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L123",
+      "source_location": "L131",
       "id": "routes_swipes_buildrpcpayload",
       "community": 7,
       "norm_label": "buildrpcpayload()"
@@ -2994,7 +2994,7 @@
       "label": "{ swipes }",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L139",
+      "source_location": "L147",
       "id": "routes_swipes_swipes",
       "community": 7,
       "norm_label": "{ swipes }"
@@ -3003,7 +3003,7 @@
       "label": "sessionIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L152",
+      "source_location": "L160",
       "id": "routes_swipes_sessionids",
       "community": 7,
       "norm_label": "sessionids"
@@ -3012,7 +3012,7 @@
       "label": "{ inserted, updated }",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L170",
+      "source_location": "L178",
       "id": "routes_swipes_inserted_updated",
       "community": 7,
       "norm_label": "{ inserted, updated }"
@@ -3021,7 +3021,7 @@
       "label": "filters",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L222",
+      "source_location": "L239",
       "id": "routes_swipes_filters",
       "community": 7,
       "norm_label": "filters"
@@ -3030,7 +3030,7 @@
       "label": "swipesQuery",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L233",
+      "source_location": "L250",
       "id": "routes_swipes_swipesquery",
       "community": 7,
       "norm_label": "swipesquery"
@@ -3039,7 +3039,7 @@
       "label": "rows",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L252",
+      "source_location": "L269",
       "id": "routes_swipes_rows",
       "community": 7,
       "norm_label": "rows"
@@ -3048,7 +3048,7 @@
       "label": "decidedTrackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L272",
+      "source_location": "L289",
       "id": "routes_swipes_decidedtrackids",
       "community": 7,
       "norm_label": "decidedtrackids"
@@ -3057,7 +3057,7 @@
       "label": "seenTrackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L278",
+      "source_location": "L295",
       "id": "routes_swipes_seentrackids",
       "community": 7,
       "norm_label": "seentrackids"
@@ -3066,7 +3066,7 @@
       "label": "swipeIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L287",
+      "source_location": "L304",
       "id": "routes_swipes_swipeids",
       "community": 7,
       "norm_label": "swipeids"
@@ -3075,7 +3075,7 @@
       "label": "destinationsBySwipe",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L290",
+      "source_location": "L307",
       "id": "routes_swipes_destinationsbyswipe",
       "community": 7,
       "norm_label": "destinationsbyswipe"
@@ -3084,7 +3084,7 @@
       "label": "tracksById",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L316",
+      "source_location": "L333",
       "id": "routes_swipes_tracksbyid",
       "community": 7,
       "norm_label": "tracksbyid"
@@ -3093,7 +3093,7 @@
       "label": "trackIds",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L317",
+      "source_location": "L334",
       "id": "routes_swipes_trackids",
       "community": 7,
       "norm_label": "trackids"
@@ -3102,7 +3102,7 @@
       "label": "result",
       "file_type": "code",
       "source_file": "backend/src/routes/swipes.ts",
-      "source_location": "L331",
+      "source_location": "L348",
       "id": "routes_swipes_result",
       "community": 7,
       "norm_label": "result"
@@ -3113,7 +3113,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L1",
       "id": "backend_src_routes_trackresponse_ts",
-      "community": 45,
+      "community": 62,
       "norm_label": "trackresponse.ts"
     },
     {
@@ -3122,7 +3122,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L9",
       "id": "routes_trackresponse_trackrow",
-      "community": 45,
+      "community": 62,
       "norm_label": "trackrow"
     },
     {
@@ -3131,7 +3131,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L22",
       "id": "routes_trackresponse_trackresponse",
-      "community": 45,
+      "community": 62,
       "norm_label": "trackresponse"
     },
     {
@@ -3140,7 +3140,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L40",
       "id": "routes_trackresponse_totrackresponse",
-      "community": 45,
+      "community": 62,
       "norm_label": "totrackresponse()"
     },
     {
@@ -3149,7 +3149,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L56",
       "id": "routes_trackresponse_buildtracksbyid",
-      "community": 45,
+      "community": 62,
       "norm_label": "buildtracksbyid()"
     },
     {
@@ -3504,10 +3504,28 @@
       "norm_label": "track"
     },
     {
+      "label": "overLongId",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L851",
+      "id": "tests_swipes_test_overlongid",
+      "community": 13,
+      "norm_label": "overlongid"
+    },
+    {
+      "label": "malformedId",
+      "file_type": "code",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L864",
+      "id": "tests_swipes_test_malformedid",
+      "community": 13,
+      "norm_label": "malformedid"
+    },
+    {
       "label": "swipeMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L852",
+      "source_location": "L878",
       "id": "tests_swipes_test_swipemock",
       "community": 13,
       "norm_label": "swipemock"
@@ -3516,7 +3534,7 @@
       "label": "destMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L867",
+      "source_location": "L893",
       "id": "tests_swipes_test_destmock",
       "community": 13,
       "norm_label": "destmock"
@@ -3525,7 +3543,7 @@
       "label": "tracksMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L873",
+      "source_location": "L899",
       "id": "tests_swipes_test_tracksmock",
       "community": 13,
       "norm_label": "tracksmock"
@@ -3534,7 +3552,7 @@
       "label": "pendingRow()",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1077",
+      "source_location": "L1103",
       "id": "tests_swipes_test_pendingrow",
       "community": 13,
       "norm_label": "pendingrow()"
@@ -3543,7 +3561,7 @@
       "label": "pendingMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1092",
+      "source_location": "L1118",
       "id": "tests_swipes_test_pendingmock",
       "community": 13,
       "norm_label": "pendingmock"
@@ -3552,7 +3570,7 @@
       "label": "decidedMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1100",
+      "source_location": "L1126",
       "id": "tests_swipes_test_decidedmock",
       "community": 13,
       "norm_label": "decidedmock"
@@ -3561,7 +3579,7 @@
       "label": "sessionOwnershipMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1185",
+      "source_location": "L1211",
       "id": "tests_swipes_test_sessionownershipmock",
       "community": 13,
       "norm_label": "sessionownershipmock"
@@ -3570,7 +3588,7 @@
       "label": "swipesMock",
       "file_type": "code",
       "source_file": "backend/src/__tests__/swipes.test.ts",
-      "source_location": "L1191",
+      "source_location": "L1217",
       "id": "tests_swipes_test_swipesmock",
       "community": 13,
       "norm_label": "swipesmock"
@@ -3707,7 +3725,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L56",
       "id": "src_theme_colors",
-      "community": 58,
+      "community": 33,
       "norm_label": "colors"
     },
     {
@@ -3752,7 +3770,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L70",
       "id": "src_theme_radius",
-      "community": 30,
+      "community": 33,
       "norm_label": "radius"
     },
     {
@@ -3824,7 +3842,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L44",
       "id": "adapters_interface_adaptercapabilities",
-      "community": 19,
+      "community": 48,
       "norm_label": "adaptercapabilities"
     },
     {
@@ -3842,7 +3860,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L61",
       "id": "adapters_interface_musicplatformadapter",
-      "community": 64,
+      "community": 19,
       "norm_label": "musicplatformadapter"
     },
     {
@@ -3867,7 +3885,7 @@
       "label": "DEFAULT_TRACKS",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L22",
+      "source_location": "L25",
       "id": "mock_mockadapter_default_tracks",
       "community": 19,
       "norm_label": "default_tracks"
@@ -3876,7 +3894,7 @@
       "label": "DEFAULT_PLAYLISTS",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L58",
+      "source_location": "L61",
       "id": "mock_mockadapter_default_playlists",
       "community": 19,
       "norm_label": "default_playlists"
@@ -3885,7 +3903,7 @@
       "label": "MockCalls",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L77",
+      "source_location": "L80",
       "id": "mock_mockadapter_mockcalls",
       "community": 19,
       "norm_label": "mockcalls"
@@ -3894,7 +3912,7 @@
       "label": "MockAdapter",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L92",
+      "source_location": "L95",
       "id": "mock_mockadapter_mockadapter",
       "community": 10,
       "norm_label": "mockadapter"
@@ -3903,7 +3921,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L121",
+      "source_location": "L124",
       "id": "mock_mockadapter_mockadapter_constructor",
       "community": 10,
       "norm_label": ".constructor()"
@@ -3912,7 +3930,7 @@
       "label": ".isAuthenticated()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L145",
+      "source_location": "L149",
       "id": "mock_mockadapter_mockadapter_isauthenticated",
       "community": 10,
       "norm_label": ".isauthenticated()"
@@ -3921,7 +3939,7 @@
       "label": ".refreshAuth()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L149",
+      "source_location": "L153",
       "id": "mock_mockadapter_mockadapter_refreshauth",
       "community": 10,
       "norm_label": ".refreshauth()"
@@ -3930,7 +3948,7 @@
       "label": ".getUserId()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L153",
+      "source_location": "L157",
       "id": "mock_mockadapter_mockadapter_getuserid",
       "community": 10,
       "norm_label": ".getuserid()"
@@ -3939,7 +3957,7 @@
       "label": ".getUserProfile()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L157",
+      "source_location": "L161",
       "id": "mock_mockadapter_mockadapter_getuserprofile",
       "community": 10,
       "norm_label": ".getuserprofile()"
@@ -3948,7 +3966,7 @@
       "label": ".getUserPlaylists()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L161",
+      "source_location": "L165",
       "id": "mock_mockadapter_mockadapter_getuserplaylists",
       "community": 10,
       "norm_label": ".getuserplaylists()"
@@ -3957,7 +3975,7 @@
       "label": ".getPlaylistById()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L165",
+      "source_location": "L169",
       "id": "mock_mockadapter_mockadapter_getplaylistbyid",
       "community": 10,
       "norm_label": ".getplaylistbyid()"
@@ -3966,7 +3984,7 @@
       "label": ".getPlaylistTracks()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L173",
+      "source_location": "L177",
       "id": "mock_mockadapter_mockadapter_getplaylisttracks",
       "community": 10,
       "norm_label": ".getplaylisttracks()"
@@ -3975,7 +3993,7 @@
       "label": ".play()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L183",
+      "source_location": "L187",
       "id": "mock_mockadapter_mockadapter_play",
       "community": 10,
       "norm_label": ".play()"
@@ -3984,7 +4002,7 @@
       "label": ".pause()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L188",
+      "source_location": "L192",
       "id": "mock_mockadapter_mockadapter_pause",
       "community": 10,
       "norm_label": ".pause()"
@@ -3993,7 +4011,7 @@
       "label": ".seek()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L192",
+      "source_location": "L196",
       "id": "mock_mockadapter_mockadapter_seek",
       "community": 10,
       "norm_label": ".seek()"
@@ -4002,7 +4020,7 @@
       "label": ".getCurrentTrack()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L197",
+      "source_location": "L201",
       "id": "mock_mockadapter_mockadapter_getcurrenttrack",
       "community": 10,
       "norm_label": ".getcurrenttrack()"
@@ -4011,7 +4029,7 @@
       "label": ".getCurrentPositionMs()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L201",
+      "source_location": "L207",
       "id": "mock_mockadapter_mockadapter_getcurrentpositionms",
       "community": 10,
       "norm_label": ".getcurrentpositionms()"
@@ -4020,7 +4038,7 @@
       "label": ".addToPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L205",
+      "source_location": "L211",
       "id": "mock_mockadapter_mockadapter_addtoplaylist",
       "community": 10,
       "norm_label": ".addtoplaylist()"
@@ -4029,7 +4047,7 @@
       "label": ".removeFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L221",
+      "source_location": "L227",
       "id": "mock_mockadapter_mockadapter_removefromplaylist",
       "community": 10,
       "norm_label": ".removefromplaylist()"
@@ -4038,7 +4056,7 @@
       "label": ".saveToLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L231",
+      "source_location": "L237",
       "id": "mock_mockadapter_mockadapter_savetolibrary",
       "community": 10,
       "norm_label": ".savetolibrary()"
@@ -4047,7 +4065,7 @@
       "label": ".removeFromLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L242",
+      "source_location": "L248",
       "id": "mock_mockadapter_mockadapter_removefromlibrary",
       "community": 10,
       "norm_label": ".removefromlibrary()"
@@ -4056,7 +4074,7 @@
       "label": ".isInLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L247",
+      "source_location": "L253",
       "id": "mock_mockadapter_mockadapter_isinlibrary",
       "community": 10,
       "norm_label": ".isinlibrary()"
@@ -4065,7 +4083,7 @@
       "label": ".getPlaylistTrackIds()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L252",
+      "source_location": "L258",
       "id": "mock_mockadapter_mockadapter_getplaylisttrackids",
       "community": 10,
       "norm_label": ".getplaylisttrackids()"
@@ -4074,7 +4092,7 @@
       "label": ".createPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L261",
+      "source_location": "L267",
       "id": "mock_mockadapter_mockadapter_createplaylist",
       "community": 10,
       "norm_label": ".createplaylist()"
@@ -4083,7 +4101,7 @@
       "label": ".removeDuplicatesFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L281",
+      "source_location": "L287",
       "id": "mock_mockadapter_mockadapter_removeduplicatesfromplaylist",
       "community": 10,
       "norm_label": ".removeduplicatesfromplaylist()"
@@ -4092,7 +4110,7 @@
       "label": ".openPlatformDeepLink()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L289",
+      "source_location": "L295",
       "id": "mock_mockadapter_mockadapter_openplatformdeeplink",
       "community": 10,
       "norm_label": ".openplatformdeeplink()"
@@ -4101,7 +4119,7 @@
       "label": ".openPlaylistInApp()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L293",
+      "source_location": "L299",
       "id": "mock_mockadapter_mockadapter_openplaylistinapp",
       "community": 10,
       "norm_label": ".openplaylistinapp()"
@@ -4110,7 +4128,7 @@
       "label": ".parsePlaylistReference()",
       "file_type": "code",
       "source_file": "src/adapters/mock/MockAdapter.ts",
-      "source_location": "L297",
+      "source_location": "L303",
       "id": "mock_mockadapter_mockadapter_parseplaylistreference",
       "community": 10,
       "norm_label": ".parseplaylistreference()"
@@ -4353,7 +4371,7 @@
       "label": ".getPlaylistTracks()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L174",
+      "source_location": "L194",
       "id": "spotify_spotifyadapter_spotifyadapter_getplaylisttracks",
       "community": 3,
       "norm_label": ".getplaylisttracks()"
@@ -4362,7 +4380,7 @@
       "label": ".play()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L209",
+      "source_location": "L229",
       "id": "spotify_spotifyadapter_spotifyadapter_play",
       "community": 3,
       "norm_label": ".play()"
@@ -4371,25 +4389,25 @@
       "label": ".pause()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L232",
+      "source_location": "L252",
       "id": "spotify_spotifyadapter_spotifyadapter_pause",
-      "community": 3,
+      "community": 40,
       "norm_label": ".pause()"
     },
     {
       "label": ".seek()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L249",
+      "source_location": "L269",
       "id": "spotify_spotifyadapter_spotifyadapter_seek",
-      "community": 3,
+      "community": 40,
       "norm_label": ".seek()"
     },
     {
       "label": ".getCurrentTrack()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L265",
+      "source_location": "L285",
       "id": "spotify_spotifyadapter_spotifyadapter_getcurrenttrack",
       "community": 3,
       "norm_label": ".getcurrenttrack()"
@@ -4398,7 +4416,7 @@
       "label": ".getCurrentPositionMs()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L271",
+      "source_location": "L291",
       "id": "spotify_spotifyadapter_spotifyadapter_getcurrentpositionms",
       "community": 3,
       "norm_label": ".getcurrentpositionms()"
@@ -4407,43 +4425,43 @@
       "label": ".addToPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L280",
+      "source_location": "L300",
       "id": "spotify_spotifyadapter_spotifyadapter_addtoplaylist",
-      "community": 3,
+      "community": 40,
       "norm_label": ".addtoplaylist()"
     },
     {
       "label": ".removeFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L295",
+      "source_location": "L315",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromplaylist",
-      "community": 3,
+      "community": 40,
       "norm_label": ".removefromplaylist()"
     },
     {
       "label": ".saveToLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L310",
+      "source_location": "L330",
       "id": "spotify_spotifyadapter_spotifyadapter_savetolibrary",
-      "community": 3,
+      "community": 40,
       "norm_label": ".savetolibrary()"
     },
     {
       "label": ".removeFromLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L319",
+      "source_location": "L339",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromlibrary",
-      "community": 3,
+      "community": 40,
       "norm_label": ".removefromlibrary()"
     },
     {
       "label": ".isInLibrary()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L328",
+      "source_location": "L348",
       "id": "spotify_spotifyadapter_spotifyadapter_isinlibrary",
       "community": 3,
       "norm_label": ".isinlibrary()"
@@ -4452,7 +4470,7 @@
       "label": ".getPlaylistTrackIds()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L344",
+      "source_location": "L364",
       "id": "spotify_spotifyadapter_spotifyadapter_getplaylisttrackids",
       "community": 3,
       "norm_label": ".getplaylisttrackids()"
@@ -4461,25 +4479,25 @@
       "label": ".createPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L361",
+      "source_location": "L381",
       "id": "spotify_spotifyadapter_spotifyadapter_createplaylist",
-      "community": 3,
+      "community": 40,
       "norm_label": ".createplaylist()"
     },
     {
       "label": ".removeDuplicatesFromPlaylist()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L401",
+      "source_location": "L421",
       "id": "spotify_spotifyadapter_spotifyadapter_removeduplicatesfromplaylist",
-      "community": 3,
+      "community": 40,
       "norm_label": ".removeduplicatesfromplaylist()"
     },
     {
       "label": ".openPlatformDeepLink()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L453",
+      "source_location": "L473",
       "id": "spotify_spotifyadapter_spotifyadapter_openplatformdeeplink",
       "community": 3,
       "norm_label": ".openplatformdeeplink()"
@@ -4488,7 +4506,7 @@
       "label": ".openPlaylistInApp()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L458",
+      "source_location": "L478",
       "id": "spotify_spotifyadapter_spotifyadapter_openplaylistinapp",
       "community": 3,
       "norm_label": ".openplaylistinapp()"
@@ -4497,7 +4515,7 @@
       "label": ".parsePlaylistReference()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
-      "source_location": "L462",
+      "source_location": "L482",
       "id": "spotify_spotifyadapter_spotifyadapter_parseplaylistreference",
       "community": 3,
       "norm_label": ".parseplaylistreference()"
@@ -4526,7 +4544,7 @@
       "source_file": "src/adapters/spotify/spotifyFetch.ts",
       "source_location": "L16",
       "id": "spotify_spotifyfetch_sleep",
-      "community": 3,
+      "community": 67,
       "norm_label": "sleep()"
     },
     {
@@ -4553,7 +4571,7 @@
       "source_file": "src/adapters/spotify/spotifyFetch.ts",
       "source_location": "L82",
       "id": "spotify_spotifyfetch_maphttperror",
-      "community": 3,
+      "community": 67,
       "norm_label": "maphttperror()"
     },
     {
@@ -4562,7 +4580,7 @@
       "source_file": "src/adapters/spotify/spotifyFetch.ts",
       "source_location": "L90",
       "id": "spotify_spotifyfetch_spotifyfetch",
-      "community": 3,
+      "community": 40,
       "norm_label": "spotifyfetch()"
     },
     {
@@ -4571,7 +4589,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L1",
       "id": "src_adapters_spotify_tests_spotifyadapter_crud_test_ts",
-      "community": 3,
+      "community": 30,
       "norm_label": "spotifyadapter.crud.test.ts"
     },
     {
@@ -4580,7 +4598,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L7",
       "id": "tests_spotifyadapter_crud_test_mockspotifyfetch",
-      "community": 3,
+      "community": 30,
       "norm_label": "mockspotifyfetch"
     },
     {
@@ -4589,7 +4607,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L9",
       "id": "tests_spotifyadapter_crud_test_makeauth",
-      "community": 3,
+      "community": 30,
       "norm_label": "makeauth()"
     },
     {
@@ -4598,7 +4616,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L17",
       "id": "tests_spotifyadapter_crud_test_makemeresponse",
-      "community": 3,
+      "community": 30,
       "norm_label": "makemeresponse()"
     },
     {
@@ -4607,7 +4625,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L19",
       "id": "tests_spotifyadapter_crud_test_makeplaylistitem",
-      "community": 3,
+      "community": 30,
       "norm_label": "makeplaylistitem()"
     },
     {
@@ -4616,61 +4634,61 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L27",
       "id": "tests_spotifyadapter_crud_test_maketrackitem",
-      "community": 3,
+      "community": 30,
       "norm_label": "maketrackitem()"
     },
     {
       "label": "deleteCall",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L249",
+      "source_location": "L250",
       "id": "tests_spotifyadapter_crud_test_deletecall",
-      "community": 3,
+      "community": 30,
       "norm_label": "deletecall"
     },
     {
       "label": "addCall",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L250",
+      "source_location": "L251",
       "id": "tests_spotifyadapter_crud_test_addcall",
-      "community": 3,
+      "community": 30,
       "norm_label": "addcall"
     },
     {
       "label": "bodies",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L256",
+      "source_location": "L257",
       "id": "tests_spotifyadapter_crud_test_bodies",
-      "community": 3,
+      "community": 30,
       "norm_label": "bodies"
     },
     {
       "label": "relinked()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L263",
+      "source_location": "L264",
       "id": "tests_spotifyadapter_crud_test_relinked",
-      "community": 3,
+      "community": 30,
       "norm_label": "relinked()"
     },
     {
       "label": "localItem",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L295",
+      "source_location": "L296",
       "id": "tests_spotifyadapter_crud_test_localitem",
-      "community": 3,
+      "community": 30,
       "norm_label": "localitem"
     },
     {
       "label": "page()",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
-      "source_location": "L439",
+      "source_location": "L440",
       "id": "tests_spotifyadapter_crud_test_page",
-      "community": 3,
+      "community": 30,
       "norm_label": "page()"
     },
     {
@@ -4679,7 +4697,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L1",
       "id": "src_adapters_spotify_tests_spotifyadapter_playback_test_ts",
-      "community": 19,
+      "community": 65,
       "norm_label": "spotifyadapter.playback.test.ts"
     },
     {
@@ -4688,7 +4706,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L7",
       "id": "tests_spotifyadapter_playback_test_mockspotifyfetch",
-      "community": 19,
+      "community": 65,
       "norm_label": "mockspotifyfetch"
     },
     {
@@ -4697,7 +4715,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L9",
       "id": "tests_spotifyadapter_playback_test_makeauth",
-      "community": 19,
+      "community": 65,
       "norm_label": "makeauth()"
     },
     {
@@ -4767,7 +4785,7 @@
       "label": "apiCall",
       "file_type": "code",
       "source_file": "src/adapters/spotify/__tests__/spotifyFetch.test.ts",
-      "source_location": "L136",
+      "source_location": "L147",
       "id": "tests_spotifyfetch_test_apicall",
       "community": 67,
       "norm_label": "apicall"
@@ -4789,6 +4807,15 @@
       "id": "tests_adapter_contract_test_adapter",
       "community": 19,
       "norm_label": "adapter"
+    },
+    {
+      "label": "currentTrack",
+      "file_type": "code",
+      "source_file": "src/adapters/__tests__/adapter-contract.test.ts",
+      "source_location": "L143",
+      "id": "tests_adapter_contract_test_currenttrack",
+      "community": 19,
+      "norm_label": "currenttrack"
     },
     {
       "label": "interface.test.ts",
@@ -4859,7 +4886,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L1",
       "id": "src_adapters_tests_spotify_spotifyfetch_test_ts",
-      "community": 67,
+      "community": 42,
       "norm_label": "spotifyfetch.test.ts"
     },
     {
@@ -4868,7 +4895,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L4",
       "id": "spotify_spotifyfetch_test_mockfetch",
-      "community": 67,
+      "community": 42,
       "norm_label": "mockfetch"
     },
     {
@@ -4877,7 +4904,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L10",
       "id": "spotify_spotifyfetch_test_buildauth",
-      "community": 67,
+      "community": 42,
       "norm_label": "buildauth()"
     },
     {
@@ -4886,7 +4913,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L19",
       "id": "spotify_spotifyfetch_test_makeresponse",
-      "community": 67,
+      "community": 42,
       "norm_label": "makeresponse()"
     },
     {
@@ -4895,7 +4922,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L41",
       "id": "spotify_spotifyfetch_test_auth",
-      "community": 67,
+      "community": 42,
       "norm_label": "auth"
     },
     {
@@ -4904,7 +4931,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L95",
       "id": "spotify_spotifyfetch_test_promise",
-      "community": 67,
+      "community": 42,
       "norm_label": "promise"
     },
     {
@@ -4913,7 +4940,7 @@
       "source_file": "src/adapters/__tests__/spotify/spotifyFetch.test.ts",
       "source_location": "L99",
       "id": "spotify_spotifyfetch_test_assertion",
-      "community": 67,
+      "community": 42,
       "norm_label": "assertion"
     },
     {
@@ -4922,7 +4949,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L1",
       "id": "src_auth_authgateway_ts",
-      "community": 30,
+      "community": 27,
       "norm_label": "authgateway.ts"
     },
     {
@@ -4931,7 +4958,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L6",
       "id": "auth_authgateway_createspotifyauthcontext",
-      "community": 30,
+      "community": 27,
       "norm_label": "createspotifyauthcontext()"
     },
     {
@@ -4940,7 +4967,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L24",
       "id": "auth_authgateway_createspotifyadapter",
-      "community": 30,
+      "community": 27,
       "norm_label": "createspotifyadapter()"
     },
     {
@@ -4994,7 +5021,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L1",
       "id": "src_components_appmodal_tsx",
-      "community": 30,
+      "community": 33,
       "norm_label": "appmodal.tsx"
     },
     {
@@ -5003,7 +5030,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L12",
       "id": "components_appmodal_appmodalprops",
-      "community": 30,
+      "community": 33,
       "norm_label": "appmodalprops"
     },
     {
@@ -5012,7 +5039,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L26",
       "id": "components_appmodal_appmodal",
-      "community": 30,
+      "community": 33,
       "norm_label": "appmodal()"
     },
     {
@@ -5021,7 +5048,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L85",
       "id": "components_appmodal_createstyles",
-      "community": 30,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -5183,7 +5210,7 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L1",
       "id": "src_components_playlistaccessguard_tsx",
-      "community": 19,
+      "community": 48,
       "norm_label": "playlistaccessguard.tsx"
     },
     {
@@ -5192,25 +5219,25 @@
       "source_file": "src/components/PlaylistAccessGuard.tsx",
       "source_location": "L5",
       "id": "components_playlistaccessguard_playlistaccessguardprops",
-      "community": 19,
+      "community": 48,
       "norm_label": "playlistaccessguardprops"
     },
     {
       "label": "PlaylistAccessGuard()",
       "file_type": "code",
       "source_file": "src/components/PlaylistAccessGuard.tsx",
-      "source_location": "L11",
+      "source_location": "L16",
       "id": "components_playlistaccessguard_playlistaccessguard",
-      "community": 19,
+      "community": 48,
       "norm_label": "playlistaccessguard()"
     },
     {
       "label": "styles",
       "file_type": "code",
       "source_file": "src/components/PlaylistAccessGuard.tsx",
-      "source_location": "L30",
+      "source_location": "L34",
       "id": "components_playlistaccessguard_styles",
-      "community": 19,
+      "community": 48,
       "norm_label": "styles"
     },
     {
@@ -5219,7 +5246,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L1",
       "id": "src_components_playlistrow_tsx",
-      "community": 30,
+      "community": 33,
       "norm_label": "playlistrow.tsx"
     },
     {
@@ -5228,7 +5255,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L9",
       "id": "components_playlistrow_playlistrowprops",
-      "community": 30,
+      "community": 33,
       "norm_label": "playlistrowprops"
     },
     {
@@ -5237,7 +5264,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L16",
       "id": "components_playlistrow_playlistrow",
-      "community": 30,
+      "community": 33,
       "norm_label": "playlistrow()"
     },
     {
@@ -5246,7 +5273,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L72",
       "id": "components_playlistrow_createstyles",
-      "community": 30,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -5307,7 +5334,7 @@
       "label": "SessionCard()",
       "file_type": "code",
       "source_file": "src/components/SessionCard.tsx",
-      "source_location": "L56",
+      "source_location": "L62",
       "id": "components_sessioncard_sessioncard",
       "community": 57,
       "norm_label": "sessioncard()"
@@ -5316,7 +5343,7 @@
       "label": "createStyles()",
       "file_type": "code",
       "source_file": "src/components/SessionCard.tsx",
-      "source_location": "L130",
+      "source_location": "L136",
       "id": "components_sessioncard_createstyles",
       "community": 57,
       "norm_label": "createstyles()"
@@ -5327,7 +5354,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L1",
       "id": "src_components_tabheader_tsx",
-      "community": 58,
+      "community": 43,
       "norm_label": "tabheader.tsx"
     },
     {
@@ -5336,7 +5363,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L7",
       "id": "components_tabheader_tabheaderprops",
-      "community": 58,
+      "community": 43,
       "norm_label": "tabheaderprops"
     },
     {
@@ -5345,7 +5372,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L14",
       "id": "components_tabheader_tabheader",
-      "community": 58,
+      "community": 43,
       "norm_label": "tabheader()"
     },
     {
@@ -5354,7 +5381,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L36",
       "id": "components_tabheader_createstyles",
-      "community": 58,
+      "community": 43,
       "norm_label": "createstyles()"
     },
     {
@@ -5417,7 +5444,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L1",
       "id": "src_deeplink_platformdeeplink_ts",
-      "community": 43,
+      "community": 64,
       "norm_label": "platformdeeplink.ts"
     },
     {
@@ -5426,7 +5453,7 @@
       "source_file": "src/deeplink/PlatformDeepLink.ts",
       "source_location": "L3",
       "id": "deeplink_platformdeeplink_openplatformdeeplink",
-      "community": 43,
+      "community": 64,
       "norm_label": "openplatformdeeplink()"
     },
     {
@@ -5435,7 +5462,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L1",
       "id": "src_deeplink_tests_platformdeeplink_test_ts",
-      "community": 43,
+      "community": 64,
       "norm_label": "platformdeeplink.test.ts"
     },
     {
@@ -5444,7 +5471,7 @@
       "source_file": "src/deeplink/__tests__/PlatformDeepLink.test.ts",
       "source_location": "L6",
       "id": "tests_platformdeeplink_test_mockopenurl",
-      "community": 43,
+      "community": 64,
       "norm_label": "mockopenurl"
     },
     {
@@ -5471,7 +5498,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L11",
       "id": "hooks_usetheme_usetheme",
-      "community": 27,
+      "community": 33,
       "norm_label": "usetheme()"
     },
     {
@@ -5687,7 +5714,7 @@
       "source_file": "src/player/SegmentNavigator.tsx",
       "source_location": "L1",
       "id": "src_player_segmentnavigator_tsx",
-      "community": 31,
+      "community": 63,
       "norm_label": "segmentnavigator.tsx"
     },
     {
@@ -5696,7 +5723,7 @@
       "source_file": "src/player/SegmentNavigator.tsx",
       "source_location": "L4",
       "id": "player_segmentnavigator_segmentnavigatorprops",
-      "community": 31,
+      "community": 63,
       "norm_label": "segmentnavigatorprops"
     },
     {
@@ -5705,7 +5732,7 @@
       "source_file": "src/player/SegmentNavigator.tsx",
       "source_location": "L27",
       "id": "player_segmentnavigator_segmentnavigator",
-      "community": 31,
+      "community": 63,
       "norm_label": "segmentnavigator()"
     },
     {
@@ -5714,7 +5741,7 @@
       "source_file": "src/player/SegmentNavigator.tsx",
       "source_location": "L62",
       "id": "player_segmentnavigator_styles",
-      "community": 31,
+      "community": 63,
       "norm_label": "styles"
     },
     {
@@ -5723,7 +5750,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L1",
       "id": "src_player_trackplayer_ts",
-      "community": 64,
+      "community": 19,
       "norm_label": "trackplayer.ts"
     },
     {
@@ -5732,7 +5759,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L9",
       "id": "player_trackplayer_playbackresult",
-      "community": 64,
+      "community": 19,
       "norm_label": "playbackresult"
     },
     {
@@ -5795,7 +5822,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L1",
       "id": "src_player_tests_trackplayer_test_ts",
-      "community": 64,
+      "community": 19,
       "norm_label": "trackplayer.test.ts"
     },
     {
@@ -5804,7 +5831,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L9",
       "id": "tests_trackplayer_test_sample_track",
-      "community": 64,
+      "community": 19,
       "norm_label": "sample_track"
     },
     {
@@ -5813,7 +5840,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L26",
       "id": "tests_trackplayer_test_createplayerwithplay",
-      "community": 64,
+      "community": 19,
       "norm_label": "createplayerwithplay()"
     },
     {
@@ -5822,7 +5849,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L33",
       "id": "tests_trackplayer_test_player",
-      "community": 64,
+      "community": 19,
       "norm_label": "player"
     },
     {
@@ -5831,7 +5858,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L41",
       "id": "tests_trackplayer_test_error",
-      "community": 64,
+      "community": 19,
       "norm_label": "error"
     },
     {
@@ -5885,7 +5912,7 @@
       "source_file": "src/services/BackendSync.ts",
       "source_location": "L1",
       "id": "src_services_backendsync_ts",
-      "community": 15,
+      "community": 19,
       "norm_label": "backendsync.ts"
     },
     {
@@ -5910,7 +5937,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L29",
+      "source_location": "L36",
       "id": "services_backendsync_backendsync_constructor",
       "community": 15,
       "norm_label": ".constructor()"
@@ -5919,7 +5946,7 @@
       "label": ".postSwipe()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L38",
+      "source_location": "L45",
       "id": "services_backendsync_backendsync_postswipe",
       "community": 15,
       "norm_label": ".postswipe()"
@@ -5928,7 +5955,7 @@
       "label": ".unlikeSwipe()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L62",
+      "source_location": "L76",
       "id": "services_backendsync_backendsync_unlikeswipe",
       "community": 15,
       "norm_label": ".unlikeswipe()"
@@ -5937,7 +5964,7 @@
       "label": ".markLibraryWritten()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L78",
+      "source_location": "L92",
       "id": "services_backendsync_backendsync_marklibrarywritten",
       "community": 15,
       "norm_label": ".marklibrarywritten()"
@@ -5946,7 +5973,7 @@
       "label": ".flushPending()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L99",
+      "source_location": "L113",
       "id": "services_backendsync_backendsync_flushpending",
       "community": 15,
       "norm_label": ".flushpending()"
@@ -5955,7 +5982,7 @@
       "label": ".sendBatch()",
       "file_type": "code",
       "source_file": "src/services/BackendSync.ts",
-      "source_location": "L124",
+      "source_location": "L153",
       "id": "services_backendsync_backendsync_sendbatch",
       "community": 15,
       "norm_label": ".sendbatch()"
@@ -5966,7 +5993,7 @@
       "source_file": "src/services/PlaylistWriter.ts",
       "source_location": "L1",
       "id": "src_services_playlistwriter_ts",
-      "community": 9,
+      "community": 19,
       "norm_label": "playlistwriter.ts"
     },
     {
@@ -5993,7 +6020,7 @@
       "source_file": "src/services/PlaylistWriter.ts",
       "source_location": "L22",
       "id": "services_playlistwriter_writeerrorcontext",
-      "community": 9,
+      "community": 19,
       "norm_label": "writeerrorcontext"
     },
     {
@@ -6420,10 +6447,19 @@
       "norm_label": "mockfetchnetworkerror()"
     },
     {
+      "label": "enqueueFailedPostSwipe()",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L52",
+      "id": "tests_backendsync_test_enqueuefailedpostswipe",
+      "community": 15,
+      "norm_label": "enqueuefailedpostswipe()"
+    },
+    {
       "label": "result",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L64",
+      "source_location": "L81",
       "id": "tests_backendsync_test_result",
       "community": 15,
       "norm_label": "result"
@@ -6432,7 +6468,7 @@
       "label": "fetchMock",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L70",
+      "source_location": "L87",
       "id": "tests_backendsync_test_fetchmock",
       "community": 15,
       "norm_label": "fetchmock"
@@ -6441,7 +6477,7 @@
       "label": "payload",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L73",
+      "source_location": "L90",
       "id": "tests_backendsync_test_payload",
       "community": 15,
       "norm_label": "payload"
@@ -6450,7 +6486,7 @@
       "label": "[url, init]",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L80",
+      "source_location": "L97",
       "id": "tests_backendsync_test_url_init",
       "community": 15,
       "norm_label": "[url, init]"
@@ -6459,7 +6495,7 @@
       "label": "body",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L88",
+      "source_location": "L105",
       "id": "tests_backendsync_test_body",
       "community": 15,
       "norm_label": "body"
@@ -6468,34 +6504,16 @@
       "label": "[, init]",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L105",
+      "source_location": "L122",
       "id": "tests_backendsync_test_init",
       "community": 15,
       "norm_label": "[, init]"
     },
     {
-      "label": "p1",
-      "file_type": "code",
-      "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L257",
-      "id": "tests_backendsync_test_p1",
-      "community": 15,
-      "norm_label": "p1"
-    },
-    {
-      "label": "p2",
-      "file_type": "code",
-      "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L258",
-      "id": "tests_backendsync_test_p2",
-      "community": 15,
-      "norm_label": "p2"
-    },
-    {
       "label": "retryMock",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L306",
+      "source_location": "L313",
       "id": "tests_backendsync_test_retrymock",
       "community": 15,
       "norm_label": "retrymock"
@@ -6504,10 +6522,73 @@
       "label": "flushMock",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L352",
+      "source_location": "L357",
       "id": "tests_backendsync_test_flushmock",
       "community": 15,
       "norm_label": "flushmock"
+    },
+    {
+      "label": "resolvePostSwipe()",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L390",
+      "id": "tests_backendsync_test_resolvepostswipe",
+      "community": 15,
+      "norm_label": "resolvepostswipe()"
+    },
+    {
+      "label": "postSwipeResponse",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L391",
+      "id": "tests_backendsync_test_postswiperesponse",
+      "community": 15,
+      "norm_label": "postswiperesponse"
+    },
+    {
+      "label": "postSwipeFetch",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L392",
+      "id": "tests_backendsync_test_postswipefetch",
+      "community": 15,
+      "norm_label": "postswipefetch"
+    },
+    {
+      "label": "flushFetch",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L405",
+      "id": "tests_backendsync_test_flushfetch",
+      "community": 15,
+      "norm_label": "flushfetch"
+    },
+    {
+      "label": "rejectPostSwipe()",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L420",
+      "id": "tests_backendsync_test_rejectpostswipe",
+      "community": 15,
+      "norm_label": "rejectpostswipe()"
+    },
+    {
+      "label": "skipFetch",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L430",
+      "id": "tests_backendsync_test_skipfetch",
+      "community": 15,
+      "norm_label": "skipfetch"
+    },
+    {
+      "label": "retryFetch",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L443",
+      "id": "tests_backendsync_test_retryfetch",
+      "community": 15,
+      "norm_label": "retryfetch"
     },
     {
       "label": "PlaylistWriter.sequences.test.ts",
@@ -7037,7 +7118,7 @@
       "source_file": "src/stores/prefsStore.ts",
       "source_location": "L28",
       "id": "stores_prefsstore_useprefsstore",
-      "community": 27,
+      "community": 31,
       "norm_label": "useprefsstore"
     },
     {
@@ -7046,7 +7127,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L1",
       "id": "src_stores_sessionstore_ts",
-      "community": 27,
+      "community": 31,
       "norm_label": "sessionstore.ts"
     },
     {
@@ -7055,7 +7136,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L3",
       "id": "stores_sessionstore_sessionstate",
-      "community": 27,
+      "community": 31,
       "norm_label": "sessionstate"
     },
     {
@@ -7064,7 +7145,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L11",
       "id": "stores_sessionstore_sessionactions",
-      "community": 27,
+      "community": 31,
       "norm_label": "sessionactions"
     },
     {
@@ -7073,7 +7154,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L20",
       "id": "stores_sessionstore_usesessionstore",
-      "community": 27,
+      "community": 31,
       "norm_label": "usesessionstore"
     },
     {
@@ -7721,7 +7802,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L1",
       "id": "src_swipe_buttonbar_tsx",
-      "community": 58,
+      "community": 33,
       "norm_label": "buttonbar.tsx"
     },
     {
@@ -7730,7 +7811,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L7",
       "id": "swipe_buttonbar_buttonbarprops",
-      "community": 58,
+      "community": 33,
       "norm_label": "buttonbarprops"
     },
     {
@@ -7739,7 +7820,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L19",
       "id": "swipe_buttonbar_buttonbar",
-      "community": 58,
+      "community": 33,
       "norm_label": "buttonbar()"
     },
     {
@@ -7748,7 +7829,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L92",
       "id": "swipe_buttonbar_createstyles",
-      "community": 58,
+      "community": 33,
       "norm_label": "createstyles()"
     },
     {
@@ -7793,7 +7874,7 @@
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L1",
       "id": "src_swipe_swipeengine_tsx",
-      "community": 58,
+      "community": 31,
       "norm_label": "swipeengine.tsx"
     },
     {
@@ -7802,7 +7883,7 @@
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L40",
       "id": "swipe_swipeengine_computeseekstepms",
-      "community": 58,
+      "community": 31,
       "norm_label": "computeseekstepms()"
     },
     {
@@ -7811,7 +7892,7 @@
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L60",
       "id": "swipe_swipeengine_swipeengineprops",
-      "community": 58,
+      "community": 31,
       "norm_label": "swipeengineprops"
     },
     {
@@ -7820,7 +7901,7 @@
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L77",
       "id": "swipe_swipeengine_swipeengine",
-      "community": 27,
+      "community": 31,
       "norm_label": "swipeengine()"
     },
     {
@@ -7829,7 +7910,7 @@
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L556",
       "id": "swipe_swipeengine_createstyles",
-      "community": 58,
+      "community": 31,
       "norm_label": "createstyles()"
     },
     {
@@ -7838,7 +7919,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L1",
       "id": "src_swipe_swipefrontcard_tsx",
-      "community": 20,
+      "community": 31,
       "norm_label": "swipefrontcard.tsx"
     },
     {
@@ -7847,7 +7928,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L10",
       "id": "swipe_swipefrontcard_swipefrontcardprops",
-      "community": 20,
+      "community": 31,
       "norm_label": "swipefrontcardprops"
     },
     {
@@ -7856,7 +7937,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L43",
       "id": "swipe_swipefrontcard_swipefrontcard",
-      "community": 20,
+      "community": 31,
       "norm_label": "swipefrontcard()"
     },
     {
@@ -7865,7 +7946,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L94",
       "id": "swipe_swipefrontcard_styles",
-      "community": 20,
+      "community": 31,
       "norm_label": "styles"
     },
     {
@@ -7928,7 +8009,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L40",
       "id": "swipe_useswipegesture_swipedirection",
-      "community": 20,
+      "community": 31,
       "norm_label": "swipedirection"
     },
     {
@@ -7964,7 +8045,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L131",
       "id": "swipe_useswipegesture_useswipegesture",
-      "community": 20,
+      "community": 31,
       "norm_label": "useswipegesture()"
     },
     {
@@ -9588,40 +9669,40 @@
       "norm_label": "\u2611 l3 \u2014 `flushpending` drops payloads on failure (low)"
     },
     {
-      "label": "\u2610 L4 \u2014 `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW \u2014 idempotent)",
+      "label": "\u2611 L4 \u2014 `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW \u2014 idempotent)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L131",
       "id": "docs_code_review_2026_06_08_l4_backendsync_postswipe_flushpending_in_flight_double_send_low_idempotent",
       "community": 35,
-      "norm_label": "\u2610 l4 \u2014 `backendsync.postswipe` + `flushpending` in-flight double-send (low \u2014 idempotent)"
+      "norm_label": "\u2611 l4 \u2014 `backendsync.postswipe` + `flushpending` in-flight double-send (low \u2014 idempotent)"
     },
     {
-      "label": "\u2610 L5 \u2014 Missing null-art guard in SessionCard (LOW)",
+      "label": "\u2611 L5 \u2014 Missing null-art guard in SessionCard (LOW)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L134",
       "id": "docs_code_review_2026_06_08_l5_missing_null_art_guard_in_sessioncard_low",
       "community": 35,
-      "norm_label": "\u2610 l5 \u2014 missing null-art guard in sessioncard (low)"
+      "norm_label": "\u2611 l5 \u2014 missing null-art guard in sessioncard (low)"
     },
     {
-      "label": "\u2610 L6 \u2014 `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)",
+      "label": "\u2611 L6 \u2014 `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L137",
       "id": "docs_code_review_2026_06_08_l6_no_active_device_leaves_the_swipe_screen_on_an_infinite_spinner_low",
       "community": 35,
-      "norm_label": "\u2610 l6 \u2014 `no_active_device` leaves the swipe screen on an infinite spinner (low)"
+      "norm_label": "\u2611 l6 \u2014 `no_active_device` leaves the swipe screen on an infinite spinner (low)"
     },
     {
-      "label": "\u2610 L7 \u2014 `spotifyFetch` blanket-overrides `Content-Type` (LOW)",
+      "label": "\u2611 L7 \u2014 `spotifyFetch` blanket-overrides `Content-Type` (LOW)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L140",
       "id": "docs_code_review_2026_06_08_l7_spotifyfetch_blanket_overrides_content_type_low",
       "community": 35,
-      "norm_label": "\u2610 l7 \u2014 `spotifyfetch` blanket-overrides `content-type` (low)"
+      "norm_label": "\u2611 l7 \u2014 `spotifyfetch` blanket-overrides `content-type` (low)"
     },
     {
       "label": "\u2611 L8 \u2014 Style memo deps use `[isDark]` but read `activeColors` (LOW)",
@@ -9633,13 +9714,13 @@
       "norm_label": "\u2611 l8 \u2014 style memo deps use `[isdark]` but read `activecolors` (low)"
     },
     {
-      "label": "\u2610 L9 \u2014 Other small items (LOW)",
+      "label": "\u2611 L9 \u2014 Other small items (LOW)",
       "file_type": "document",
       "source_file": "docs/code-review-2026-06-08.md",
       "source_location": "L146",
       "id": "docs_code_review_2026_06_08_l9_other_small_items_low",
       "community": 35,
-      "norm_label": "\u2610 l9 \u2014 other small items (low)"
+      "norm_label": "\u2611 l9 \u2014 other small items (low)"
     },
     {
       "label": "Verified non-issues / false positives (do NOT \"fix\")",
@@ -9658,6 +9739,24 @@
       "id": "docs_code_review_2026_06_08_suggested_fix_order",
       "community": 35,
       "norm_label": "suggested fix order"
+    },
+    {
+      "label": "p1",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L257",
+      "community": 15,
+      "norm_label": "p1",
+      "id": "tests_backendsync_test_p1"
+    },
+    {
+      "label": "p2",
+      "file_type": "code",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L258",
+      "community": 15,
+      "norm_label": "p2",
+      "id": "tests_backendsync_test_p2"
     },
     {
       "label": "fetchMock2",
@@ -9826,7 +9925,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L262",
-      "community": 30,
+      "community": 33,
       "norm_label": "styles",
       "id": "tabs_destination_styles"
     },
@@ -9835,7 +9934,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
-      "community": 30,
+      "community": 0,
       "norm_label": "styles",
       "id": "tabs_index_styles"
     },
@@ -9988,7 +10087,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/settings/privacy-policy.tsx",
       "source_location": "L80",
-      "community": 42,
+      "community": 33,
       "norm_label": "styles",
       "id": "settings_privacy_policy_styles"
     },
@@ -9997,7 +10096,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/settings/terms-of-service.tsx",
       "source_location": "L85",
-      "community": 48,
+      "community": 33,
       "norm_label": "styles",
       "id": "settings_terms_of_service_styles"
     },
@@ -10006,7 +10105,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/swipe/[playlistId].tsx",
       "source_location": "L686",
-      "community": 27,
+      "community": 64,
       "norm_label": "styles",
       "id": "swipe_playlistid_styles"
     },
@@ -10222,7 +10321,7 @@
       "file_type": "code",
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L81",
-      "community": 30,
+      "community": 33,
       "norm_label": "styles",
       "id": "components_appmodal_styles"
     },
@@ -10240,7 +10339,7 @@
       "file_type": "code",
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L67",
-      "community": 30,
+      "community": 33,
       "norm_label": "styles",
       "id": "components_playlistrow_styles"
     },
@@ -10249,7 +10348,7 @@
       "file_type": "code",
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L32",
-      "community": 58,
+      "community": 43,
       "norm_label": "styles",
       "id": "components_tabheader_styles"
     },
@@ -10330,7 +10429,7 @@
       "file_type": "code",
       "source_file": "src/player/usePreviewPlayer.ts",
       "source_location": "L79",
-      "community": 60,
+      "community": 64,
       "norm_label": "usepreviewplayer()",
       "id": "player_usepreviewplayer_usepreviewplayer"
     },
@@ -10492,7 +10591,7 @@
       "file_type": "code",
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L88",
-      "community": 58,
+      "community": 33,
       "norm_label": "styles",
       "id": "swipe_buttonbar_styles"
     },
@@ -10519,7 +10618,7 @@
       "file_type": "code",
       "source_file": "src/swipe/SwipeEngine.tsx",
       "source_location": "L518",
-      "community": 58,
+      "community": 31,
       "norm_label": "styles",
       "id": "swipe_swipeengine_styles"
     },
@@ -17852,6 +17951,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L851",
+      "weight": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_overlongid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
+      "source_location": "L864",
+      "weight": 1.0,
+      "source": "backend_src_tests_swipes_test_ts",
+      "target": "tests_swipes_test_malformedid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/__tests__/swipes.test.ts",
       "source_location": "L571",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -21482,6 +21601,16 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/adapters/__tests__/adapter-contract.test.ts",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "src_adapters_tests_adapter_contract_test_ts",
+      "target": "tests_adapter_contract_test_currenttrack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/adapters/__tests__/interface.test.ts",
       "source_location": "L25",
       "weight": 1.0,
@@ -24631,6 +24760,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_enqueuefailedpostswipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L49",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24691,26 +24830,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L119",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_p1"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/services/__tests__/BackendSync.test.ts",
-      "source_location": "L120",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_p2"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L344",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24731,11 +24850,112 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L390",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_resolvepostswipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L391",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_postswiperesponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L421",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_postswipefetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L405",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_flushfetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L420",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_rejectpostswipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L430",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_skipfetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L443",
+      "weight": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_retryfetch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L119",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_p1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L120",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_services_tests_backendsync_test_ts",
+      "target": "tests_backendsync_test_p2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L168",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
       "target": "tests_backendsync_test_fetchmock2"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/services/__tests__/BackendSync.test.ts",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "tests_backendsync_test_enqueuefailedpostswipe",
+      "target": "tests_backendsync_test_mockfetch",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -29404,5 +29624,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ef271c25bf008bf5c2b5b679497b5daf0b0bc662"
+  "built_at_commit": "1bb0e4b96ace33d32015cdb88a51846febd190ae"
 }
