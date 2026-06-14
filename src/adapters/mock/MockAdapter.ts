@@ -17,6 +17,9 @@ interface MockFixtures {
   supportsLibrarySave?: boolean;
   supportsPlaylistCreation?: boolean;
   likedTrackIds?: Set<string>;
+  // Defaults to null to match SpotifyAdapter, which does not yet report a
+  // currently playing track. Tests opt in by passing a Track here.
+  currentTrack?: Track | null;
 }
 
 const DEFAULT_TRACKS: Track[] = [
@@ -130,6 +133,7 @@ export class MockAdapter implements MusicPlatformAdapter {
       supportsLibrarySave,
       supportsPlaylistCreation,
       likedTrackIds: overrides.likedTrackIds ?? new Set<string>(),
+      currentTrack: overrides.currentTrack ?? null,
     };
 
     this.capabilities = {
@@ -195,7 +199,9 @@ export class MockAdapter implements MusicPlatformAdapter {
   }
 
   async getCurrentTrack(): Promise<Track | null> {
-    return this.fixtures.tracks[0] ?? null;
+    // Defaults to null to match SpotifyAdapter's default; tests opt in via the
+    // currentTrack fixture.
+    return this.fixtures.currentTrack;
   }
 
   async getCurrentPositionMs(): Promise<number> {

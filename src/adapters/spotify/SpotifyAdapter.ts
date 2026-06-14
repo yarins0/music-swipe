@@ -158,8 +158,28 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async getPlaylistById(playlistId: string): Promise<Playlist> {
     if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-      const playlists = await this.getUserPlaylists();
-      return playlists[0]; // Liked Songs is always first
+      // Read the Liked Songs count directly from /me/tracks instead of paginating
+      // every playlist via getUserPlaylists() just to extract one total.
+      let likedTrackCount = 0;
+      try {
+        const likedData = await spotifyFetch<{ total: number }>(
+          '/me/tracks?limit=1',
+          {},
+          this.auth,
+        );
+        likedTrackCount = likedData?.total ?? 0;
+      } catch {
+        // Non-fatal: Liked Songs still resolves with count 0.
+      }
+
+      return {
+        id: LIKED_SONGS_PLAYLIST_ID,
+        name: 'Liked Songs',
+        coverArtUrl: null,
+        trackCount: likedTrackCount,
+        isOwned: true,
+        isFollowed: false,
+      };
     }
 
     const userId = await this.getUserId();

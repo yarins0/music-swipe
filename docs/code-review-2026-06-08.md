@@ -143,7 +143,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L8 — Style memo deps use `[isDark]` but read `activeColors` (LOW)
 **Files:** `SwipeEngine.tsx`, `SwipeCard.tsx`, `ButtonBar.tsx`, `DestinationEditor.tsx`. Stale styles if a palette changes without a brightness flip. **Fix:** depend on `activeColors`. (Convention, no impact today.)
 
-### ☐ L9 — Other small items (LOW)
+### ☑ L9 — Other small items (LOW)
 - `app/(tabs)/index.tsx`: unused `clearAuth` selector + unused `Platform` import (lint noise).
 - `src/components/PlaylistAccessGuard.tsx:~23`: "Open in Spotify" button has no `onPress` (Phase 5 stub) — wire the deep link or confirm the component is unreferenced.
 - `src/adapters/spotify/SpotifyAdapter.ts:~150-157`: `getPlaylistById(LIKED_SONGS)` paginates all playlists to read one count — fetch `/me/tracks?limit=1` directly.

@@ -845,6 +845,32 @@ describe('GET /swipes', () => {
     expect(res.body.error).toMatch(/status must be one of/);
   });
 
+  it('returns 400 when source_playlist_id exceeds the max length', async () => {
+    authenticateAs();
+
+    const overLongId = 'a'.repeat(256);
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?source_playlist_id=${overLongId}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/source_playlist_id is malformed/);
+  });
+
+  it('returns 400 when source_playlist_id contains disallowed characters', async () => {
+    authenticateAs();
+
+    const malformedId = encodeURIComponent('bad id/../with spaces');
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?source_playlist_id=${malformedId}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/source_playlist_id is malformed/);
+  });
+
   it('returns 200 with swipe list including destinationPlaylistIds', async () => {
     authenticateAs();
 

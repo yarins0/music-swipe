@@ -8,6 +8,11 @@ interface PlaylistAccessGuardProps {
   children: ReactNode;
 }
 
+// Unreferenced Phase 5 stub: no source file imports this component yet. When it is
+// adopted, the action button must be wired to the platform deep link via the adapter's
+// openPlaylistInApp (passed in as a prop), and its label/colour sourced from a
+// platform-agnostic place rather than the hardcoded Spotify values below — this file
+// lives outside src/adapters/, so platform-specific strings here are a boundary smell.
 export function PlaylistAccessGuard({
   capabilities,
   children,
@@ -16,7 +21,6 @@ export function PlaylistAccessGuard({
     return <>{children}</>;
   }
 
-  // Phase 5: real deep link will open Spotify to the playlist
   return (
     <View style={styles.container}>
       <Text style={styles.message}>Follow this playlist first to access it</Text>

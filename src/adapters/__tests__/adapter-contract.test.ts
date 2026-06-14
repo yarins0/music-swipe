@@ -134,10 +134,25 @@ describe('adapter contract — MockAdapter', () => {
       expect(adapter.calls.seek).toContain(5000);
     });
 
-    it('getCurrentTrack() returns Track or null', async () => {
+    it('getCurrentTrack() defaults to null, matching SpotifyAdapter', async () => {
       const adapter = new MockAdapter();
-      const track = await adapter.getCurrentTrack();
-      expect(track === null || typeof (track as Track).id === 'string').toBe(true);
+      expect(await adapter.getCurrentTrack()).toBeNull();
+    });
+
+    it('getCurrentTrack() returns the currentTrack fixture when provided', async () => {
+      const currentTrack: Track = {
+        id: 'now-playing',
+        uri: 'mock:track:now-playing',
+        title: 'Now Playing',
+        artist: 'Mock Artist',
+        artists: ['Mock Artist'],
+        album: 'Mock Album',
+        albumArtUrl: 'https://example.com/now.jpg',
+        durationMs: 200000,
+        previewUrl: null,
+      };
+      const adapter = new MockAdapter({ currentTrack });
+      expect(await adapter.getCurrentTrack()).toEqual(currentTrack);
     });
 
     it('getCurrentPositionMs() returns a number', async () => {

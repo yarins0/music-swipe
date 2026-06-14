@@ -113,15 +113,16 @@ describe('SpotifyAdapter — CRUD', () => {
 
   // --- getPlaylistById ---
 
-  it('getPlaylistById() with LIKED_SONGS_PLAYLIST_ID delegates to getUserPlaylists', async () => {
-    mockSpotifyFetch.mockResolvedValueOnce(makeMeResponse());
-    mockSpotifyFetch.mockResolvedValueOnce({ items: [], next: null, total: 0 });
+  it('getPlaylistById() with LIKED_SONGS_PLAYLIST_ID reads the count from /me/tracks', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({ total: 7 });
 
     const pl = await adapter.getPlaylistById(LIKED_SONGS_PLAYLIST_ID);
 
     expect(pl.id).toBe(LIKED_SONGS_PLAYLIST_ID);
     expect(pl.trackCount).toBe(7);
+    // Reads the one count directly instead of paginating every playlist.
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(1);
+    expect(mockSpotifyFetch.mock.calls[0][0]).toBe('/me/tracks?limit=1');
   });
 
   it('getPlaylistById() for a regular playlist calls /playlists/:id', async () => {

@@ -9,6 +9,14 @@ const router = Router();
 const VALID_STATUSES = new Set(['liked', 'super_liked', 'skipped', 'pending']);
 const DECIDED_STATUSES = new Set(['liked', 'super_liked', 'skipped']);
 
+// Bound the source_playlist_id query param at the boundary. Even though supabase-js
+// parameterises the value (so this is not an SQLi guard), an unbounded or oddly-shaped
+// id has no legitimate use and is rejected here. Playlist references seen in this app are
+// platform ids / URIs (e.g. "spotify:playlist:<base62>"), so the charset stays to those
+// characters and the length is capped well above any real id.
+const MAX_PLAYLIST_ID_LENGTH = 255;
+const PLAYLIST_ID_CHARSET = /^[\w:-]+$/;
+
 interface SwipeInput {
   sessionId?: unknown;
   spotifyTrackId?: unknown;
@@ -190,6 +198,15 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
 
   if (source_playlist_id !== undefined && typeof source_playlist_id !== 'string') {
     res.status(400).json({ error: 'source_playlist_id must be a string' });
+    return;
+  }
+
+  if (
+    typeof source_playlist_id === 'string' &&
+    (source_playlist_id.length > MAX_PLAYLIST_ID_LENGTH ||
+      !PLAYLIST_ID_CHARSET.test(source_playlist_id))
+  ) {
+    res.status(400).json({ error: 'source_playlist_id is malformed' });
     return;
   }
 
