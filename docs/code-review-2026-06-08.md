@@ -131,7 +131,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L4 — `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW — idempotent)
 **File:** `src/services/BackendSync.ts:38-53, 99-109`. The 2026-06-04 M1 fix removes a payload from `pending` on resolve, but `flushPending` can still grab a payload during its in-flight window and re-POST it. **Impact is benign:** the backend upserts on `UNIQUE(session_id, spotify_track_id)` (2026-06-04 M2/M8), so a duplicate send is idempotent — cost is one redundant request, no data duplication. **Fix (optional):** mark in-flight payloads (a `Set` of references) and have `flushPending` skip them.
 
-### ☐ L5 — Missing null-art guard in SessionCard (LOW)
+### ☑ L5 — Missing null-art guard in SessionCard (LOW)
 **File:** `src/components/SessionCard.tsx:~38`. Passes `uri: null` to `expo-image` for null-art restored tracks (PlaylistRow and session-end guard this; SessionCard's `LikedRow` doesn't). **Fix:** add the placeholder branch like the others.
 
 ### ☐ L6 — `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)

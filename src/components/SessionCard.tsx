@@ -35,7 +35,13 @@ interface LikedRowProps {
 function LikedRow({ record, isRemoving, onRemove, styles, activeColors }: LikedRowProps): React.ReactElement {
   return (
     <View style={styles.trackRow}>
-      <Image source={{ uri: record.track.albumArtUrl }} style={styles.thumb} contentFit="cover" />
+      {/* Restored sessions may carry tracks with null art; passing uri:null to expo-image errors,
+          so render the styled placeholder instead — mirrors PlaylistRow's coverArtUrl guard. */}
+      {record.track.albumArtUrl ? (
+        <Image source={{ uri: record.track.albumArtUrl }} style={styles.thumb} contentFit="cover" />
+      ) : (
+        <View style={styles.thumb} />
+      )}
       <View style={styles.trackInfo}>
         <Text style={styles.trackTitle} numberOfLines={1}>{record.track.title}</Text>
         <Text style={styles.trackArtist} numberOfLines={1}>{record.track.artist}</Text>
