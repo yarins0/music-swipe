@@ -103,9 +103,13 @@ export async function spotifyFetch<T = unknown>(
     fetch(`${SPOTIFY_API_BASE}${endpoint}`, {
       ...options,
       headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
+        // Default Content-Type first so caller headers can override it (e.g. a caller
+        // sending form-encoded or no body): later keys win in object-spread order.
         'Content-Type': 'application/json',
+        ...options.headers,
+        // Authorization last: the token spotifyFetch manages (refresh/rotation) is
+        // authoritative and must not be overridable by caller-supplied headers.
+        Authorization: `Bearer ${token}`,
       },
     });
 

@@ -124,6 +124,31 @@ describe('spotifyFetch — token refresh (H1 single-flight, H2 selective auth-ex
     expect(auth.onAuthExpired).toHaveBeenCalledTimes(1);
   });
 
+  it('lets a caller override Content-Type while keeping Authorization authoritative', async () => {
+    // L7: the default Content-Type must not blanket-override a caller-supplied one,
+    // but the managed bearer token must still win over any caller Authorization header.
+    const auth = makeExpiringAuth();
+    global.fetch = jest.fn(async (url: string) => {
+      if (url === TOKEN_ENDPOINT) return makeResponse({ status: 200, jsonBody: TOKEN_SUCCESS });
+      return makeResponse({ status: 200, textBody: '{"ok":true}' });
+    }) as unknown as typeof fetch;
+
+    await spotifyFetch(
+      '/me',
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: 'Bearer caller-supplied-token',
+        },
+      },
+      auth,
+    );
+
+    const apiCall = (global.fetch as jest.Mock).mock.calls.find(([url]) => url.startsWith(API_BASE));
+    expect(apiCall?.[1].headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(apiCall?.[1].headers.Authorization).toBe('Bearer new-token');
+  });
+
   it('uses the refreshed token for the API request after a proactive refresh', async () => {
     const auth = makeExpiringAuth();
     global.fetch = jest.fn(async (url: string) => {

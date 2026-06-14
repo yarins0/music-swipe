@@ -137,7 +137,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L6 — `NO_ACTIVE_DEVICE` leaves the swipe screen on an infinite spinner (LOW)
 **File:** `app/(tabs)/swipe/[playlistId].tsx:~344`. Fires the deep link + alert but doesn't set a retryable phase or re-fetch on return → stuck on "Loading playlist…". **Fix:** set an actionable error phase with Retry, or re-run `fetchQueue` on `AppState` `active`.
 
-### ☐ L7 — `spotifyFetch` blanket-overrides `Content-Type` (LOW)
+### ☑ L7 — `spotifyFetch` blanket-overrides `Content-Type` (LOW)
 **File:** `src/adapters/spotify/spotifyFetch.ts:71-79`. `options.headers` is spread before the hardcoded `Content-Type: application/json`, so a caller can never override it. **Fix:** spread `options.headers` last, or only set the header when a body is present.
 
 ### ☑ L8 — Style memo deps use `[isDark]` but read `activeColors` (LOW)
