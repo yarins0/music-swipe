@@ -128,7 +128,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L3 — `flushPending` drops payloads on failure (LOW)
 **File:** `src/services/BackendSync.ts:99-109`. The spliced batch is lost if `sendBatch` rejects (session-end flush on a network blip → those swipes never retried). **Fix:** on rejection, unshift the batch back into `pending`.
 
-### ☐ L4 — `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW — idempotent)
+### ☑ L4 — `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW — idempotent)
 **File:** `src/services/BackendSync.ts:38-53, 99-109`. The 2026-06-04 M1 fix removes a payload from `pending` on resolve, but `flushPending` can still grab a payload during its in-flight window and re-POST it. **Impact is benign:** the backend upserts on `UNIQUE(session_id, spotify_track_id)` (2026-06-04 M2/M8), so a duplicate send is idempotent — cost is one redundant request, no data duplication. **Fix (optional):** mark in-flight payloads (a `Set` of references) and have `flushPending` skip them.
 
 ### ☐ L5 — Missing null-art guard in SessionCard (LOW)

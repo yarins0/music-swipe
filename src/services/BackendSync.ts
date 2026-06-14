@@ -25,6 +25,13 @@ export interface SwipePayload {
 
 export class BackendSync {
   private readonly pending: SwipePayload[] = [];
+  // Payloads currently being POSTed by an in-flight postSwipe() request.
+  // flushPending() skips these so a batch flush cannot re-send a payload whose
+  // single-element request is still settling (the M1 cleanup only removes a
+  // payload from `pending` once its request resolves, leaving an in-flight
+  // window where both paths could POST it). Tracked by reference identity, so
+  // the same SwipePayload object pushed to `pending` is the key we add/remove.
+  private readonly inFlight: Set<SwipePayload> = new Set();
 
   constructor(
     private readonly backendUrl: string,
@@ -38,10 +45,15 @@ export class BackendSync {
   postSwipe(payload: SwipePayload): void {
     this.pending.push(payload);
 
+    // Mark the payload in flight so a concurrent flushPending() skips it instead
+    // of re-POSTing the same swipe.
+    this.inFlight.add(payload);
+
     // Fire-and-forget: kick off a single-element flush immediately.
     // On success, remove the payload from pending so flushPending() does
     // not re-send it. On failure, leave it in pending so the next
-    // flushPending() retries it.
+    // flushPending() retries it. Either way, clear the in-flight mark once the
+    // request settles so a later flush can retry a failed payload.
     this.sendBatch([payload]).then(() => {
       const index = this.pending.indexOf(payload);
       if (index !== -1) {
@@ -49,6 +61,8 @@ export class BackendSync {
       }
     }).catch((err: unknown) => {
       console.warn('[BackendSync] postSwipe failed:', err);
+    }).finally(() => {
+      this.inFlight.delete(payload);
     });
   }
 
@@ -101,9 +115,24 @@ export class BackendSync {
       return;
     }
 
-    // Drain the queue snapshot before awaiting so new postSwipe() calls
-    // that arrive concurrently do not get swallowed by this flush.
-    const batch = this.pending.splice(0, this.pending.length);
+    // Drain only payloads that are NOT already being sent by an in-flight
+    // postSwipe(). In-flight payloads stay in `pending` so their own request
+    // can clean them up on success or leave them for a later retry on failure;
+    // pulling them here would double-send the same swipe.
+    const batch: SwipePayload[] = [];
+    for (let index = this.pending.length - 1; index >= 0; index -= 1) {
+      const payload = this.pending[index];
+      if (this.inFlight.has(payload)) {
+        continue;
+      }
+      this.pending.splice(index, 1);
+      batch.unshift(payload);
+    }
+
+    // Nothing flushable right now — every pending payload is mid-flight.
+    if (batch.length === 0) {
+      return;
+    }
 
     try {
       await this.sendBatch(batch);
