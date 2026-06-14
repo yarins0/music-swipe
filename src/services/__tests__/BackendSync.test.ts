@@ -293,21 +293,46 @@ describe('BackendSync', () => {
       await expect(sync.flushPending()).rejects.toThrow('timeout');
     });
 
-    it('clears the queue even if the batch request fails', async () => {
+    it('restores the batch to the queue when the request fails so it is retried', async () => {
       global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
-      sync.postSwipe(makePayload());
+      sync.postSwipe(makePayload({ trackId: 'track-retry' }));
 
       global.fetch = mockFetch(500, { error: 'fail' });
 
       // Swallow the expected rejection
       await sync.flushPending().catch(() => {});
 
-      // Queue must now be empty so a second flush is a no-op
-      const fetchMock2 = jest.fn();
-      global.fetch = fetchMock2;
+      // The failed batch must remain queued — a second flush re-sends it.
+      const retryMock = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = retryMock;
 
       await sync.flushPending();
-      expect(fetchMock2).not.toHaveBeenCalled();
+
+      expect(retryMock).toHaveBeenCalledTimes(1);
+      const [, init] = retryMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes).toHaveLength(1);
+      expect(body.swipes[0]).toMatchObject({ spotifyTrackId: 'track-retry' });
+    });
+
+    it('keeps the restored batch ahead of payloads enqueued after the failure', async () => {
+      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+      sync.postSwipe(makePayload({ trackId: 'older' }));
+
+      global.fetch = mockFetch(500, { error: 'fail' });
+      await sync.flushPending().catch(() => {});
+
+      // A new swipe enqueues after the failed flush returned; keep it pending too.
+      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+      sync.postSwipe(makePayload({ trackId: 'newer' }));
+
+      const retryMock = mockFetch(200, { inserted: 2, updated: 0 });
+      global.fetch = retryMock;
+      await sync.flushPending();
+
+      const [, init] = retryMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes.map((s) => s['spotifyTrackId'])).toEqual(['older', 'newer']);
     });
 
     // -------------------------------------------------------------------------

@@ -125,7 +125,7 @@ Spotify URL/URI/22-char-ID regexes and `extractSpotifyPlaylistId` live outside `
 ### ☑ L2 — Production logging of scopes / deep-link URIs (LOW, security hygiene)
 **Files:** `src/auth/useSpotifyAuth.ts:105` (granted scopes) · `src/deeplink/PlatformDeepLink.ts:4` (every deep-link URI). **Fix:** gate behind `__DEV__`. (Token persistence already uses `expo-secure-store` — verified, no action.)
 
-### ☐ L3 — `flushPending` drops payloads on failure (LOW)
+### ☑ L3 — `flushPending` drops payloads on failure (LOW)
 **File:** `src/services/BackendSync.ts:99-109`. The spliced batch is lost if `sendBatch` rejects (session-end flush on a network blip → those swipes never retried). **Fix:** on rejection, unshift the batch back into `pending`.
 
 ### ☐ L4 — `BackendSync.postSwipe` + `flushPending` in-flight double-send (LOW — idempotent)

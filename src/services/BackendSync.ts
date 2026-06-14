@@ -105,7 +105,16 @@ export class BackendSync {
     // that arrive concurrently do not get swallowed by this flush.
     const batch = this.pending.splice(0, this.pending.length);
 
-    await this.sendBatch(batch);
+    try {
+      await this.sendBatch(batch);
+    } catch (err) {
+      // Restore the batch on failure (e.g. a network blip during the session-end
+      // flush) so those swipes are retried on the next flush instead of being
+      // dropped. Unshift keeps the older batch ahead of any payloads that arrived
+      // while the request was in flight, preserving chronological order.
+      this.pending.unshift(...batch);
+      throw err;
+    }
   }
 
   // ---------------------------------------------------------------------------
