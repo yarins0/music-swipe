@@ -16,7 +16,7 @@
   "dependencies": {
     "@expo-google-fonts/outfit": "0.4.3",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@supabase/supabase-js": "^2.46.0",
+    "@supabase/supabase-js": "^2.112.4",
     "expo": "~52.0.0",
     "expo-auth-session": "~6.0.3",
     "expo-checkbox": "~3.0.0",
@@ -30,13 +30,13 @@
     "expo-status-bar": "~2.0.0",
     "expo-web-browser": "~14.0.1",
     "react": "18.3.1",
-    "react-native": "0.76.3",
+    "react-native": "0.87.1",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-reanimated": "~3.16.1",
-    "react-native-safe-area-context": "5.8.0",
-    "react-native-screens": "~4.4.0",
-    "react-native-web": "0.19.13",
-    "zustand": "^5.0.0"
+    "react-native-safe-area-context": "5.9.1",
+    "react-native-screens": "~4.27.0",
+    "react-native-web": "0.21.2",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
