@@ -29,7 +29,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://api.musicswipe.app"
+        "EXPO_PUBLIC_BACKEND_URL": "https://music-swipe-backend.onrender.com"
       }
     },
     "production": {
@@ -37,7 +37,7 @@
       "distribution": "store",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://api.musicswipe.app"
+        "EXPO_PUBLIC_BACKEND_URL": "https://music-swipe-backend.onrender.com"
       }
     }
   },
