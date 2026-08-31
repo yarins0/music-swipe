@@ -4,7 +4,7 @@
   },
   "build": {
     "base": {
-      "node": "20.x",
+      "node": "20.18.0",
       "env": {
         "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "6889af852c054b92a999e2615ae210b2"
       }
