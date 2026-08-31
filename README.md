@@ -159,7 +159,7 @@ eas build --platform android
 ```
 
 Build profiles are in `eas.json`: `development` builds a simulator/APK build against
-`localhost:3000`, `preview` builds an internal APK against `https://api.musicswipe.app`, and
+`localhost:3000`, `preview` builds an internal APK against `https://music-swipe-backend.onrender.com`, and
 `production` targets the App Store and Play Store with auto-incrementing build numbers.
 
 ## 📁 Repo Layout
