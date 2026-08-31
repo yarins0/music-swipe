@@ -41,6 +41,23 @@ function mockFetchNetworkError(message = 'network error'): jest.Mock {
   return jest.fn().mockRejectedValue(new Error(message));
 }
 
+/**
+ * Enqueues a payload via postSwipe whose fire-and-forget send FAILS and then
+ * settles, leaving the payload sitting in `pending` with its in-flight mark
+ * cleared. This is the realistic precondition for flushPending tests: a payload
+ * waiting to be flushed that is no longer mid-flight. (A never-resolving send is
+ * not usable here — the L4 fix correctly keeps such a payload marked in-flight,
+ * so flushPending would skip it.)
+ */
+async function enqueueFailedPostSwipe(sync: BackendSync, payload: SwipePayload): Promise<void> {
+  global.fetch = mockFetch(500, { error: 'parked' });
+  sync.postSwipe(payload);
+  // Let the full sendBatch().catch().finally() chain drain so the payload stays
+  // in `pending` and the in-flight mark is removed. A macrotask tick flushes all
+  // queued microtasks regardless of how many hops the chain takes.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe('BackendSync', () => {
   let sync: BackendSync;
 
@@ -251,19 +268,12 @@ describe('BackendSync', () => {
     });
 
     it('sends all pending payloads as a batch and clears the queue', async () => {
+      // Park two payloads in `pending` via failed (then settled) postSwipe sends
+      // so flushPending has a non-empty, non-in-flight queue to drain.
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'track-1' }));
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'track-2', direction: 'skipped' }));
+
       const fetchMock = mockFetch(200, { inserted: 2, updated: 0 });
-      global.fetch = fetchMock;
-
-      const p1 = makePayload({ trackId: 'track-1' });
-      const p2 = makePayload({ trackId: 'track-2', direction: 'skipped' });
-
-      // Use a fetch mock that never resolves for postSwipe fire-and-forget calls
-      // so we can test flushPending separately. Reset fetch after postSwipe enqueues.
-      global.fetch = jest.fn().mockReturnValue(new Promise(() => {})); // never resolves
-      sync.postSwipe(p1);
-      sync.postSwipe(p2);
-
-      // Now set the real mock for flushPending
       global.fetch = fetchMock;
 
       await sync.flushPending();
@@ -276,8 +286,7 @@ describe('BackendSync', () => {
     });
 
     it('throws when the server returns a non-2xx response', async () => {
-      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
-      sync.postSwipe(makePayload());
+      await enqueueFailedPostSwipe(sync, makePayload());
 
       global.fetch = mockFetch(503, { error: 'Service Unavailable' });
 
@@ -285,29 +294,50 @@ describe('BackendSync', () => {
     });
 
     it('throws when fetch rejects with a network error', async () => {
-      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
-      sync.postSwipe(makePayload());
+      await enqueueFailedPostSwipe(sync, makePayload());
 
       global.fetch = mockFetchNetworkError('timeout');
 
       await expect(sync.flushPending()).rejects.toThrow('timeout');
     });
 
-    it('clears the queue even if the batch request fails', async () => {
-      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
-      sync.postSwipe(makePayload());
+    it('restores the batch to the queue when the request fails so it is retried', async () => {
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'track-retry' }));
 
       global.fetch = mockFetch(500, { error: 'fail' });
 
       // Swallow the expected rejection
       await sync.flushPending().catch(() => {});
 
-      // Queue must now be empty so a second flush is a no-op
-      const fetchMock2 = jest.fn();
-      global.fetch = fetchMock2;
+      // The failed batch must remain queued — a second flush re-sends it.
+      const retryMock = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = retryMock;
 
       await sync.flushPending();
-      expect(fetchMock2).not.toHaveBeenCalled();
+
+      expect(retryMock).toHaveBeenCalledTimes(1);
+      const [, init] = retryMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes).toHaveLength(1);
+      expect(body.swipes[0]).toMatchObject({ spotifyTrackId: 'track-retry' });
+    });
+
+    it('keeps the restored batch ahead of payloads enqueued after the failure', async () => {
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'older' }));
+
+      global.fetch = mockFetch(500, { error: 'fail' });
+      await sync.flushPending().catch(() => {});
+
+      // A new swipe enqueues after the failed flush returned; keep it pending too.
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'newer' }));
+
+      const retryMock = mockFetch(200, { inserted: 2, updated: 0 });
+      global.fetch = retryMock;
+      await sync.flushPending();
+
+      const [, init] = retryMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes.map((s) => s['spotifyTrackId'])).toEqual(['older', 'newer']);
     });
 
     // -------------------------------------------------------------------------
@@ -332,13 +362,10 @@ describe('BackendSync', () => {
     });
 
     it('retries a failed postSwipe when flushPending is called', async () => {
-      // postSwipe fires and rejects — the payload stays in pending.
-      global.fetch = mockFetch(500, { error: 'server error' });
-      sync.postSwipe(makePayload({ trackId: 'track-fail' }));
-
-      // Drain microtasks so the .catch() runs (payload stays in pending).
-      await Promise.resolve();
-      await Promise.resolve();
+      // postSwipe fires and rejects — the payload stays in pending. The .catch()
+      // leaves it queued; the .finally() then clears its in-flight mark so a
+      // later flush is free to retry it.
+      await enqueueFailedPostSwipe(sync, makePayload({ trackId: 'track-fail' }));
 
       // flushPending must send the still-pending payload.
       const retryMock = mockFetch(200, { inserted: 1, updated: 0 });
@@ -350,6 +377,78 @@ describe('BackendSync', () => {
       const body = JSON.parse(init.body as string) as { swipes: unknown[] };
       expect(body.swipes).toHaveLength(1);
       expect(body.swipes[0]).toMatchObject({ spotifyTrackId: 'track-fail' });
+    });
+
+    // -------------------------------------------------------------------------
+    // L4 regression: flushPending must not re-send a payload whose postSwipe
+    // request is still in flight (the M1 cleanup only runs once it resolves).
+    // -------------------------------------------------------------------------
+
+    it('does not re-send a payload whose postSwipe request is still in flight', async () => {
+      // Defer the postSwipe request so it is still in flight when flushPending
+      // runs. resolvePostSwipe lets us settle it on demand.
+      let resolvePostSwipe: (value: { ok: boolean; status: number }) => void = () => {};
+      const postSwipeResponse = { ok: true, status: 200 };
+      const postSwipeFetch = jest.fn().mockReturnValue(
+        new Promise<{ ok: boolean; status: number }>((resolve) => {
+          resolvePostSwipe = resolve;
+        }),
+      );
+      global.fetch = postSwipeFetch;
+      sync.postSwipe(makePayload({ trackId: 'track-inflight' }));
+
+      // The postSwipe POST has been issued but not yet resolved.
+      expect(postSwipeFetch).toHaveBeenCalledTimes(1);
+
+      // flushPending while the payload is mid-flight: it must skip it, leaving
+      // the in-flight request as the only send for this payload.
+      const flushFetch = jest.fn();
+      global.fetch = flushFetch;
+      await sync.flushPending();
+
+      expect(flushFetch).not.toHaveBeenCalled();
+
+      // Settle the original in-flight request and let its cleanup run.
+      resolvePostSwipe(postSwipeResponse);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    it('flushes the payload normally once its in-flight postSwipe send settles', async () => {
+      // A failing postSwipe leaves the payload in pending. While its request is
+      // in flight, flushPending must skip it; once it settles, flushPending
+      // must be free to retry it.
+      let rejectPostSwipe: (reason: Error) => void = () => {};
+      const postSwipeFetch = jest.fn().mockReturnValue(
+        new Promise((_resolve, reject) => {
+          rejectPostSwipe = reject;
+        }),
+      );
+      global.fetch = postSwipeFetch;
+      sync.postSwipe(makePayload({ trackId: 'track-settle' }));
+
+      // Mid-flight flush is a no-op: the payload is still marked in flight.
+      const skipFetch = jest.fn();
+      global.fetch = skipFetch;
+      await sync.flushPending();
+      expect(skipFetch).not.toHaveBeenCalled();
+
+      // Settle the in-flight send (failure keeps the payload in pending) and let
+      // the whole .catch()/.finally() chain drain so the in-flight mark is
+      // cleared. A macrotask tick flushes all queued microtasks regardless of
+      // how many hops the promise chain takes.
+      rejectPostSwipe(new Error('network down'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // The payload is no longer blocked — flushPending now retries it.
+      const retryFetch = mockFetch(200, { inserted: 1, updated: 0 });
+      global.fetch = retryFetch;
+      await sync.flushPending();
+
+      expect(retryFetch).toHaveBeenCalledTimes(1);
+      const [, init] = retryFetch.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as { swipes: Record<string, unknown>[] };
+      expect(body.swipes).toHaveLength(1);
+      expect(body.swipes[0]).toMatchObject({ spotifyTrackId: 'track-settle' });
     });
   });
 });

@@ -17,6 +17,9 @@ interface MockFixtures {
   supportsLibrarySave?: boolean;
   supportsPlaylistCreation?: boolean;
   likedTrackIds?: Set<string>;
+  // Defaults to null to match SpotifyAdapter, which does not yet report a
+  // currently playing track. Tests opt in by passing a Track here.
+  currentTrack?: Track | null;
 }
 
 const DEFAULT_TRACKS: Track[] = [
@@ -77,11 +80,12 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
 export interface MockCalls {
   play: string[];
   seek: number[];
-  addToPlaylist: Array<{ playlistId: string; trackId: string }>;
-  removeFromPlaylist: Array<{ playlistId: string; trackId: string }>;
+  addToPlaylist: { playlistId: string; trackId: string }[];
+  removeFromPlaylist: { playlistId: string; trackId: string }[];
   saveToLibrary: string[];
   removeFromLibrary: string[];
   isInLibrary: string[];
+  getPlaylistTrackIds: string[];
   createPlaylist: string[];
   removeDuplicatesFromPlaylist: string[];
   openPlatformDeepLink: string[];
@@ -99,6 +103,7 @@ export class MockAdapter implements MusicPlatformAdapter {
     saveToLibrary: [],
     removeFromLibrary: [],
     isInLibrary: [],
+    getPlaylistTrackIds: [],
     createPlaylist: [],
     removeDuplicatesFromPlaylist: [],
     openPlatformDeepLink: [],
@@ -128,6 +133,7 @@ export class MockAdapter implements MusicPlatformAdapter {
       supportsLibrarySave,
       supportsPlaylistCreation,
       likedTrackIds: overrides.likedTrackIds ?? new Set<string>(),
+      currentTrack: overrides.currentTrack ?? null,
     };
 
     this.capabilities = {
@@ -193,7 +199,9 @@ export class MockAdapter implements MusicPlatformAdapter {
   }
 
   async getCurrentTrack(): Promise<Track | null> {
-    return this.fixtures.tracks[0] ?? null;
+    // Defaults to null to match SpotifyAdapter's default; tests opt in via the
+    // currentTrack fixture.
+    return this.fixtures.currentTrack;
   }
 
   async getCurrentPositionMs(): Promise<number> {
@@ -247,6 +255,15 @@ export class MockAdapter implements MusicPlatformAdapter {
     return this.fixtures.likedTrackIds.has(trackId);
   }
 
+  async getPlaylistTrackIds(playlistId: string): Promise<Set<string>> {
+    this.calls.getPlaylistTrackIds.push(playlistId);
+    // Return a copy so the writer's per-session cache cannot mutate fixture state.
+    if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
+      return new Set(this.fixtures.likedTrackIds);
+    }
+    return new Set(this.playlistContents.get(playlistId) ?? []);
+  }
+
   async createPlaylist(name: string): Promise<string> {
     if (!this.fixtures.supportsPlaylistCreation) {
       throw new PlatformError(
@@ -281,5 +298,18 @@ export class MockAdapter implements MusicPlatformAdapter {
 
   async openPlaylistInApp(playlistId: string): Promise<void> {
     this.calls.openPlaylistInApp.push(playlistId);
+  }
+
+  parsePlaylistReference(input: string): string | null {
+    const trimmed = input.trim();
+
+    // Mirrors the real adapter's contract using the mock reference format: a
+    // mock:playlist: URI or a raw mock-playlist-<n> id.
+    const uriMatch = trimmed.match(/^mock:playlist:([\w-]+)$/);
+    if (uriMatch) return uriMatch[1];
+
+    if (/^mock-playlist-\w+$/.test(trimmed)) return trimmed;
+
+    return null;
   }
 }

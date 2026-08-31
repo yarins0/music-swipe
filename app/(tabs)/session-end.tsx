@@ -55,8 +55,8 @@ function computeOptimisticStats(session: SessionEntry | null): SessionStats {
 // ---------------------------------------------------------------------------
 
 function StatCard({ label, value, progress }: { label: string; value: number; progress: number }) {
-  const { activeColors, isDark } = useTheme();
-  const statStyles = useMemo(() => createStatStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const statStyles = useMemo(() => createStatStyles(activeColors), [activeColors]);
 
   return (
     <View style={statStyles.card}>
@@ -79,8 +79,8 @@ interface LikedTrackRowProps {
 }
 
 function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false }: LikedTrackRowProps) {
-  const { activeColors, isDark } = useTheme();
-  const trackStyles = useMemo(() => createTrackStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const trackStyles = useMemo(() => createTrackStyles(activeColors), [activeColors]);
 
   return (
     <View style={trackStyles.row}>
@@ -116,8 +116,8 @@ function LikedTrackRow({ track, status, isRemoving, onRemove, hideRemove = false
 export default function SessionEndScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const sourcePlaylistName = useSessionStore((s) => s.sourcePlaylistName);
   const isFilterMode = useSessionStore((s) => s.isFilterMode);
@@ -128,7 +128,7 @@ export default function SessionEndScreen(): React.ReactElement {
   const completeActiveSession = useSwipeStore((s) => s.completeActiveSession);
   const removeSwipeFromSession = useSwipeStore((s) => s.removeSwipeFromSession);
 
-  const [stats, setStats] = useState<SessionStats>(() => computeOptimisticStats(activeSession));
+  const [stats] = useState<SessionStats>(() => computeOptimisticStats(activeSession));
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [savedPlaylistId, setSavedPlaylistId] = useState<string | null>(null);
@@ -217,9 +217,33 @@ export default function SessionEndScreen(): React.ReactElement {
       const adapter = getAdapter();
       const playlistName = sourcePlaylistName ? `MusicSwipe – ${sourcePlaylistName}` : 'MusicSwipe Session';
       const newPlaylistId = await adapter.createPlaylist(playlistName);
+
+      // Record any non-retryable write failure so "Saved ✓" is only shown when the
+      // tracks actually landed. Rate-limit exhaustion is NOT reported here — those
+      // writes stay in the durable queue and retry automatically on next launch.
+      let hadWriteError = false;
+      const writer = new PlaylistWriter(adapter, undefined, undefined, () => {
+        hadWriteError = true;
+      });
+
+      // Await every write so the button stays in its pending spinner until the tracks
+      // land. The previous fire-and-forget loop flipped to "Saved ✓" the instant the
+      // empty playlist was created, so a silently-failing write showed success over a
+      // partial or empty playlist.
+      await Promise.all(
+        likedTracks.map((record) => writer.writeAndWait(record.track.id, [newPlaylistId])),
+      );
+
+      // The playlist exists and most tracks landed; mark saved so a retry tap can't
+      // create a second duplicate playlist. Surface any writes that did not land —
+      // the durable queue will retry them on next launch.
       setSavedPlaylistId(newPlaylistId);
-      const writer = new PlaylistWriter(adapter);
-      for (const record of likedTracks) writer.write(record.track.id, [newPlaylistId]);
+      if (hadWriteError) {
+        Alert.alert(
+          'Some tracks pending',
+          'Your playlist was created, but a few tracks could not be added yet. They will be retried automatically.',
+        );
+      }
     } catch (err) {
       console.warn('[SessionEnd] createPlaylist failed:', err);
       Alert.alert('Error', 'Could not create playlist. Please try again.');

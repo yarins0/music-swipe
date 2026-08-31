@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Switch,
   StyleSheet,
-  Alert,
   Animated,
   useColorScheme,
 } from 'react-native';
@@ -54,7 +53,7 @@ function ToggleRow({ label, subtitle, value, onValueChange, styles, activeColors
         value={value}
         onValueChange={onValueChange}
         trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
-        thumbColor={activeColors.surface}
+        thumbColor={activeColors.onSurfaceVariant}
         ios_backgroundColor={activeColors.surfaceContainerHighest}
       />
     </View>
@@ -294,17 +293,6 @@ export default function SettingsScreen(): React.ReactElement {
 
   const handleLogOut = () => setLogoutModalVisible(true);
 
-  const handleReconnect = () => {
-    Alert.alert(
-      'Reconnect Spotify',
-      'You will be signed out and redirected to log in again.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reconnect', onPress: () => void clearAuth() },
-      ],
-    );
-  };
-
   return (
     <View style={styles.screen}>
       <TabHeader title="Settings" />
@@ -387,7 +375,7 @@ export default function SettingsScreen(): React.ReactElement {
                 value={autoPlayMusic}
                 onValueChange={setAutoPlayMusic}
                 trackColor={{ false: activeColors.surfaceContainerHighest, true: activeColors.primary }}
-                thumbColor={activeColors.surface}
+                thumbColor={activeColors.onSurfaceVariant}
                 ios_backgroundColor={activeColors.surfaceContainerHighest}
               />
             </Animated.View>

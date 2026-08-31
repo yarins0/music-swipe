@@ -69,6 +69,13 @@ export interface MusicPlatformAdapter {
 
   getUserPlaylists(): Promise<Playlist[]>;
   getPlaylistById(playlistId: string): Promise<Playlist>;
+
+  /**
+   * Parses a user-supplied playlist reference (a platform URL, URI, or raw id) and
+   * returns the platform playlist id, or null if the input is not a recognizable
+   * reference. Keeps platform-specific URL/URI parsing behind the adapter boundary.
+   */
+  parsePlaylistReference(input: string): string | null;
   getPlaylistTracks(
     playlistId: string,
     offset?: number,
@@ -86,6 +93,15 @@ export interface MusicPlatformAdapter {
   saveToLibrary(trackId: string): Promise<void>;
   removeFromLibrary(trackId: string): Promise<void>;
   isInLibrary(trackId: string): Promise<boolean>;
+
+  /**
+   * Returns the set of track ids currently in the playlist. Used to build a per-session
+   * membership cache so a write can skip adding a track that is already present (no
+   * duplicates) and tell a track the caller added apart from one the user already owned.
+   * For the Liked Songs library this returns the saved-track ids.
+   */
+  getPlaylistTrackIds(playlistId: string): Promise<Set<string>>;
+
   createPlaylist(name: string): Promise<string>;
 
   /**

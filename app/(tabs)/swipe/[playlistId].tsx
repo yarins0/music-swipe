@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, AppStateStatus, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  AppStateStatus,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -16,6 +25,7 @@ import { openPlatformDeepLink } from '@/deeplink/PlatformDeepLink';
 import { type Colors } from '@/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { BACKEND_URL } from '@/config';
+import { mapPendingSwipesToTracks, type PendingSwipeResponse } from '@/services/restorePendingTracks';
 
 // Spotify caps a single page at 100 items for playlists and 50 for the saved-tracks
 // ("Liked Songs") endpoint; SpotifyAdapter silently clamps anything larger. Paging by
@@ -28,6 +38,15 @@ function getPageSize(playlistId: string): number {
   return playlistId === LIKED_SONGS_PLAYLIST_ID ? LIKED_SONGS_PAGE_SIZE : PLAYLIST_PAGE_SIZE;
 }
 
+// Deep-link target handed to PlatformDeepLink when no active playback device is found.
+// Kept as a constant so the launch URI isn't duplicated across the trigger sites.
+const PLATFORM_DEEP_LINK_TARGET = 'spotify:';
+
+const DEVICE_MISSING_TITLE = 'No active device';
+const DEVICE_MISSING_MESSAGE =
+  'Open your music app and start playing something, then come back and tap Retry.';
+const RETRY_BUTTON_LABEL = 'Retry';
+
 type InitPhase =
   | 'hydrating'
   | 'flushing'
@@ -35,6 +54,10 @@ type InitPhase =
   | 'fetching_queue'
   | 'opening_session'
   | 'ready'
+  // Actionable, retryable terminal state: playlist load failed because the platform
+  // reported NO_ACTIVE_DEVICE. Distinct from 'error' so the UI can offer Retry and
+  // auto-recover on foreground instead of stranding the user on a dead screen.
+  | 'device_missing'
   | 'error';
 
 export default function SwipeScreen(): React.ReactElement {
@@ -44,8 +67,8 @@ export default function SwipeScreen(): React.ReactElement {
   const playlistId = rawPlaylistId ? decodeURIComponent(rawPlaylistId) : rawPlaylistId;
   const router = useRouter();
 
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   const supabaseToken = useAuthStore((s) => s.supabaseToken);
   const { destinationPlaylistIds } = useSessionStore();
@@ -70,6 +93,14 @@ export default function SwipeScreen(): React.ReactElement {
   const backendSyncRef = useRef<BackendSync | null>(null);
 
   const [phase, setPhase] = useState<InitPhase>('hydrating');
+  // Mirror of `phase` for the AppState listener, which is subscribed once on mount and
+  // would otherwise close over a stale phase value. Lets the foreground handler decide
+  // whether to auto-retry without re-subscribing on every phase change.
+  const phaseRef = useRef<InitPhase>('hydrating');
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [availablePlaylists, setAvailablePlaylists] = useState<Playlist[]>([]);
@@ -212,7 +243,7 @@ export default function SwipeScreen(): React.ReactElement {
     };
 
     void flush();
-  }, [phase, buildServices, getResumeTarget]);
+  }, [phase, buildServices, getResumeTarget, playlistId]);
 
   // ---------------------------------------------------------------------------
   // Token refresh helper — re-registers with backend using current Spotify token
@@ -261,32 +292,13 @@ export default function SwipeScreen(): React.ReactElement {
           return [];
         }
 
-        const data = (await response.json()) as {
-          swipes: {
-            spotifyTrackId: string;
-            metadata?: {
-              title?: string;
-              artist?: string;
-              album?: string;
-              albumArtUrl?: string;
-              durationMs?: number;
-              previewUrl?: string | null;
-            };
-          }[];
-        };
+        const data = (await response.json()) as { swipes: PendingSwipeResponse[] };
 
-        // Map backend metadata directly to Track shape
-        return (data.swipes ?? []).map((s) => ({
-          id: s.spotifyTrackId,
-          uri: `spotify:track:${s.spotifyTrackId}`,
-          title: s.metadata?.title ?? s.spotifyTrackId,
-          artist: s.metadata?.artist ?? '',
-          artists: s.metadata?.artist ? [s.metadata.artist] : [],
-          album: s.metadata?.album ?? '',
-          albumArtUrl: s.metadata?.albumArtUrl ?? '',
-          durationMs: s.metadata?.durationMs ?? 0,
-          previewUrl: s.metadata?.previewUrl ?? null,
-        }));
+        // Map the backend `track` metadata to the internal Track shape. The
+        // platform URI fallback (for swipes whose track was never cached
+        // server-side) is supplied here so the platform literal stays out of
+        // business logic — see restorePendingTracks.ts.
+        return mapPendingSwipesToTracks(data.swipes ?? [], (id) => `spotify:track:${id}`);
       } catch (err) {
         console.warn('[SwipeScreen] fetchPendingTracks error:', err);
         return [];
@@ -310,7 +322,6 @@ export default function SwipeScreen(): React.ReactElement {
       try {
         const adapter = adapterRef.current!;
         const resume = getResumeTarget();
-        const isResuming = resume !== null;
 
         const pageSize = getPageSize(playlistId);
         const startOffset = resume ? resume.resumeOffset : 0;
@@ -340,14 +351,16 @@ export default function SwipeScreen(): React.ReactElement {
       } catch (err) {
         console.error('[SwipeScreen] fetchQueue failed:', err);
         if (err instanceof PlatformError && err.code === PlatformErrorCode.NO_ACTIVE_DEVICE) {
-          console.log('[SwipeScreen] NO_ACTIVE_DEVICE — opening Spotify deep link');
-          void openPlatformDeepLink('spotify:');
-          Alert.alert(
-            'Open Spotify',
-            'Start playing something in Spotify, then come back to MusicSwipe.',
-            [{ text: 'OK' }],
-          );
-        } else if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
+          console.log('[SwipeScreen] NO_ACTIVE_DEVICE — opening platform deep link');
+          void openPlatformDeepLink(PLATFORM_DEEP_LINK_TARGET);
+          Alert.alert(DEVICE_MISSING_TITLE, DEVICE_MISSING_MESSAGE, [{ text: 'OK' }]);
+          // Land on the dedicated retryable phase rather than the generic error screen,
+          // so the user gets a Retry affordance and the AppState listener can auto-recover
+          // when they return from the music app. Returning here skips the generic fallthrough.
+          setPhase('device_missing');
+          return;
+        }
+        if (err instanceof PlatformError && err.code === PlatformErrorCode.PERMISSION_DENIED) {
           setErrorMessage('Spotify permissions need updating. Please log out and log back in to continue.');
           setPhase('error');
           return;
@@ -457,20 +470,40 @@ export default function SwipeScreen(): React.ReactElement {
   }, [phase, playlistId, destinationPlaylistIds, initSession, refreshSupabaseToken, getResumeTarget]);
 
   // -------------------------------------------------------------------------
-  // AppState listener — flush pending swipes on foreground reconnect
+  // Retry — re-run the playlist fetch (phase 4) after a NO_ACTIVE_DEVICE failure.
+  // Services are already built and pending tracks already fetched, so rewinding to
+  // 'fetching_queue' replays only the adapter load that failed. Guarded so it only
+  // fires from the retryable device-missing state.
+  // -------------------------------------------------------------------------
+  const handleRetryFetch = useCallback((): void => {
+    if (phaseRef.current !== 'device_missing') return;
+    setErrorMessage(null);
+    setPhase('fetching_queue');
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // AppState listener — on foreground: flush pending swipes, and auto-recover from
+  // a NO_ACTIVE_DEVICE failure by replaying the fetch (the user has likely just
+  // started playback in their music app and tabbed back).
   // -------------------------------------------------------------------------
   useEffect(() => {
     const handleAppStateChange = (nextState: AppStateStatus): void => {
-      if (nextState === 'active' && backendSyncRef.current) {
+      if (nextState !== 'active') return;
+
+      if (backendSyncRef.current) {
         backendSyncRef.current.flushPending().catch((err: unknown) => {
           console.warn('[SwipeScreen] AppState flush failed:', err);
         });
       }
+
+      // Auto-retry the playlist load only when currently stranded on device_missing,
+      // so returning from the music app recovers the screen without a manual tap.
+      handleRetryFetch();
     };
 
     const sub = AppState.addEventListener('change', handleAppStateChange);
     return () => sub.remove();
-  }, []);
+  }, [handleRetryFetch]);
 
   // -------------------------------------------------------------------------
   // Session end callback (queue exhausted) — navigate to session-end screen.
@@ -492,46 +525,6 @@ export default function SwipeScreen(): React.ReactElement {
       params: sessionId ? { sessionId } : {},
     });
   }, [sessionId, router]);
-
-  // -------------------------------------------------------------------------
-  // onEntireSession: fire-and-forget add, awaitable sequential remove with loading
-  // -------------------------------------------------------------------------
-  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
-
-  const handleEntireSession = useCallback(
-    (added: string[], removed: string[], confirmedRemove: boolean): void => {
-      if (!confirmedRemove && removed.length > 0) return;
-
-      const store = useSwipeStore.getState();
-      const activeEntry = store.sessions.find((e) => e.sessionId === store.activeSessionId);
-      const likedTrackIds = (activeEntry?.likedSwipes ?? []).map((r) => r.track.id);
-
-      for (const pid of added) {
-        for (const trackId of likedTrackIds) {
-          playlistWriterRef.current?.write(trackId, [pid]);
-        }
-      }
-
-      if (removed.length > 0 && adapterRef.current) {
-        const adapter = adapterRef.current;
-        setIsBulkRemoving(true);
-        (async () => {
-          try {
-            for (const pid of removed) {
-              for (const trackId of likedTrackIds) {
-                await adapter.removeFromPlaylist(pid, trackId);
-              }
-            }
-          } catch {
-            Alert.alert('Error', 'Some tracks could not be removed. Please try manually.');
-          } finally {
-            setIsBulkRemoving(false);
-          }
-        })();
-      }
-    },
-    [],
-  );
 
   // -------------------------------------------------------------------------
   // Lazy paging
@@ -568,22 +561,28 @@ export default function SwipeScreen(): React.ReactElement {
     );
   }
 
+  if (phase === 'device_missing') {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.brand}>MusicSwipe</Text>
+        <Text style={styles.errorText}>{DEVICE_MISSING_MESSAGE}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          accessibilityRole="button"
+          onPress={handleRetryFetch}
+        >
+          <Text style={styles.retryButtonText}>{RETRY_BUTTON_LABEL}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (phase !== 'ready' || !sessionId) {
     return (
       <View style={styles.center}>
         <Text style={styles.brand}>MusicSwipe</Text>
         <ActivityIndicator size="large" color={activeColors.primary} />
         <Text style={styles.loadingText}>{phaseLabel(phase)}</Text>
-      </View>
-    );
-  }
-
-  if (isBulkRemoving) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.brand}>MusicSwipe</Text>
-        <ActivityIndicator size="large" color={activeColors.primary} />
-        <Text style={styles.loadingText}>Removing tracks…</Text>
       </View>
     );
   }
@@ -599,7 +598,6 @@ export default function SwipeScreen(): React.ReactElement {
       totalTracks={totalTracks}
       onSessionEnd={handleSessionEnd}
       onNeedMoreTracks={() => void loadMoreTracks()}
-      onEntireSession={handleEntireSession}
     />
   );
 }
@@ -641,6 +639,17 @@ function createStyles(c: Colors) {
       textAlign: 'center',
       paddingHorizontal: 32,
       fontFamily: 'Outfit_400Regular',
+    },
+    retryButton: {
+      backgroundColor: c.primary,
+      paddingVertical: 12,
+      paddingHorizontal: 32,
+      borderRadius: 50,
+    },
+    retryButtonText: {
+      color: c.background,
+      fontSize: 15,
+      fontFamily: 'Outfit_700Bold',
     },
   });
 }

@@ -1,6 +1,8 @@
-import { PlaylistWriter, StorageInterface } from '../PlaylistWriter';
+import { PlaylistWriter, StorageInterface, PendingWrite } from '../PlaylistWriter';
 import { MockAdapter } from '../../adapters/mock/MockAdapter';
 import { LIKED_SONGS_PLAYLIST_ID } from '../../adapters/interface';
+
+const QUEUE_KEY = '@music-swipe/playlist-write-queue';
 
 // In-memory StorageInterface stub — mimics AsyncStorage without native modules.
 function buildMockStorage(initial: Record<string, string> = {}): jest.Mocked<StorageInterface> {
@@ -97,17 +99,19 @@ describe('PlaylistWriter – stateful action sequences', () => {
       expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(false);
     });
 
-    it('undoWrite → undoWriteAsync (double-undo): removeFromPlaylist called twice, track absent', async () => {
+    it('undoWrite → undoWriteAsync (double-undo): removed once, second undo is a no-op, track absent', async () => {
       const { adapter, writer } = setup();
       writer.write('t1', [DEST1]);
       await flush();
       writer.undoWrite('t1', [DEST1]);
       await flush();
+      // The first undo already gave back our added copy and cleared the recorded pair,
+      // so the second undo finds nothing of ours to remove and does not call the API again.
       await writer.undoWriteAsync('t1', [DEST1]);
       expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(false);
       expect(
         adapter.calls.removeFromPlaylist.filter((c) => c.playlistId === DEST1 && c.trackId === 't1'),
-      ).toHaveLength(2);
+      ).toHaveLength(1);
     });
   });
 
@@ -350,6 +354,90 @@ describe('PlaylistWriter – stateful action sequences', () => {
         expect.stringContaining('undoWrite failed'),
         expect.any(Error),
       );
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // 7. H3 — durable-queue race: a failed entry survives a concurrent write
+  // ─────────────────────────────────────────────
+  describe('durable-queue race (H3)', () => {
+    it('liking into two playlists concurrently keeps the failed entry in the queue', async () => {
+      // Both destinations run concurrently inside one write(). DEST2's add succeeds and
+      // removes its queue entry; DEST1's add fails non-retryably and must stay queued for
+      // next-launch recovery. Without serialized queue mutations the concurrent persists
+      // race and DEST1's entry is lost.
+      const { adapter, storage, writer } = setup();
+      jest.spyOn(adapter, 'addToPlaylist').mockImplementation(async (playlistId: string) => {
+        if (playlistId === DEST1) throw new Error('add failed');
+      });
+
+      writer.write('t1', [DEST1, DEST2]);
+      await flush();
+
+      const raw = await storage.getItem(QUEUE_KEY);
+      const queue: PendingWrite[] = raw ? (JSON.parse(raw) as PendingWrite[]) : [];
+      expect(queue).toContainEqual(
+        expect.objectContaining({ trackId: 't1', playlistId: DEST1 }),
+      );
+      // DEST2 succeeded — its entry must not linger.
+      expect(queue.some((e) => e.playlistId === DEST2)).toBe(false);
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // 8. H5 — undo never deletes a pre-existing track
+  // ─────────────────────────────────────────────
+  describe('undo guard for pre-existing tracks (H5)', () => {
+    it('like a track already in the playlist → undo leaves it untouched', async () => {
+      const { adapter, writer } = setup();
+      // Pre-seed the destination with X as if the user already had it there.
+      adapter.playlistContents.set(DEST1, new Set(['X']));
+
+      writer.write('X', [DEST1]);
+      await flush();
+      writer.undoWrite('X', [DEST1]);
+      await flush();
+
+      // X must survive (one copy) — it pre-existed, so the writer never claimed it.
+      expect(adapter.playlistContents.get(DEST1)?.has('X')).toBe(true);
+      expect(adapter.playlistContents.get(DEST1)?.size).toBe(1);
+      // The guard means no removal was ever attempted for the pre-existing pair.
+      expect(
+        adapter.calls.removeFromPlaylist.some((c) => c.playlistId === DEST1 && c.trackId === 'X'),
+      ).toBe(false);
+    });
+
+    it('undoWriteAsync (end-screen) also leaves a pre-existing track untouched', async () => {
+      const { adapter, writer } = setup();
+      adapter.playlistContents.set(DEST1, new Set(['X']));
+
+      writer.write('X', [DEST1]);
+      await flush();
+      await writer.undoWriteAsync('X', [DEST1]);
+
+      expect(adapter.playlistContents.get(DEST1)?.has('X')).toBe(true);
+      expect(adapter.playlistContents.get(DEST1)?.size).toBe(1);
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // 9. M2 — writeAndWait resolves only after writes land
+  // ─────────────────────────────────────────────
+  describe('writeAndWait — awaitable completion (M2)', () => {
+    it('awaiting writeAndWait is enough — no flush needed for the track to be present', async () => {
+      // The session-end "Save as playlist" button relies on this: once writeAndWait
+      // resolves, the playlist genuinely contains the track, so showing "Saved ✓" is
+      // truthful. (No flush() — the await alone must have drained the write.)
+      const { adapter, writer } = setup();
+      await writer.writeAndWait('t1', [DEST1]);
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+    });
+
+    it('lands the track in every destination before resolving', async () => {
+      const { adapter, writer } = setup();
+      await writer.writeAndWait('t1', [DEST1, DEST2]);
+      expect(adapter.playlistContents.get(DEST1)?.has('t1')).toBe(true);
+      expect(adapter.playlistContents.get(DEST2)?.has('t1')).toBe(true);
     });
   });
 });

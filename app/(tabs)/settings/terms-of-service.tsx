@@ -25,8 +25,8 @@ function TosSection({ title, body, styles }: TosSectionProps): React.ReactElemen
 export default function TermsOfServiceScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <View style={styles.screen}>

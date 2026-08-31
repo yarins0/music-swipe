@@ -27,30 +27,15 @@ export async function getUserPlaylists(
   return { owned, followed };
 }
 
-const SPOTIFY_PLAYLIST_URL_RE = /spotify\.com\/playlist\/([a-zA-Z0-9]+)/;
-const SPOTIFY_URI_RE = /^spotify:playlist:([a-zA-Z0-9]+)$/;
-const SPOTIFY_RAW_ID_RE = /^[a-zA-Z0-9]{22}$/;
-
-export function extractSpotifyPlaylistId(input: string): string | null {
-  const urlMatch = input.match(SPOTIFY_PLAYLIST_URL_RE);
-  if (urlMatch) return urlMatch[1];
-
-  const uriMatch = input.match(SPOTIFY_URI_RE);
-  if (uriMatch) return uriMatch[1];
-
-  if (SPOTIFY_RAW_ID_RE.test(input.trim())) return input.trim();
-
-  return null;
-}
-
 export async function resolvePlaylistFromUrl(
   input: string,
   adapter: MusicPlatformAdapter,
 ): Promise<Playlist> {
-  const playlistId = extractSpotifyPlaylistId(input.trim());
+  // Platform-specific URL/URI/id parsing lives behind the adapter boundary.
+  const playlistId = adapter.parsePlaylistReference(input);
 
   if (!playlistId) {
-    throw new Error('Invalid Spotify playlist URL or ID');
+    throw new Error('Invalid playlist URL or ID');
   }
 
   try {

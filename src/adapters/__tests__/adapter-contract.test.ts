@@ -134,10 +134,25 @@ describe('adapter contract — MockAdapter', () => {
       expect(adapter.calls.seek).toContain(5000);
     });
 
-    it('getCurrentTrack() returns Track or null', async () => {
+    it('getCurrentTrack() defaults to null, matching SpotifyAdapter', async () => {
       const adapter = new MockAdapter();
-      const track = await adapter.getCurrentTrack();
-      expect(track === null || typeof (track as Track).id === 'string').toBe(true);
+      expect(await adapter.getCurrentTrack()).toBeNull();
+    });
+
+    it('getCurrentTrack() returns the currentTrack fixture when provided', async () => {
+      const currentTrack: Track = {
+        id: 'now-playing',
+        uri: 'mock:track:now-playing',
+        title: 'Now Playing',
+        artist: 'Mock Artist',
+        artists: ['Mock Artist'],
+        album: 'Mock Album',
+        albumArtUrl: 'https://example.com/now.jpg',
+        durationMs: 200000,
+        previewUrl: null,
+      };
+      const adapter = new MockAdapter({ currentTrack });
+      expect(await adapter.getCurrentTrack()).toEqual(currentTrack);
     });
 
     it('getCurrentPositionMs() returns a number', async () => {
@@ -219,6 +234,35 @@ describe('adapter contract — MockAdapter', () => {
       await adapter.removeFromLibrary('mock-track-1');
       expect(adapter.calls.removeFromLibrary).toContain('mock-track-1');
     });
+
+    it('getPlaylistTrackIds() returns an empty set for an untouched playlist', async () => {
+      const adapter = new MockAdapter();
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(new Set());
+    });
+
+    it('getPlaylistTrackIds() reflects tracks added to the playlist', async () => {
+      const adapter = new MockAdapter();
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-2');
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(
+        new Set(['mock-track-1', 'mock-track-2']),
+      );
+    });
+
+    it('getPlaylistTrackIds() returns a copy that does not mutate fixture state', async () => {
+      const adapter = new MockAdapter();
+      await adapter.addToPlaylist('mock-playlist-1', 'mock-track-1');
+      const ids = await adapter.getPlaylistTrackIds('mock-playlist-1');
+      ids.add('intruder');
+      expect(await adapter.getPlaylistTrackIds('mock-playlist-1')).toEqual(new Set(['mock-track-1']));
+    });
+
+    it('getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID) returns the saved-track ids', async () => {
+      const adapter = new MockAdapter({ likedTrackIds: new Set(['mock-track-1']) });
+      expect(await adapter.getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID)).toEqual(
+        new Set(['mock-track-1']),
+      );
+    });
   });
 
   describe('playlist creation', () => {
@@ -263,6 +307,33 @@ describe('adapter contract — MockAdapter', () => {
     it('removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID) is a no-op returning 0', async () => {
       const adapter = new MockAdapter();
       expect(await adapter.removeDuplicatesFromPlaylist(LIKED_SONGS_PLAYLIST_ID)).toBe(0);
+    });
+  });
+
+  describe('playlist reference parsing', () => {
+    it('parsePlaylistReference() extracts the id from a platform URI', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('mock:playlist:mock-playlist-1')).toBe('mock-playlist-1');
+    });
+
+    it('parsePlaylistReference() accepts a raw playlist id', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('mock-playlist-2')).toBe('mock-playlist-2');
+    });
+
+    it('parsePlaylistReference() trims surrounding whitespace', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('  mock-playlist-2  ')).toBe('mock-playlist-2');
+    });
+
+    it('parsePlaylistReference() returns null for an unrecognized reference', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('not-a-reference')).toBeNull();
+    });
+
+    it('parsePlaylistReference() returns null for an empty string', () => {
+      const adapter = new MockAdapter();
+      expect(adapter.parsePlaylistReference('')).toBeNull();
     });
   });
 

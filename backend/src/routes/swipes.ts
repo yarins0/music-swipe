@@ -9,105 +9,13 @@ const router = Router();
 const VALID_STATUSES = new Set(['liked', 'super_liked', 'skipped', 'pending']);
 const DECIDED_STATUSES = new Set(['liked', 'super_liked', 'skipped']);
 
-interface ReconcileResult {
-  ok: boolean;
-  status?: number;
-  error?: string;
-}
-
-/**
- * Resolve dangling 'pending' rows after a decision.
- *
- * A track deferred (status='pending') in one session and later decided (liked/super_liked/
- * skipped) in another session keeps its original session-scoped pending row, because POST
- * upserts by (sessionId, trackId). That stale row would wrongly resurface in a later
- * session's decide-later fetch. This deletes any pending row for the same (user, track)
- * that belongs to another session of the SAME source playlist — pending rows for other
- * playlists are left untouched.
- *
- * @param userId authenticated user id
- * @param swipes the batch being written
- * @param sessionPlaylistMap sessionId → source_playlist_id for the batch's sessions
- */
-async function reconcilePendingDecisions(
-  userId: string,
-  swipes: SwipeInput[],
-  sessionPlaylistMap: Map<string, string>,
-): Promise<ReconcileResult> {
-  // Group decided track ids by the playlist they were decided in.
-  const decidedTracksByPlaylist = new Map<string, Set<string>>();
-  for (const swipe of swipes) {
-    if (!DECIDED_STATUSES.has(swipe.status as string)) continue;
-    const playlistId = sessionPlaylistMap.get(swipe.sessionId as string);
-    if (!playlistId) continue;
-    const tracks = decidedTracksByPlaylist.get(playlistId) ?? new Set<string>();
-    tracks.add(swipe.spotifyTrackId as string);
-    decidedTracksByPlaylist.set(playlistId, tracks);
-  }
-
-  if (decidedTracksByPlaylist.size === 0) return { ok: true };
-
-  const playlistIds = [...decidedTracksByPlaylist.keys()];
-  const decidedTrackIds = [
-    ...new Set([...decidedTracksByPlaylist.values()].flatMap((set) => [...set])),
-  ];
-
-  // All of this user's sessions for the affected playlists — used to scope the cleanup.
-  const sessionsResult = await supabase
-    .from('sessions')
-    .select('id, source_playlist_id')
-    .eq('user_id', userId)
-    .in('source_playlist_id', playlistIds);
-
-  if (sessionsResult.error) {
-    console.error('POST /swipes reconciliation session lookup error:', sessionsResult.error);
-    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
-  }
-
-  const sessionToPlaylist = new Map<string, string>(
-    ((sessionsResult.data ?? []) as Array<{ id: string; source_playlist_id: string }>).map((s) => [
-      s.id,
-      s.source_playlist_id,
-    ]),
-  );
-  if (sessionToPlaylist.size === 0) return { ok: true };
-
-  // Find dangling pending rows for the decided tracks, then keep only those whose session
-  // belongs to a playlist where that specific track was decided.
-  const pendingResult = await supabase
-    .from('swipes')
-    .select('id, session_id, spotify_track_id')
-    .eq('user_id', userId)
-    .eq('status', 'pending')
-    .in('spotify_track_id', decidedTrackIds);
-
-  if (pendingResult.error) {
-    console.error('POST /swipes reconciliation pending lookup error:', pendingResult.error);
-    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
-  }
-
-  const danglingIds = ((pendingResult.data ?? []) as Array<{
-    id: string;
-    session_id: string;
-    spotify_track_id: string;
-  }>)
-    .filter((row) => {
-      const playlistId = sessionToPlaylist.get(row.session_id);
-      return playlistId !== undefined && decidedTracksByPlaylist.get(playlistId)?.has(row.spotify_track_id);
-    })
-    .map((row) => row.id);
-
-  if (danglingIds.length === 0) return { ok: true };
-
-  const deleteResult = await supabase.from('swipes').delete().in('id', danglingIds);
-
-  if (deleteResult.error) {
-    console.error('POST /swipes reconciliation delete error:', deleteResult.error);
-    return { ok: false, status: 500, error: 'Failed to reconcile pending swipes' };
-  }
-
-  return { ok: true };
-}
+// Bound the source_playlist_id query param at the boundary. Even though supabase-js
+// parameterises the value (so this is not an SQLi guard), an unbounded or oddly-shaped
+// id has no legitimate use and is rejected here. Playlist references seen in this app are
+// platform ids / URIs (e.g. "spotify:playlist:<base62>"), so the charset stays to those
+// characters and the length is capped well above any real id.
+const MAX_PLAYLIST_ID_LENGTH = 255;
+const PLAYLIST_ID_CHARSET = /^[\w:-]+$/;
 
 interface SwipeInput {
   sessionId?: unknown;
@@ -183,7 +91,6 @@ function validateSwipeBatch(swipes: SwipeInput[]): ValidationError | null {
 
 interface SessionVerification {
   ok: true;
-  sessionPlaylistMap: Map<string, string>;
 }
 
 interface SessionVerificationError {
@@ -193,14 +100,15 @@ interface SessionVerificationError {
 }
 
 // Fetches session rows and verifies every session belongs to the given user.
-// Returns the sessionId → source_playlist_id map needed by reconciliation.
+// Reconciliation of dangling pending rows now happens inside upsert_swipes (M4),
+// so this only enforces ownership.
 async function fetchAndVerifySessions(
   sessionIds: string[],
   userId: string,
 ): Promise<SessionVerification | SessionVerificationError> {
   const result = await supabase
     .from('sessions')
-    .select('id, user_id, source_playlist_id')
+    .select('id, user_id')
     .in('id', sessionIds);
 
   if (result.error) {
@@ -208,7 +116,7 @@ async function fetchAndVerifySessions(
     return { ok: false, status: 500, error: 'Failed to verify session ownership' };
   }
 
-  const rows = (result.data ?? []) as Array<{ id: string; user_id: string; source_playlist_id?: string }>;
+  const rows = (result.data ?? []) as { id: string; user_id: string }[];
   const sessionMap = new Map(rows.map((s) => [s.id, s.user_id]));
 
   for (const sessionId of sessionIds) {
@@ -217,13 +125,7 @@ async function fetchAndVerifySessions(
       return { ok: false, status: 404, error: `Session not found: ${sessionId}` };
   }
 
-  const sessionPlaylistMap = new Map(
-    rows
-      .filter((s) => typeof s.source_playlist_id === 'string')
-      .map((s) => [s.id, s.source_playlist_id as string]),
-  );
-
-  return { ok: true, sessionPlaylistMap };
+  return { ok: true };
 }
 
 function buildRpcPayload(swipes: SwipeInput[]) {
@@ -275,16 +177,8 @@ router.post('/', requireAuth, async (req: Request, res: Response): Promise<void>
 
   const { inserted, updated } = rpcResult.data as { inserted: number; updated: number };
 
-  const reconcile = await reconcilePendingDecisions(
-    req.userId as string,
-    swipes as SwipeInput[],
-    sessionResult.sessionPlaylistMap,
-  );
-  if (!reconcile.ok) {
-    res.status(reconcile.status ?? 500).json({ error: reconcile.error });
-    return;
-  }
-
+  // Dangling-pending reconciliation now runs inside upsert_swipes, in the same
+  // transaction as the upserts (M4) — no separate post-commit cleanup pass here.
   res.json({ inserted, updated });
 });
 
@@ -304,6 +198,15 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
 
   if (source_playlist_id !== undefined && typeof source_playlist_id !== 'string') {
     res.status(400).json({ error: 'source_playlist_id must be a string' });
+    return;
+  }
+
+  if (
+    typeof source_playlist_id === 'string' &&
+    (source_playlist_id.length > MAX_PLAYLIST_ID_LENGTH ||
+      !PLAYLIST_ID_CHARSET.test(source_playlist_id))
+  ) {
+    res.status(400).json({ error: 'source_playlist_id is malformed' });
     return;
   }
 
@@ -384,7 +287,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     }
 
     const decidedTrackIds = new Set(
-      ((decidedResult.data ?? []) as Array<{ spotify_track_id: string }>).map(
+      ((decidedResult.data ?? []) as { spotify_track_id: string }[]).map(
         (r) => r.spotify_track_id,
       ),
     );
@@ -415,10 +318,10 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    for (const dest of (destResult.data ?? []) as Array<{
+    for (const dest of (destResult.data ?? []) as {
       swipe_id: string;
       spotify_playlist_id: string;
-    }>) {
+    }[]) {
       const existing = destinationsBySwipe.get(dest.swipe_id) ?? [];
       existing.push(dest.spotify_playlist_id);
       destinationsBySwipe.set(dest.swipe_id, existing);

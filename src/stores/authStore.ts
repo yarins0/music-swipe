@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { useSwipeStore } from './swipeStore';
 import { useSessionStore } from './sessionStore';
+import { PlaylistWriter } from '../services/PlaylistWriter';
 
 const KEYS = {
   ACCESS_TOKEN: 'spotify_access_token',
@@ -113,9 +114,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   clearAuth: async () => {
     useSwipeStore.getState().resetAll();
     useSessionStore.getState().clearSession();
-    await Promise.all(
-      Object.values(KEYS).map((key) => SecureStore.deleteItemAsync(key)),
-    );
+    // Clear the previous user's pending PlaylistWriter state alongside the tokens,
+    // so the next login's drainStoredQueue can't replay their adds (M3).
+    await Promise.all([
+      ...Object.values(KEYS).map((key) => SecureStore.deleteItemAsync(key)),
+      PlaylistWriter.clearStoredState(),
+    ]);
     set({
       isAuthenticated: false,
       accessToken: null,

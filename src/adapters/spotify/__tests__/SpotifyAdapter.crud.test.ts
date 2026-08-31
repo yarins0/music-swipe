@@ -1,5 +1,5 @@
 import { SpotifyAdapter } from '../SpotifyAdapter';
-import { PlatformErrorCode, LIKED_SONGS_PLAYLIST_ID } from '../../interface';
+import { LIKED_SONGS_PLAYLIST_ID } from '../../interface';
 import { spotifyFetch } from '../spotifyFetch';
 
 jest.mock('../spotifyFetch');
@@ -113,15 +113,16 @@ describe('SpotifyAdapter — CRUD', () => {
 
   // --- getPlaylistById ---
 
-  it('getPlaylistById() with LIKED_SONGS_PLAYLIST_ID delegates to getUserPlaylists', async () => {
-    mockSpotifyFetch.mockResolvedValueOnce(makeMeResponse());
-    mockSpotifyFetch.mockResolvedValueOnce({ items: [], next: null, total: 0 });
+  it('getPlaylistById() with LIKED_SONGS_PLAYLIST_ID reads the count from /me/tracks', async () => {
     mockSpotifyFetch.mockResolvedValueOnce({ total: 7 });
 
     const pl = await adapter.getPlaylistById(LIKED_SONGS_PLAYLIST_ID);
 
     expect(pl.id).toBe(LIKED_SONGS_PLAYLIST_ID);
     expect(pl.trackCount).toBe(7);
+    // Reads the one count directly instead of paginating every playlist.
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(1);
+    expect(mockSpotifyFetch.mock.calls[0][0]).toBe('/me/tracks?limit=1');
   });
 
   it('getPlaylistById() for a regular playlist calls /playlists/:id', async () => {
@@ -418,6 +419,53 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(result).toBe(false);
   });
 
+  // --- getPlaylistTrackIds ---
+
+  it('getPlaylistTrackIds() returns the set of track ids from a regular playlist', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [makeTrackItem('t-1'), makeTrackItem('t-2')],
+      next: null,
+      total: 2,
+    });
+
+    const ids = await adapter.getPlaylistTrackIds('pl-1');
+
+    expect(ids).toEqual(new Set(['t-1', 't-2']));
+    const [endpoint] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toContain('/playlists/pl-1/items');
+  });
+
+  it('getPlaylistTrackIds() paginates until all pages are read', async () => {
+    // A regular playlist pages at 100; total > 100 forces a second fetch (offset < total).
+    const page = (count: number, startId: number) => ({
+      items: Array.from({ length: count }, (_, i) => makeTrackItem(`t-${startId + i}`)),
+      next: null,
+      total: 150,
+    });
+    mockSpotifyFetch
+      .mockResolvedValueOnce(page(100, 0))
+      .mockResolvedValueOnce(page(50, 100));
+
+    const ids = await adapter.getPlaylistTrackIds('pl-1');
+
+    expect(ids.size).toBe(150);
+    expect(mockSpotifyFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID) reads the /me/tracks endpoint', async () => {
+    mockSpotifyFetch.mockResolvedValueOnce({
+      items: [makeTrackItem('t-1')],
+      next: null,
+      total: 1,
+    });
+
+    const ids = await adapter.getPlaylistTrackIds(LIKED_SONGS_PLAYLIST_ID);
+
+    expect(ids).toEqual(new Set(['t-1']));
+    const [endpoint] = mockSpotifyFetch.mock.calls[0];
+    expect(endpoint).toContain('/me/tracks');
+  });
+
   // --- capabilities ---
 
   it('capabilities flags match expected Spotify values', () => {
@@ -425,5 +473,39 @@ describe('SpotifyAdapter — CRUD', () => {
     expect(adapter.capabilities.supportsSeek).toBe(true);
     expect(adapter.capabilities.supportsLibrarySave).toBe(true);
     expect(adapter.capabilities.supportsPlaylistCreation).toBe(true);
+  });
+
+  // --- parsePlaylistReference ---
+
+  it('parsePlaylistReference() extracts the id from an open.spotify.com URL', () => {
+    expect(adapter.parsePlaylistReference('https://open.spotify.com/playlist/37i9dQZF1DX5Vy6DFOcx00')).toBe(
+      '37i9dQZF1DX5Vy6DFOcx00',
+    );
+  });
+
+  it('parsePlaylistReference() extracts the id from a spotify:playlist: URI', () => {
+    expect(adapter.parsePlaylistReference('spotify:playlist:37i9dQZF1DX5Vy6DFOcx00')).toBe(
+      '37i9dQZF1DX5Vy6DFOcx00',
+    );
+  });
+
+  it('parsePlaylistReference() accepts a raw 22-character base62 id', () => {
+    expect(adapter.parsePlaylistReference('37i9dQZF1DX5Vy6DFOcx00')).toBe('37i9dQZF1DX5Vy6DFOcx00');
+  });
+
+  it('parsePlaylistReference() trims surrounding whitespace before matching a raw id', () => {
+    expect(adapter.parsePlaylistReference('  37i9dQZF1DX5Vy6DFOcx00  ')).toBe('37i9dQZF1DX5Vy6DFOcx00');
+  });
+
+  it('parsePlaylistReference() returns null for an invalid URL', () => {
+    expect(adapter.parsePlaylistReference('https://example.com/foo')).toBeNull();
+  });
+
+  it('parsePlaylistReference() returns null for a string that is not a valid id', () => {
+    expect(adapter.parsePlaylistReference('not-a-playlist')).toBeNull();
+  });
+
+  it('parsePlaylistReference() returns null for an empty string', () => {
+    expect(adapter.parsePlaylistReference('')).toBeNull();
   });
 });

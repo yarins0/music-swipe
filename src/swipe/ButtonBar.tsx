@@ -26,8 +26,8 @@ export function ButtonBar({
   isDecideLaterEnabled,
   isFilterMode = false,
 }: ButtonBarProps): React.ReactElement {
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <View style={styles.row}>

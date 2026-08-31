@@ -24,6 +24,9 @@ export const VELOCITY_THRESHOLD = 500;
 /** Duration of the fly-off animation when a swipe commits. */
 const FLY_OFF_DURATION = 250;
 
+/** Timing config for easing a below-threshold or cancelled card back to center. */
+const SNAP_BACK_CONFIG = { duration: 300, easing: Easing.out(Easing.cubic) };
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -133,6 +136,15 @@ export function useSwipeGesture({ onSwipe, onHaptic }: UseSwipeGestureOptions): 
   // Guard: prevents a second gesture starting while the fly-off animation plays.
   const isAnimating = useSharedValue(false);
 
+  // Eases the card back to its resting (centered, unrotated) position. Shared by
+  // the below-threshold release path and the cancellation path (onFinalize).
+  const springBackToCenter = (): void => {
+    'worklet';
+    translateX.value = withTiming(0, SNAP_BACK_CONFIG);
+    translateY.value = withTiming(0, SNAP_BACK_CONFIG);
+    rotation.value = withTiming(0, SNAP_BACK_CONFIG);
+  };
+
   const gesture = Gesture.Pan()
     .onUpdate((event) => {
       if (isAnimating.value) return;
@@ -176,10 +188,17 @@ export function useSwipeGesture({ onSwipe, onHaptic }: UseSwipeGestureOptions): 
         });
       } else {
         // Below threshold — ease back to resting position.
-        const snapBack = { duration: 300, easing: Easing.out(Easing.cubic) };
-        translateX.value = withTiming(0, snapBack);
-        translateY.value = withTiming(0, snapBack);
-        rotation.value = withTiming(0, snapBack);
+        springBackToCenter();
+      }
+    })
+    // RNGH fires onEnd only on a normal release. An interrupted/cancelled gesture
+    // (OS pointer-cancel, navigation interrupt, a competing gesture winning) fires
+    // onFinalize with success=false and never onEnd — without this the card would
+    // freeze at its dragged offset until the next track change reset it. Guard on
+    // isAnimating so this never fights an in-progress fly-off.
+    .onFinalize((_event, success) => {
+      if (!success && !isAnimating.value) {
+        springBackToCenter();
       }
     });
 

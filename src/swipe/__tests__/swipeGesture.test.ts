@@ -22,17 +22,36 @@ jest.mock('react-native-reanimated', () => {
   return {
     useSharedValue: jest.fn((v: number) => makeSharedValue(v)),
     useAnimatedStyle: jest.fn((fn: () => object) => fn()),
+    withTiming: jest.fn((target: number) => target),
     withSpring: jest.fn((target: number) => target),
     runOnJS: jest.fn((fn: (...args: unknown[]) => unknown) => fn),
+    Easing: { out: jest.fn(() => jest.fn()), cubic: jest.fn() },
   };
 });
 
+// Capture the gesture handlers the hook registers so tests can invoke them
+// directly (RNGH's real gesture pipeline can't run under Jest).
+const capturedHandlers: {
+  onUpdate?: (event: unknown) => void;
+  onEnd?: (event: unknown) => void;
+  onFinalize?: (event: unknown, success: boolean) => void;
+} = {};
+
 jest.mock('react-native-gesture-handler', () => {
-  const panBuilder = {
-    enabled: jest.fn().mockReturnThis(),
-    onUpdate: jest.fn().mockReturnThis(),
-    onEnd: jest.fn().mockReturnThis(),
-  };
+  const panBuilder: Record<string, jest.Mock> = {};
+  panBuilder.enabled = jest.fn(() => panBuilder);
+  panBuilder.onUpdate = jest.fn((fn) => {
+    capturedHandlers.onUpdate = fn;
+    return panBuilder;
+  });
+  panBuilder.onEnd = jest.fn((fn) => {
+    capturedHandlers.onEnd = fn;
+    return panBuilder;
+  });
+  panBuilder.onFinalize = jest.fn((fn) => {
+    capturedHandlers.onFinalize = fn;
+    return panBuilder;
+  });
   return {
     Gesture: {
       Pan: jest.fn(() => panBuilder),
@@ -179,5 +198,48 @@ describe('useSwipeGesture', () => {
     const { useSwipeGesture } = require('../useSwipeGesture');
     const { resetCard } = useSwipeGesture({ onSwipe: jest.fn() });
     expect(() => resetCard()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// useSwipeGesture — cancellation recenters the card (C2)
+// ---------------------------------------------------------------------------
+
+describe('useSwipeGesture cancellation (C2)', () => {
+  const { withTiming } = require('react-native-reanimated');
+
+  beforeEach(() => {
+    capturedHandlers.onFinalize = undefined;
+    (withTiming as jest.Mock).mockClear();
+  });
+
+  it('registers an onFinalize handler so cancellation is observed', () => {
+    const { useSwipeGesture } = require('../useSwipeGesture');
+    useSwipeGesture({ onSwipe: jest.fn() });
+    expect(typeof capturedHandlers.onFinalize).toBe('function');
+  });
+
+  it('springs the card back to center when a gesture is cancelled (success=false)', () => {
+    const { useSwipeGesture } = require('../useSwipeGesture');
+    useSwipeGesture({ onSwipe: jest.fn() });
+    // Clear the timing calls made during hook setup so only the cancellation
+    // path's animations are counted.
+    (withTiming as jest.Mock).mockClear();
+
+    capturedHandlers.onFinalize!({ translationX: 80, translationY: 40 }, false);
+
+    // translateX, translateY and rotation each eased back to 0.
+    expect(withTiming).toHaveBeenCalledTimes(3);
+    expect(withTiming).toHaveBeenCalledWith(0, expect.anything());
+  });
+
+  it('does nothing when the gesture finalized successfully (success=true)', () => {
+    const { useSwipeGesture } = require('../useSwipeGesture');
+    useSwipeGesture({ onSwipe: jest.fn() });
+    (withTiming as jest.Mock).mockClear();
+
+    capturedHandlers.onFinalize!({ translationX: 80, translationY: 40 }, true);
+
+    expect(withTiming).not.toHaveBeenCalled();
   });
 });

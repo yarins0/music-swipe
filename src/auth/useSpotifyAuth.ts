@@ -88,8 +88,6 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       });
 
       if (!tokenResponse.ok) {
-        const body = await tokenResponse.text();
-        //console.log('TOKEN EXCHANGE FAILED:', tokenResponse.status, body);
         throw new Error('Token exchange failed');
       }
 
@@ -102,7 +100,10 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       };
 
       // Log granted scopes so we can confirm whether user-library-modify / user-library-read are included.
-      console.log('[useSpotifyAuth] Granted scopes:', tokenData.scope ?? '(not returned)');
+      // Dev-only: the scope grant is debug information that should not reach production logs.
+      if (__DEV__) {
+        console.log('[useSpotifyAuth] Granted scopes:', tokenData.scope ?? '(not returned)');
+      }
 
       const expiresAt = Date.now() + tokenData.expires_in * 1000;
 
@@ -114,8 +115,6 @@ export function useSpotifyAuth(): UseSpotifyAuthReturn {
       });
 
       if (!registerResponse.ok) {
-        const body = await registerResponse.text();
-        //console.log('REGISTER FAILED:', registerResponse.status, body);
         throw new Error('Backend registration failed');
       }
 

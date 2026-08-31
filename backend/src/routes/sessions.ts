@@ -330,10 +330,10 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    for (const dest of (destResult.data ?? []) as Array<{
+    for (const dest of (destResult.data ?? []) as {
       swipe_id: string;
       spotify_playlist_id: string;
-    }>) {
+    }[]) {
       const existing = destinationsBySwipe.get(dest.swipe_id) ?? [];
       existing.push(dest.spotify_playlist_id);
       destinationsBySwipe.set(dest.swipe_id, existing);

@@ -1,7 +1,9 @@
 import { Linking } from 'react-native';
 
 export async function openPlatformDeepLink(uri: string): Promise<void> {
-  console.log('[PlatformDeepLink] Opening deep link:', uri);
+  if (__DEV__) {
+    console.log('[PlatformDeepLink] Opening deep link:', uri);
+  }
   try {
     await Linking.openURL(uri);
   } catch (err) {

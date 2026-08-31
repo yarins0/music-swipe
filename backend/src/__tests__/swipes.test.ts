@@ -265,19 +265,6 @@ describe('POST /swipes', () => {
     // rpc returns inserted: 2, updated: 0
     mockRpcSuccess(2, 0);
 
-    // No reconciliation calls needed: skipped status has no decisions to reconcile,
-    // but liked does — however reconcilePendingDecisions short-circuits when there are
-    // no decided tracks in a playlist set that has other sessions. Here we just let it
-    // run (it will call from() for sessions); queue empty reconciliation mocks.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom
-      .mockReturnValueOnce(reconcileSessionsMock)
-      .mockReturnValueOnce(pendingRowsMock);
-
     const app = buildApp();
     const res = await request(app)
       .post('/swipes')
@@ -333,14 +320,6 @@ describe('POST /swipes', () => {
 
     mockRpcSuccess(0, 1);
 
-    // super_liked is a decided status, so reconcilePendingDecisions runs.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
-
     const app = buildApp();
     const res = await request(app)
       .post('/swipes')
@@ -375,14 +354,6 @@ describe('POST /swipes', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     mockRpcSuccess(1, 0);
-
-    // skipped is a decided status, so reconcilePendingDecisions runs.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -437,16 +408,6 @@ describe('POST /swipes', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     mockRpcSuccess(0, 1);
-
-    // Reconciliation: super_liked is a decided status, so reconciliation runs.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom
-      .mockReturnValueOnce(reconcileSessionsMock)
-      .mockReturnValueOnce(pendingRowsMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -653,16 +614,6 @@ describe('POST /swipes destinationPlaylistIds element validation', () => {
 
     mockRpcSuccess(1, 0);
 
-    // Reconciliation: liked is decided, so it runs.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom
-      .mockReturnValueOnce(reconcileSessionsMock)
-      .mockReturnValueOnce(pendingRowsMock);
-
     const app = buildApp();
     const res = await request(app)
       .post('/swipes')
@@ -692,8 +643,6 @@ describe('POST /swipes destinationPlaylistIds element validation', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     mockRpcSuccess(1, 0);
-
-    // Pending-only batch: no decisions, reconciliation returns early without DB calls.
 
     const app = buildApp();
     const res = await request(app)
@@ -728,47 +677,32 @@ describe('POST /swipes destinationPlaylistIds element validation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /swipes — dangling-pending reconciliation (Phase 3)
+// POST /swipes — dangling-pending reconciliation
+//
+// Reconciliation of stale 'pending' rows moved INTO the upsert_swipes plpgsql
+// function (migration 0004, M4), so it now runs inside the RPC's transaction
+// rather than as a separate post-commit pass in the route. With supabase.rpc
+// fully mocked here, the SQL-side DELETE isn't observable at this layer, so the
+// route no longer makes its own reconciliation queries — see the assertions
+// below that the POST path issues no follow-up DB calls after the RPC. The
+// reconciliation logic itself is covered by migration 0004.
 // ---------------------------------------------------------------------------
-describe('POST /swipes pending reconciliation', () => {
+describe('POST /swipes pending reconciliation (now in upsert_swipes)', () => {
   const SESSION_B = 'session-uuid-bbb';
-  const SESSION_OLD = 'session-uuid-old';
-  const SESSION_OTHER_PLAYLIST = 'session-uuid-other';
-  const DANGLING_ID = 'swipe-dangling-001';
 
-  it('deletes a dangling pending row when the track is decided in another session of the same playlist', async () => {
+  it('makes no DB calls after the upsert RPC for a decided swipe', async () => {
     authenticateAs();
 
-    // 1: ownership — session B belongs to the user and targets playlist A
     const sessionMock = makeQueryMock({
-      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
+      data: [{ id: SESSION_B, user_id: VALID_USER_ID }],
       error: null,
     });
+    // Exactly two from() calls are expected: the requireAuth user lookup and the
+    // session-ownership check. No reconciliation mock is queued — if the route
+    // attempted a post-RPC query, from() would return undefined and 500.
     mockFrom.mockReturnValueOnce(sessionMock);
 
-    // 2: rpc writes the liked swipe atomically
     mockRpcSuccess(1, 0);
-
-    // 3: reconcile — all sessions for playlist A (an older one + B)
-    const reconcileSessionsMock = makeQueryMock({
-      data: [
-        { id: SESSION_OLD, source_playlist_id: PLAYLIST_A },
-        { id: SESSION_B, source_playlist_id: PLAYLIST_A },
-      ],
-      error: null,
-    });
-    // 4: reconcile — a dangling pending row for the decided track, in the older session
-    const pendingRowsMock = makeQueryMock({
-      data: [{ id: DANGLING_ID, session_id: SESSION_OLD, spotify_track_id: TRACK_ID_1 }],
-      error: null,
-    });
-    // 5: reconcile — delete the dangling rows
-    const deleteMock = makeQueryMock({ data: null, error: null });
-
-    mockFrom
-      .mockReturnValueOnce(reconcileSessionsMock)
-      .mockReturnValueOnce(pendingRowsMock)
-      .mockReturnValueOnce(deleteMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -778,93 +712,9 @@ describe('POST /swipes pending reconciliation', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ inserted: 1, updated: 0 });
-    expect(deleteMock['delete']).toHaveBeenCalled();
-    expect(deleteMock['in']).toHaveBeenCalledWith('id', [DANGLING_ID]);
-  });
-
-  it('does not delete a pending row for the same track in a different playlist', async () => {
-    authenticateAs();
-
-    const sessionMock = makeQueryMock({
-      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    mockFrom.mockReturnValueOnce(sessionMock);
-
-    mockRpcSuccess(1, 0);
-
-    // Reconcile sessions for playlist A only — the other playlist's session is absent.
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_B, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    // The dangling pending row lives under a session that belongs to a DIFFERENT playlist,
-    // so it is not in the playlist-A session set and must be left alone.
-    const pendingRowsMock = makeQueryMock({
-      data: [{ id: DANGLING_ID, session_id: SESSION_OTHER_PLAYLIST, spotify_track_id: TRACK_ID_1 }],
-      error: null,
-    });
-
-    mockFrom
-      .mockReturnValueOnce(reconcileSessionsMock)
-      .mockReturnValueOnce(pendingRowsMock);
-    // No delete mock is queued: if the route attempted a delete, from() would return
-    // undefined and the request would 500. A 200 proves no delete ran.
-
-    const app = buildApp();
-    const res = await request(app)
-      .post('/swipes')
-      .set('Authorization', VALID_TOKEN)
-      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ inserted: 1, updated: 0 });
-  });
-
-  it('skips reconciliation entirely when the batch is all pending', async () => {
-    authenticateAs();
-
-    const sessionMock = makeQueryMock({
-      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    mockFrom.mockReturnValueOnce(sessionMock);
-
-    mockRpcSuccess(1, 0);
-    // No reconciliation mocks: a pending-only batch has no decision to reconcile.
-
-    const app = buildApp();
-    const res = await request(app)
-      .post('/swipes')
-      .set('Authorization', VALID_TOKEN)
-      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'pending' }] });
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ inserted: 1, updated: 0 });
-  });
-
-  it('returns 500 when the reconciliation session lookup fails', async () => {
-    authenticateAs();
-
-    const sessionMock = makeQueryMock({
-      data: [{ id: SESSION_B, user_id: VALID_USER_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    mockFrom.mockReturnValueOnce(sessionMock);
-
-    mockRpcSuccess(1, 0);
-
-    const reconcileFailMock = makeQueryMock({ data: null, error: new Error('DB error') });
-    mockFrom.mockReturnValueOnce(reconcileFailMock);
-
-    const app = buildApp();
-    const res = await request(app)
-      .post('/swipes')
-      .set('Authorization', VALID_TOKEN)
-      .send({ swipes: [{ sessionId: SESSION_B, spotifyTrackId: TRACK_ID_1, status: 'liked' }] });
-
-    expect(res.status).toBe(500);
-    expect(res.body.error).toMatch(/reconcile pending swipes/);
+    // requireAuth user lookup (1) + session ownership (1); no reconciliation pass.
+    expect(mockFrom).toHaveBeenCalledTimes(2);
+    expect(mockRpc).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -893,13 +743,6 @@ describe('POST /swipes track metadata', () => {
     mockFrom.mockReturnValueOnce(sessionMock);
 
     mockRpcSuccess(1, 0);
-
-    const reconcileSessionsMock = makeQueryMock({
-      data: [{ id: SESSION_ID, source_playlist_id: PLAYLIST_A }],
-      error: null,
-    });
-    const pendingRowsMock = makeQueryMock({ data: [], error: null });
-    mockFrom.mockReturnValueOnce(reconcileSessionsMock).mockReturnValueOnce(pendingRowsMock);
 
     const app = buildApp();
     const res = await request(app)
@@ -1000,6 +843,32 @@ describe('GET /swipes', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/status must be one of/);
+  });
+
+  it('returns 400 when source_playlist_id exceeds the max length', async () => {
+    authenticateAs();
+
+    const overLongId = 'a'.repeat(256);
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?source_playlist_id=${overLongId}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/source_playlist_id is malformed/);
+  });
+
+  it('returns 400 when source_playlist_id contains disallowed characters', async () => {
+    authenticateAs();
+
+    const malformedId = encodeURIComponent('bad id/../with spaces');
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/swipes?source_playlist_id=${malformedId}`)
+      .set('Authorization', VALID_TOKEN);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/source_playlist_id is malformed/);
   });
 
   it('returns 200 with swipe list including destinationPlaylistIds', async () => {

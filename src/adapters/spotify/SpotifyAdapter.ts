@@ -14,7 +14,7 @@ interface SpotifyMeResponse {
   id: string;
   display_name: string | null;
   email: string | null;
-  images?: Array<{ url: string; width: number | null; height: number | null }>;
+  images?: { url: string; width: number | null; height: number | null }[];
 }
 
 interface SpotifyNewPlaylistResponse {
@@ -36,6 +36,12 @@ interface SpotifyDevicesResponse {
 interface SpotifyPlayerState {
   progress_ms: number | null;
 }
+
+// The three ways a user can reference a Spotify playlist: an open.spotify.com share
+// URL, a spotify:playlist: URI, or a raw 22-character base62 id.
+const SPOTIFY_PLAYLIST_URL_RE = /spotify\.com\/playlist\/([a-zA-Z0-9]+)/;
+const SPOTIFY_URI_RE = /^spotify:playlist:([a-zA-Z0-9]+)$/;
+const SPOTIFY_RAW_ID_RE = /^[a-zA-Z0-9]{22}$/;
 
 export class SpotifyAdapter implements MusicPlatformAdapter {
   readonly capabilities: AdapterCapabilities = {
@@ -152,8 +158,28 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async getPlaylistById(playlistId: string): Promise<Playlist> {
     if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
-      const playlists = await this.getUserPlaylists();
-      return playlists[0]; // Liked Songs is always first
+      // Read the Liked Songs count directly from /me/tracks instead of paginating
+      // every playlist via getUserPlaylists() just to extract one total.
+      let likedTrackCount = 0;
+      try {
+        const likedData = await spotifyFetch<{ total: number }>(
+          '/me/tracks?limit=1',
+          {},
+          this.auth,
+        );
+        likedTrackCount = likedData?.total ?? 0;
+      } catch {
+        // Non-fatal: Liked Songs still resolves with count 0.
+      }
+
+      return {
+        id: LIKED_SONGS_PLAYLIST_ID,
+        name: 'Liked Songs',
+        coverArtUrl: null,
+        trackCount: likedTrackCount,
+        isOwned: true,
+        isFollowed: false,
+      };
     }
 
     const userId = await this.getUserId();
@@ -329,6 +355,29 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
     return result[0] ?? false;
   }
 
+  /**
+   * Returns the set of track ids in the playlist by paginating its items once.
+   * Reuses getPlaylistTracks (which already handles the Liked Songs vs regular endpoints
+   * and filters out non-track/local items). Used to build the writer's per-session
+   * membership cache — one scan per destination instead of a check per like.
+   */
+  async getPlaylistTrackIds(playlistId: string): Promise<Set<string>> {
+    const ids = new Set<string>();
+    // /me/tracks caps at 50; /playlists/{id}/items accepts up to 100.
+    const PAGE = playlistId === LIKED_SONGS_PLAYLIST_ID ? 50 : 100;
+    let offset = 0;
+    let total = 0;
+    do {
+      const { tracks, total: pageTotal } = await this.getPlaylistTracks(playlistId, offset, PAGE);
+      total = pageTotal;
+      for (const track of tracks) ids.add(track.id);
+      if (tracks.length === 0) break; // guard against an inflated total
+      offset += PAGE;
+    } while (offset < total);
+
+    return ids;
+  }
+
   async createPlaylist(name: string): Promise<string> {
     const data = await spotifyFetch<SpotifyNewPlaylistResponse>(
       '/me/playlists',
@@ -428,5 +477,19 @@ export class SpotifyAdapter implements MusicPlatformAdapter {
 
   async openPlaylistInApp(playlistId: string): Promise<void> {
     await openPlatformDeepLink(`spotify:playlist:${playlistId}`);
+  }
+
+  parsePlaylistReference(input: string): string | null {
+    const trimmed = input.trim();
+
+    const urlMatch = trimmed.match(SPOTIFY_PLAYLIST_URL_RE);
+    if (urlMatch) return urlMatch[1];
+
+    const uriMatch = trimmed.match(SPOTIFY_URI_RE);
+    if (uriMatch) return uriMatch[1];
+
+    if (SPOTIFY_RAW_ID_RE.test(trimmed)) return trimmed;
+
+    return null;
   }
 }

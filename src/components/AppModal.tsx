@@ -34,8 +34,8 @@ export function AppModal({
   onConfirm,
   onCancel,
 }: AppModalProps): React.ReactElement {
-  const { activeColors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(activeColors), [isDark]);
+  const { activeColors } = useTheme();
+  const styles = useMemo(() => createStyles(activeColors), [activeColors]);
 
   return (
     <Modal

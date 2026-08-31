@@ -92,16 +92,21 @@ router.post('/register', registerLimiter, async (req: Request, res: Response): P
         password,
         email_confirm: true,
       });
-      if (createError) {
-        console.error('Supabase createUser error:', createError.message);
-        res.status(500).json({ error: 'Failed to create session' });
-        return;
-      }
 
+      // createUser can fail because a concurrent first-time registration for the same
+      // Spotify user already created the auth account (the email now exists). In that
+      // race the account is valid, so retry the sign-in once before surfacing an error
+      // rather than 500ing the request that lost the race.
       ({ data: sessionData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
         email: deterministicEmail,
         password,
       }));
+
+      if (createError && (signInError || !sessionData.session)) {
+        console.error('Supabase createUser error:', createError.message);
+        res.status(500).json({ error: 'Failed to create session' });
+        return;
+      }
     }
 
     if (signInError || !sessionData.session) {
