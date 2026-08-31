@@ -13,6 +13,22 @@ updates:
       minor-and-patch:
         patterns: ['*']
         update-types: [minor, patch]
+    ignore:
+      # Expo pins one compatible version of each of these per SDK release.
+      # They move together during an SDK upgrade, through
+      # `npx expo install --fix`, never one package at a time. Dependabot
+      # bumping react-native alone broke the peer range on @types/react.
+      - dependency-name: expo
+      - dependency-name: expo-*
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-*
+      - dependency-name: '@react-native-async-storage/*'
+      - dependency-name: '@types/react'
+      # babel-preset-expo pins the babel toolchain to the SDK as well.
+      - dependency-name: '@babel/*'
+      - dependency-name: babel-preset-expo
 
   - package-ecosystem: npm
     directory: /backend
