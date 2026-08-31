@@ -15,8 +15,10 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # No web client exists. A native app sends no Origin header, so CORS
+      # never applies to it. This value matches nothing and blocks browsers.
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: "none"
       - key: RATE_LIMIT_WINDOW_MS
         value: "60000"
       - key: RATE_LIMIT_MAX
