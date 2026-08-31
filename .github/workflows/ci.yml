@@ -21,6 +21,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # The root eslint config and the root jest run both cover backend/src,
+      # so the backend dependencies must be present in this job too.
+      - run: npm ci --prefix backend
       - run: npm run lint
       - run: npm run build
       - run: npm test
@@ -38,6 +41,10 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      # backend has no eslint config of its own. It uses the root one, which
+      # requires @eslint/eslintrc from the root node_modules.
+      - run: npm ci
+        working-directory: ${{ github.workspace }}
       - run: npm run lint
       - run: npm run build
       - run: npm test
