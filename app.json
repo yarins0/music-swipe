@@ -21,16 +21,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
-      ]
+      }
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
-      "expo-audio"
+      "expo-secure-store"
     ],
     "newArchEnabled": true,
     "experiments": {
