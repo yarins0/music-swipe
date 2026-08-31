@@ -86,3 +86,6 @@ graphify-out/.graphify_python
 graphify-out/.graphify_labels.json
 graphify-out/.graphify_root
 .gstack/
+
+# Google Play service account key, written from a secret at submit time
+google-service-account.json
