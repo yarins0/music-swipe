@@ -5,7 +5,7 @@ const compat = new FlatCompat({ baseDirectory: process.cwd() });
 
 /** @type {import('eslint').Linter.Config[]} */
 module.exports = [
-  { ignores: ['node_modules/**', 'dist/**', '.expo/**', 'examples/**'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', '.expo/**', 'examples/**'] },
   ...compat.extends('expo'),
   {
     files: ['**/*.{ts,tsx,js,jsx}'],

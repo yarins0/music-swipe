@@ -202,10 +202,19 @@
       "norm_label": "backgroundcolor"
     },
     {
+      "label": "permissions",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L25",
+      "id": "music_swipe_app_android_permissions",
+      "community": 2,
+      "norm_label": "permissions"
+    },
+    {
       "label": "plugins",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L26",
+      "source_location": "L30",
       "id": "music_swipe_app_expo_plugins",
       "community": 2,
       "norm_label": "plugins"
@@ -214,7 +223,7 @@
       "label": "newArchEnabled",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L31",
+      "source_location": "L35",
       "id": "music_swipe_app_expo_newarchenabled",
       "community": 2,
       "norm_label": "newarchenabled"
@@ -223,7 +232,7 @@
       "label": "experiments",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L32",
+      "source_location": "L36",
       "id": "music_swipe_app_expo_experiments",
       "community": 2,
       "norm_label": "experiments"
@@ -232,7 +241,7 @@
       "label": "typedRoutes",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L33",
+      "source_location": "L37",
       "id": "music_swipe_app_experiments_typedroutes",
       "community": 2,
       "norm_label": "typedroutes"
@@ -241,7 +250,7 @@
       "label": "extra",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L35",
+      "source_location": "L39",
       "id": "music_swipe_app_expo_extra",
       "community": 2,
       "norm_label": "extra"
@@ -250,7 +259,7 @@
       "label": "spotifyClientId",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L36",
+      "source_location": "L40",
       "id": "music_swipe_app_extra_spotifyclientid",
       "community": 2,
       "norm_label": "spotifyclientid"
@@ -259,10 +268,55 @@
       "label": "backendUrl",
       "file_type": "code",
       "source_file": "app.json",
-      "source_location": "L37",
+      "source_location": "L41",
       "id": "music_swipe_app_extra_backendurl",
       "community": 2,
       "norm_label": "backendurl"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L42",
+      "id": "music_swipe_app_extra_router",
+      "community": 2,
+      "norm_label": "router"
+    },
+    {
+      "label": "origin",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L43",
+      "id": "music_swipe_app_router_origin",
+      "community": 2,
+      "norm_label": "origin"
+    },
+    {
+      "label": "eas",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L45",
+      "id": "music_swipe_app_extra_eas",
+      "community": 2,
+      "norm_label": "eas"
+    },
+    {
+      "label": "projectId",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L46",
+      "id": "music_swipe_app_eas_projectid",
+      "community": 2,
+      "norm_label": "projectid"
+    },
+    {
+      "label": "owner",
+      "file_type": "code",
+      "source_file": "app.json",
+      "source_location": "L49",
+      "id": "music_swipe_app_expo_owner",
+      "community": 2,
+      "norm_label": "owner"
     },
     {
       "label": "babel.config.js",
@@ -328,10 +382,28 @@
       "norm_label": "node"
     },
     {
-      "label": "development",
+      "label": "env",
+      "file_type": "code",
+      "source_file": "eas.json",
+      "source_location": "L8",
+      "id": "music_swipe_eas_base_env",
+      "community": 5,
+      "norm_label": "env"
+    },
+    {
+      "label": "EXPO_PUBLIC_SPOTIFY_CLIENT_ID",
       "file_type": "code",
       "source_file": "eas.json",
       "source_location": "L9",
+      "id": "music_swipe_eas_env_expo_public_spotify_client_id",
+      "community": 5,
+      "norm_label": "expo_public_spotify_client_id"
+    },
+    {
+      "label": "development",
+      "file_type": "code",
+      "source_file": "eas.json",
+      "source_location": "L12",
       "id": "music_swipe_eas_build_development",
       "community": 5,
       "norm_label": "development"
@@ -340,7 +412,7 @@
       "label": "extends",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L10",
+      "source_location": "L13",
       "id": "music_swipe_eas_development_extends",
       "community": 5,
       "norm_label": "extends"
@@ -349,7 +421,7 @@
       "label": "distribution",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L11",
+      "source_location": "L14",
       "id": "music_swipe_eas_development_distribution",
       "community": 5,
       "norm_label": "distribution"
@@ -358,7 +430,7 @@
       "label": "ios",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L12",
+      "source_location": "L15",
       "id": "music_swipe_eas_development_ios",
       "community": 5,
       "norm_label": "ios"
@@ -367,7 +439,7 @@
       "label": "simulator",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L13",
+      "source_location": "L16",
       "id": "music_swipe_eas_ios_simulator",
       "community": 5,
       "norm_label": "simulator"
@@ -376,7 +448,7 @@
       "label": "android",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L15",
+      "source_location": "L18",
       "id": "music_swipe_eas_development_android",
       "community": 5,
       "norm_label": "android"
@@ -385,7 +457,7 @@
       "label": "buildType",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L16",
+      "source_location": "L19",
       "id": "music_swipe_eas_android_buildtype",
       "community": 5,
       "norm_label": "buildtype"
@@ -394,7 +466,7 @@
       "label": "env",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L18",
+      "source_location": "L21",
       "id": "music_swipe_eas_development_env",
       "community": 5,
       "norm_label": "env"
@@ -403,7 +475,7 @@
       "label": "EXPO_PUBLIC_BACKEND_URL",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L19",
+      "source_location": "L22",
       "id": "music_swipe_eas_env_expo_public_backend_url",
       "community": 5,
       "norm_label": "expo_public_backend_url"
@@ -412,7 +484,7 @@
       "label": "preview",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L22",
+      "source_location": "L25",
       "id": "music_swipe_eas_build_preview",
       "community": 5,
       "norm_label": "preview"
@@ -421,7 +493,7 @@
       "label": "extends",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L23",
+      "source_location": "L26",
       "id": "music_swipe_eas_preview_extends",
       "community": 5,
       "norm_label": "extends"
@@ -430,7 +502,7 @@
       "label": "distribution",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L24",
+      "source_location": "L27",
       "id": "music_swipe_eas_preview_distribution",
       "community": 5,
       "norm_label": "distribution"
@@ -439,7 +511,7 @@
       "label": "android",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L25",
+      "source_location": "L28",
       "id": "music_swipe_eas_preview_android",
       "community": 5,
       "norm_label": "android"
@@ -448,7 +520,7 @@
       "label": "env",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L28",
+      "source_location": "L31",
       "id": "music_swipe_eas_preview_env",
       "community": 5,
       "norm_label": "env"
@@ -457,7 +529,7 @@
       "label": "production",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L32",
+      "source_location": "L35",
       "id": "music_swipe_eas_build_production",
       "community": 5,
       "norm_label": "production"
@@ -466,7 +538,7 @@
       "label": "extends",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L33",
+      "source_location": "L36",
       "id": "music_swipe_eas_production_extends",
       "community": 5,
       "norm_label": "extends"
@@ -475,7 +547,7 @@
       "label": "distribution",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L34",
+      "source_location": "L37",
       "id": "music_swipe_eas_production_distribution",
       "community": 5,
       "norm_label": "distribution"
@@ -484,7 +556,7 @@
       "label": "autoIncrement",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L35",
+      "source_location": "L38",
       "id": "music_swipe_eas_production_autoincrement",
       "community": 5,
       "norm_label": "autoincrement"
@@ -493,7 +565,7 @@
       "label": "env",
       "file_type": "code",
       "source_file": "eas.json",
-      "source_location": "L36",
+      "source_location": "L39",
       "id": "music_swipe_eas_production_env",
       "community": 5,
       "norm_label": "env"
@@ -1385,7 +1457,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L1",
       "id": "app_tabs_destination_tsx",
-      "community": 33,
+      "community": 37,
       "norm_label": "destination.tsx"
     },
     {
@@ -1394,7 +1466,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L25",
       "id": "tabs_destination_destinationpickerscreen",
-      "community": 33,
+      "community": 37,
       "norm_label": "destinationpickerscreen()"
     },
     {
@@ -1403,7 +1475,7 @@
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L314",
       "id": "tabs_destination_createstyles",
-      "community": 33,
+      "community": 37,
       "norm_label": "createstyles()"
     },
     {
@@ -1412,7 +1484,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L1",
       "id": "app_tabs_index_tsx",
-      "community": 0,
+      "community": 37,
       "norm_label": "index.tsx"
     },
     {
@@ -1421,7 +1493,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L23",
       "id": "tabs_index_section",
-      "community": 0,
+      "community": 37,
       "norm_label": "section"
     },
     {
@@ -1430,7 +1502,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L25",
       "id": "tabs_index_sourcepickerscreen",
-      "community": 0,
+      "community": 37,
       "norm_label": "sourcepickerscreen()"
     },
     {
@@ -1439,7 +1511,7 @@
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
       "id": "tabs_index_createstyles",
-      "community": 0,
+      "community": 37,
       "norm_label": "createstyles()"
     },
     {
@@ -1529,7 +1601,7 @@
       "source_file": "app/(tabs)/session-end.tsx",
       "source_location": "L116",
       "id": "tabs_session_end_sessionendscreen",
-      "community": 38,
+      "community": 27,
       "norm_label": "sessionendscreen()"
     },
     {
@@ -1565,7 +1637,7 @@
       "source_file": "app/(tabs)/_layout.tsx",
       "source_location": "L1",
       "id": "app_tabs_layout_tsx",
-      "community": 44,
+      "community": 26,
       "norm_label": "_layout.tsx"
     },
     {
@@ -1574,7 +1646,7 @@
       "source_file": "app/(tabs)/_layout.tsx",
       "source_location": "L6",
       "id": "tabs_layout_hidden_nav_prefixes",
-      "community": 44,
+      "community": 26,
       "norm_label": "hidden_nav_prefixes"
     },
     {
@@ -1583,7 +1655,7 @@
       "source_file": "app/(tabs)/_layout.tsx",
       "source_location": "L8",
       "id": "tabs_layout_shouldshownavbar",
-      "community": 44,
+      "community": 26,
       "norm_label": "shouldshownavbar()"
     },
     {
@@ -1592,7 +1664,7 @@
       "source_file": "app/(tabs)/_layout.tsx",
       "source_location": "L12",
       "id": "tabs_layout_applayout",
-      "community": 44,
+      "community": 26,
       "norm_label": "applayout()"
     },
     {
@@ -1601,7 +1673,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L1",
       "id": "app_tabs_settings_contact_tsx",
-      "community": 33,
+      "community": 40,
       "norm_label": "contact.tsx"
     },
     {
@@ -1610,7 +1682,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L14",
       "id": "settings_contact_stylestype",
-      "community": 33,
+      "community": 40,
       "norm_label": "stylestype"
     },
     {
@@ -1619,7 +1691,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L16",
       "id": "settings_contact_contactrowprops",
-      "community": 33,
+      "community": 40,
       "norm_label": "contactrowprops"
     },
     {
@@ -1628,7 +1700,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L25",
       "id": "settings_contact_contactrow",
-      "community": 33,
+      "community": 40,
       "norm_label": "contactrow()"
     },
     {
@@ -1637,7 +1709,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L40",
       "id": "settings_contact_contactscreen",
-      "community": 33,
+      "community": 40,
       "norm_label": "contactscreen()"
     },
     {
@@ -1646,7 +1718,7 @@
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L105",
       "id": "settings_contact_createstyles",
-      "community": 33,
+      "community": 40,
       "norm_label": "createstyles()"
     },
     {
@@ -2537,7 +2609,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L1",
       "id": "backend_src_routes_auth_ts",
-      "community": 37,
+      "community": 28,
       "norm_label": "auth.ts"
     },
     {
@@ -2546,7 +2618,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L7",
       "id": "routes_auth_registerlimiter",
-      "community": 37,
+      "community": 28,
       "norm_label": "registerlimiter"
     },
     {
@@ -2555,7 +2627,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L15",
       "id": "routes_auth_router",
-      "community": 37,
+      "community": 28,
       "norm_label": "router"
     },
     {
@@ -2564,7 +2636,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L17",
       "id": "routes_auth_spotifyuser",
-      "community": 37,
+      "community": 28,
       "norm_label": "spotifyuser"
     },
     {
@@ -2573,7 +2645,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L23",
       "id": "routes_auth_getspotifyuser",
-      "community": 37,
+      "community": 28,
       "norm_label": "getspotifyuser()"
     },
     {
@@ -2582,7 +2654,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L44",
       "id": "routes_auth_deriveuserpassword",
-      "community": 37,
+      "community": 28,
       "norm_label": "deriveuserpassword()"
     },
     {
@@ -2591,7 +2663,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L58",
       "id": "routes_auth_spotifyaccesstoken",
-      "community": 37,
+      "community": 28,
       "norm_label": "{ spotifyaccesstoken }"
     },
     {
@@ -2600,7 +2672,7 @@
       "source_file": "backend/src/routes/auth.ts",
       "source_location": "L80",
       "id": "routes_auth_password",
-      "community": 37,
+      "community": 28,
       "norm_label": "password"
     },
     {
@@ -2658,13 +2730,13 @@
       "norm_label": "validateoptionalstringarray()"
     },
     {
-      "label": "{\n    sourcePlaylistId,\n    sourcePlaylistName,\n    destinationPlaylistIds,\n    destinationPlaylistNames,\n    isFilterMode,\n    totalTracks,\n  }",
+      "label": "{\r\n    sourcePlaylistId,\r\n    sourcePlaylistName,\r\n    destinationPlaylistIds,\r\n    destinationPlaylistNames,\r\n    isFilterMode,\r\n    totalTracks,\r\n  }",
       "file_type": "code",
       "source_file": "backend/src/routes/sessions.ts",
       "source_location": "L46",
       "id": "routes_sessions_sourceplaylistid_sourceplaylistname_destinationplaylistids_destinationplaylistnames_isfiltermode_totaltracks",
       "community": 45,
-      "norm_label": "{\n    sourceplaylistid,\n    sourceplaylistname,\n    destinationplaylistids,\n    destinationplaylistnames,\n    isfiltermode,\n    totaltracks,\n  }"
+      "norm_label": "{\r\n    sourceplaylistid,\r\n    sourceplaylistname,\r\n    destinationplaylistids,\r\n    destinationplaylistnames,\r\n    isfiltermode,\r\n    totaltracks,\r\n  }"
     },
     {
       "label": "destIdsError",
@@ -2694,13 +2766,13 @@
       "norm_label": "insertpayload"
     },
     {
-      "label": "{\n    endedAt,\n    resumeOffset,\n    status,\n    sourcePlaylistName,\n    destinationPlaylistIds,\n    destinationPlaylistNames,\n    totalTracks,\n    isFilterMode,\n  }",
+      "label": "{\r\n    endedAt,\r\n    resumeOffset,\r\n    status,\r\n    sourcePlaylistName,\r\n    destinationPlaylistIds,\r\n    destinationPlaylistNames,\r\n    totalTracks,\r\n    isFilterMode,\r\n  }",
       "file_type": "code",
       "source_file": "backend/src/routes/sessions.ts",
       "source_location": "L128",
       "id": "routes_sessions_endedat_resumeoffset_status_sourceplaylistname_destinationplaylistids_destinationplaylistnames_totaltracks_isfiltermode",
       "community": 45,
-      "norm_label": "{\n    endedat,\n    resumeoffset,\n    status,\n    sourceplaylistname,\n    destinationplaylistids,\n    destinationplaylistnames,\n    totaltracks,\n    isfiltermode,\n  }"
+      "norm_label": "{\r\n    endedat,\r\n    resumeoffset,\r\n    status,\r\n    sourceplaylistname,\r\n    destinationplaylistids,\r\n    destinationplaylistnames,\r\n    totaltracks,\r\n    isfiltermode,\r\n  }"
     },
     {
       "label": "updatePayload",
@@ -3113,7 +3185,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L1",
       "id": "backend_src_routes_trackresponse_ts",
-      "community": 62,
+      "community": 45,
       "norm_label": "trackresponse.ts"
     },
     {
@@ -3122,7 +3194,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L9",
       "id": "routes_trackresponse_trackrow",
-      "community": 62,
+      "community": 45,
       "norm_label": "trackrow"
     },
     {
@@ -3131,7 +3203,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L22",
       "id": "routes_trackresponse_trackresponse",
-      "community": 62,
+      "community": 45,
       "norm_label": "trackresponse"
     },
     {
@@ -3140,7 +3212,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L40",
       "id": "routes_trackresponse_totrackresponse",
-      "community": 62,
+      "community": 45,
       "norm_label": "totrackresponse()"
     },
     {
@@ -3149,7 +3221,7 @@
       "source_file": "backend/src/routes/trackResponse.ts",
       "source_location": "L56",
       "id": "routes_trackresponse_buildtracksbyid",
-      "community": 62,
+      "community": 45,
       "norm_label": "buildtracksbyid()"
     },
     {
@@ -3716,7 +3788,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L1",
       "id": "src_theme_ts",
-      "community": 33,
+      "community": 40,
       "norm_label": "theme.ts"
     },
     {
@@ -3725,7 +3797,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L56",
       "id": "src_theme_colors",
-      "community": 33,
+      "community": 40,
       "norm_label": "colors"
     },
     {
@@ -3734,7 +3806,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L19",
       "id": "src_theme_lightcolors",
-      "community": 33,
+      "community": 40,
       "norm_label": "lightcolors"
     },
     {
@@ -3743,7 +3815,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L37",
       "id": "src_theme_darkcolors",
-      "community": 33,
+      "community": 40,
       "norm_label": "darkcolors"
     },
     {
@@ -3752,7 +3824,7 @@
       "source_file": "src/theme.ts",
       "source_location": "L58",
       "id": "src_theme_getcolors",
-      "community": 33,
+      "community": 40,
       "norm_label": "getcolors()"
     },
     {
@@ -3824,7 +3896,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L23",
       "id": "adapters_interface_track",
-      "community": 19,
+      "community": 64,
       "norm_label": "track"
     },
     {
@@ -3833,7 +3905,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L35",
       "id": "adapters_interface_playlist",
-      "community": 0,
+      "community": 31,
       "norm_label": "playlist"
     },
     {
@@ -3842,7 +3914,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L44",
       "id": "adapters_interface_adaptercapabilities",
-      "community": 48,
+      "community": 19,
       "norm_label": "adaptercapabilities"
     },
     {
@@ -3860,7 +3932,7 @@
       "source_file": "src/adapters/interface.ts",
       "source_location": "L61",
       "id": "adapters_interface_musicplatformadapter",
-      "community": 19,
+      "community": 64,
       "norm_label": "musicplatformadapter"
     },
     {
@@ -4220,7 +4292,7 @@
       "source_file": "src/adapters/spotify/mappers.ts",
       "source_location": "L71",
       "id": "spotify_mappers_mapspotifyplaylist",
-      "community": 3,
+      "community": 21,
       "norm_label": "mapspotifyplaylist()"
     },
     {
@@ -4391,7 +4463,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L252",
       "id": "spotify_spotifyadapter_spotifyadapter_pause",
-      "community": 40,
+      "community": 3,
       "norm_label": ".pause()"
     },
     {
@@ -4400,7 +4472,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L269",
       "id": "spotify_spotifyadapter_spotifyadapter_seek",
-      "community": 40,
+      "community": 3,
       "norm_label": ".seek()"
     },
     {
@@ -4427,7 +4499,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L300",
       "id": "spotify_spotifyadapter_spotifyadapter_addtoplaylist",
-      "community": 40,
+      "community": 3,
       "norm_label": ".addtoplaylist()"
     },
     {
@@ -4436,7 +4508,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L315",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromplaylist",
-      "community": 40,
+      "community": 3,
       "norm_label": ".removefromplaylist()"
     },
     {
@@ -4445,7 +4517,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L330",
       "id": "spotify_spotifyadapter_spotifyadapter_savetolibrary",
-      "community": 40,
+      "community": 3,
       "norm_label": ".savetolibrary()"
     },
     {
@@ -4454,7 +4526,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L339",
       "id": "spotify_spotifyadapter_spotifyadapter_removefromlibrary",
-      "community": 40,
+      "community": 3,
       "norm_label": ".removefromlibrary()"
     },
     {
@@ -4481,7 +4553,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L381",
       "id": "spotify_spotifyadapter_spotifyadapter_createplaylist",
-      "community": 40,
+      "community": 3,
       "norm_label": ".createplaylist()"
     },
     {
@@ -4490,7 +4562,7 @@
       "source_file": "src/adapters/spotify/SpotifyAdapter.ts",
       "source_location": "L421",
       "id": "spotify_spotifyadapter_spotifyadapter_removeduplicatesfromplaylist",
-      "community": 40,
+      "community": 3,
       "norm_label": ".removeduplicatesfromplaylist()"
     },
     {
@@ -4580,7 +4652,7 @@
       "source_file": "src/adapters/spotify/spotifyFetch.ts",
       "source_location": "L90",
       "id": "spotify_spotifyfetch_spotifyfetch",
-      "community": 40,
+      "community": 3,
       "norm_label": "spotifyfetch()"
     },
     {
@@ -4589,7 +4661,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L1",
       "id": "src_adapters_spotify_tests_spotifyadapter_crud_test_ts",
-      "community": 30,
+      "community": 3,
       "norm_label": "spotifyadapter.crud.test.ts"
     },
     {
@@ -4598,7 +4670,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L7",
       "id": "tests_spotifyadapter_crud_test_mockspotifyfetch",
-      "community": 30,
+      "community": 3,
       "norm_label": "mockspotifyfetch"
     },
     {
@@ -4607,7 +4679,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L9",
       "id": "tests_spotifyadapter_crud_test_makeauth",
-      "community": 30,
+      "community": 3,
       "norm_label": "makeauth()"
     },
     {
@@ -4616,7 +4688,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L17",
       "id": "tests_spotifyadapter_crud_test_makemeresponse",
-      "community": 30,
+      "community": 3,
       "norm_label": "makemeresponse()"
     },
     {
@@ -4625,7 +4697,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L19",
       "id": "tests_spotifyadapter_crud_test_makeplaylistitem",
-      "community": 30,
+      "community": 3,
       "norm_label": "makeplaylistitem()"
     },
     {
@@ -4634,7 +4706,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L27",
       "id": "tests_spotifyadapter_crud_test_maketrackitem",
-      "community": 30,
+      "community": 3,
       "norm_label": "maketrackitem()"
     },
     {
@@ -4643,7 +4715,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L250",
       "id": "tests_spotifyadapter_crud_test_deletecall",
-      "community": 30,
+      "community": 3,
       "norm_label": "deletecall"
     },
     {
@@ -4652,7 +4724,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L251",
       "id": "tests_spotifyadapter_crud_test_addcall",
-      "community": 30,
+      "community": 3,
       "norm_label": "addcall"
     },
     {
@@ -4661,7 +4733,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L257",
       "id": "tests_spotifyadapter_crud_test_bodies",
-      "community": 30,
+      "community": 3,
       "norm_label": "bodies"
     },
     {
@@ -4670,7 +4742,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L264",
       "id": "tests_spotifyadapter_crud_test_relinked",
-      "community": 30,
+      "community": 3,
       "norm_label": "relinked()"
     },
     {
@@ -4679,7 +4751,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L296",
       "id": "tests_spotifyadapter_crud_test_localitem",
-      "community": 30,
+      "community": 3,
       "norm_label": "localitem"
     },
     {
@@ -4688,7 +4760,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.crud.test.ts",
       "source_location": "L440",
       "id": "tests_spotifyadapter_crud_test_page",
-      "community": 30,
+      "community": 3,
       "norm_label": "page()"
     },
     {
@@ -4697,7 +4769,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L1",
       "id": "src_adapters_spotify_tests_spotifyadapter_playback_test_ts",
-      "community": 65,
+      "community": 19,
       "norm_label": "spotifyadapter.playback.test.ts"
     },
     {
@@ -4706,7 +4778,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L7",
       "id": "tests_spotifyadapter_playback_test_mockspotifyfetch",
-      "community": 65,
+      "community": 19,
       "norm_label": "mockspotifyfetch"
     },
     {
@@ -4715,7 +4787,7 @@
       "source_file": "src/adapters/spotify/__tests__/SpotifyAdapter.playback.test.ts",
       "source_location": "L9",
       "id": "tests_spotifyadapter_playback_test_makeauth",
-      "community": 65,
+      "community": 19,
       "norm_label": "makeauth()"
     },
     {
@@ -4949,7 +5021,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L1",
       "id": "src_auth_authgateway_ts",
-      "community": 27,
+      "community": 67,
       "norm_label": "authgateway.ts"
     },
     {
@@ -4958,7 +5030,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L6",
       "id": "auth_authgateway_createspotifyauthcontext",
-      "community": 27,
+      "community": 67,
       "norm_label": "createspotifyauthcontext()"
     },
     {
@@ -4967,7 +5039,7 @@
       "source_file": "src/auth/AuthGateway.ts",
       "source_location": "L24",
       "id": "auth_authgateway_createspotifyadapter",
-      "community": 27,
+      "community": 67,
       "norm_label": "createspotifyadapter()"
     },
     {
@@ -5021,7 +5093,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L1",
       "id": "src_components_appmodal_tsx",
-      "community": 33,
+      "community": 37,
       "norm_label": "appmodal.tsx"
     },
     {
@@ -5030,7 +5102,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L12",
       "id": "components_appmodal_appmodalprops",
-      "community": 33,
+      "community": 37,
       "norm_label": "appmodalprops"
     },
     {
@@ -5039,7 +5111,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L26",
       "id": "components_appmodal_appmodal",
-      "community": 33,
+      "community": 37,
       "norm_label": "appmodal()"
     },
     {
@@ -5048,7 +5120,7 @@
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L85",
       "id": "components_appmodal_createstyles",
-      "community": 33,
+      "community": 37,
       "norm_label": "createstyles()"
     },
     {
@@ -5129,7 +5201,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L1",
       "id": "src_components_errorboundary_tsx",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorboundary.tsx"
     },
     {
@@ -5138,7 +5210,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L5",
       "id": "components_errorboundary_errorboundaryprops",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorboundaryprops"
     },
     {
@@ -5147,7 +5219,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L9",
       "id": "components_errorboundary_errorboundarystate",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorboundarystate"
     },
     {
@@ -5156,7 +5228,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L16",
       "id": "components_errorboundary_errorboundary",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorboundary"
     },
     {
@@ -5165,7 +5237,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L17",
       "id": "components_errorboundary_errorboundary_constructor",
-      "community": 44,
+      "community": 62,
       "norm_label": ".constructor()"
     },
     {
@@ -5174,7 +5246,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L22",
       "id": "components_errorboundary_errorboundary_getderivedstatefromerror",
-      "community": 44,
+      "community": 62,
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -5183,7 +5255,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L26",
       "id": "components_errorboundary_errorboundary_componentdidcatch",
-      "community": 44,
+      "community": 62,
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -5192,7 +5264,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L36",
       "id": "components_errorboundary_errorboundary_render",
-      "community": 44,
+      "community": 62,
       "norm_label": ".render()"
     },
     {
@@ -5201,7 +5273,7 @@
       "source_file": "src/components/ErrorBoundary.tsx",
       "source_location": "L53",
       "id": "components_errorboundary_styles",
-      "community": 44,
+      "community": 62,
       "norm_label": "styles"
     },
     {
@@ -5246,7 +5318,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L1",
       "id": "src_components_playlistrow_tsx",
-      "community": 33,
+      "community": 37,
       "norm_label": "playlistrow.tsx"
     },
     {
@@ -5255,7 +5327,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L9",
       "id": "components_playlistrow_playlistrowprops",
-      "community": 33,
+      "community": 37,
       "norm_label": "playlistrowprops"
     },
     {
@@ -5264,7 +5336,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L16",
       "id": "components_playlistrow_playlistrow",
-      "community": 33,
+      "community": 37,
       "norm_label": "playlistrow()"
     },
     {
@@ -5273,7 +5345,7 @@
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L72",
       "id": "components_playlistrow_createstyles",
-      "community": 33,
+      "community": 37,
       "norm_label": "createstyles()"
     },
     {
@@ -5354,7 +5426,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L1",
       "id": "src_components_tabheader_tsx",
-      "community": 43,
+      "community": 40,
       "norm_label": "tabheader.tsx"
     },
     {
@@ -5363,7 +5435,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L7",
       "id": "components_tabheader_tabheaderprops",
-      "community": 43,
+      "community": 40,
       "norm_label": "tabheaderprops"
     },
     {
@@ -5372,7 +5444,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L14",
       "id": "components_tabheader_tabheader",
-      "community": 43,
+      "community": 31,
       "norm_label": "tabheader()"
     },
     {
@@ -5381,7 +5453,7 @@
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L36",
       "id": "components_tabheader_createstyles",
-      "community": 43,
+      "community": 40,
       "norm_label": "createstyles()"
     },
     {
@@ -5390,7 +5462,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L1",
       "id": "src_components_tests_errorboundary_test_tsx",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorboundary.test.tsx"
     },
     {
@@ -5399,7 +5471,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L17",
       "id": "tests_errorboundary_test_bombcomponent",
-      "community": 44,
+      "community": 62,
       "norm_label": "bombcomponent()"
     },
     {
@@ -5408,7 +5480,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L26",
       "id": "tests_errorboundary_test_querybytext",
-      "community": 44,
+      "community": 62,
       "norm_label": "{ querybytext }"
     },
     {
@@ -5417,7 +5489,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L36",
       "id": "tests_errorboundary_test_getbytext",
-      "community": 44,
+      "community": 62,
       "norm_label": "{ getbytext }"
     },
     {
@@ -5426,7 +5498,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L78",
       "id": "tests_errorboundary_test_button",
-      "community": 44,
+      "community": 62,
       "norm_label": "button"
     },
     {
@@ -5435,7 +5507,7 @@
       "source_file": "src/components/__tests__/ErrorBoundary.test.tsx",
       "source_location": "L96",
       "id": "tests_errorboundary_test_errorlogcall",
-      "community": 44,
+      "community": 62,
       "norm_label": "errorlogcall"
     },
     {
@@ -5480,7 +5552,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L1",
       "id": "src_hooks_usetheme_ts",
-      "community": 33,
+      "community": 40,
       "norm_label": "usetheme.ts"
     },
     {
@@ -5489,7 +5561,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L6",
       "id": "hooks_usetheme_themeresult",
-      "community": 33,
+      "community": 40,
       "norm_label": "themeresult"
     },
     {
@@ -5498,7 +5570,7 @@
       "source_file": "src/hooks/useTheme.ts",
       "source_location": "L11",
       "id": "hooks_usetheme_usetheme",
-      "community": 33,
+      "community": 31,
       "norm_label": "usetheme()"
     },
     {
@@ -5750,7 +5822,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L1",
       "id": "src_player_trackplayer_ts",
-      "community": 19,
+      "community": 64,
       "norm_label": "trackplayer.ts"
     },
     {
@@ -5759,7 +5831,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L9",
       "id": "player_trackplayer_playbackresult",
-      "community": 19,
+      "community": 64,
       "norm_label": "playbackresult"
     },
     {
@@ -5768,7 +5840,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L20",
       "id": "player_trackplayer_trackplayer",
-      "community": 64,
+      "community": 65,
       "norm_label": "trackplayer"
     },
     {
@@ -5777,7 +5849,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L23",
       "id": "player_trackplayer_trackplayer_constructor",
-      "community": 64,
+      "community": 65,
       "norm_label": ".constructor()"
     },
     {
@@ -5786,7 +5858,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L37",
       "id": "player_trackplayer_trackplayer_play",
-      "community": 64,
+      "community": 65,
       "norm_label": ".play()"
     },
     {
@@ -5795,7 +5867,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L51",
       "id": "player_trackplayer_trackplayer_pause",
-      "community": 64,
+      "community": 65,
       "norm_label": ".pause()"
     },
     {
@@ -5804,7 +5876,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L63",
       "id": "player_trackplayer_trackplayer_seekto",
-      "community": 64,
+      "community": 65,
       "norm_label": ".seekto()"
     },
     {
@@ -5813,7 +5885,7 @@
       "source_file": "src/player/TrackPlayer.ts",
       "source_location": "L73",
       "id": "player_trackplayer_trackplayer_getcurrentpositionms",
-      "community": 64,
+      "community": 65,
       "norm_label": ".getcurrentpositionms()"
     },
     {
@@ -5822,7 +5894,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L1",
       "id": "src_player_tests_trackplayer_test_ts",
-      "community": 19,
+      "community": 65,
       "norm_label": "trackplayer.test.ts"
     },
     {
@@ -5831,7 +5903,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L9",
       "id": "tests_trackplayer_test_sample_track",
-      "community": 19,
+      "community": 65,
       "norm_label": "sample_track"
     },
     {
@@ -5840,7 +5912,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L26",
       "id": "tests_trackplayer_test_createplayerwithplay",
-      "community": 19,
+      "community": 65,
       "norm_label": "createplayerwithplay()"
     },
     {
@@ -5849,7 +5921,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L33",
       "id": "tests_trackplayer_test_player",
-      "community": 19,
+      "community": 65,
       "norm_label": "player"
     },
     {
@@ -5858,7 +5930,7 @@
       "source_file": "src/player/__tests__/TrackPlayer.test.ts",
       "source_location": "L41",
       "id": "tests_trackplayer_test_error",
-      "community": 19,
+      "community": 65,
       "norm_label": "error"
     },
     {
@@ -5885,7 +5957,7 @@
       "source_file": "src/playlist/PlaylistResolver.ts",
       "source_location": "L9",
       "id": "playlist_playlistresolver_getuserplaylists",
-      "community": 0,
+      "community": 37,
       "norm_label": "getuserplaylists()"
     },
     {
@@ -5912,7 +5984,7 @@
       "source_file": "src/services/BackendSync.ts",
       "source_location": "L1",
       "id": "src_services_backendsync_ts",
-      "community": 19,
+      "community": 64,
       "norm_label": "backendsync.ts"
     },
     {
@@ -6335,7 +6407,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L1",
       "id": "src_services_sessiontracker_ts",
-      "community": 41,
+      "community": 46,
       "norm_label": "sessiontracker.ts"
     },
     {
@@ -6344,7 +6416,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L9",
       "id": "services_sessiontracker_sessionmeta",
-      "community": 41,
+      "community": 46,
       "norm_label": "sessionmeta"
     },
     {
@@ -6353,7 +6425,7 @@
       "source_file": "src/services/SessionTracker.ts",
       "source_location": "L20",
       "id": "services_sessiontracker_sessionpatch",
-      "community": 41,
+      "community": 46,
       "norm_label": "sessionpatch"
     },
     {
@@ -7127,7 +7199,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L1",
       "id": "src_stores_sessionstore_ts",
-      "community": 31,
+      "community": 37,
       "norm_label": "sessionstore.ts"
     },
     {
@@ -7136,7 +7208,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L3",
       "id": "stores_sessionstore_sessionstate",
-      "community": 31,
+      "community": 37,
       "norm_label": "sessionstate"
     },
     {
@@ -7145,7 +7217,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L11",
       "id": "stores_sessionstore_sessionactions",
-      "community": 31,
+      "community": 37,
       "norm_label": "sessionactions"
     },
     {
@@ -7154,7 +7226,7 @@
       "source_file": "src/stores/sessionStore.ts",
       "source_location": "L20",
       "id": "stores_sessionstore_usesessionstore",
-      "community": 31,
+      "community": 37,
       "norm_label": "usesessionstore"
     },
     {
@@ -7163,7 +7235,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L1",
       "id": "src_stores_sessiontypes_ts",
-      "community": 57,
+      "community": 46,
       "norm_label": "sessiontypes.ts"
     },
     {
@@ -7172,7 +7244,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L6",
       "id": "stores_sessiontypes_swipestatus",
-      "community": 57,
+      "community": 46,
       "norm_label": "swipestatus"
     },
     {
@@ -7181,7 +7253,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L13",
       "id": "stores_sessiontypes_swiperecord",
-      "community": 57,
+      "community": 46,
       "norm_label": "swiperecord"
     },
     {
@@ -7190,7 +7262,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L35",
       "id": "stores_sessiontypes_sessionstatus",
-      "community": 41,
+      "community": 46,
       "norm_label": "sessionstatus"
     },
     {
@@ -7199,7 +7271,7 @@
       "source_file": "src/stores/sessionTypes.ts",
       "source_location": "L48",
       "id": "stores_sessiontypes_sessionentry",
-      "community": 57,
+      "community": 46,
       "norm_label": "sessionentry"
     },
     {
@@ -7343,7 +7415,7 @@
       "source_file": "src/stores/swipeStore.ts",
       "source_location": "L597",
       "id": "stores_swipestore_useactivesession",
-      "community": 38,
+      "community": 27,
       "norm_label": "useactivesession()"
     },
     {
@@ -7397,7 +7469,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L1",
       "id": "src_stores_usehistoryhydration_ts",
-      "community": 57,
+      "community": 66,
       "norm_label": "usehistoryhydration.ts"
     },
     {
@@ -7406,7 +7478,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L10",
       "id": "stores_usehistoryhydration_remotetrack",
-      "community": 57,
+      "community": 66,
       "norm_label": "remotetrack"
     },
     {
@@ -7415,7 +7487,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L23",
       "id": "stores_usehistoryhydration_remotelikedswipe",
-      "community": 57,
+      "community": 66,
       "norm_label": "remotelikedswipe"
     },
     {
@@ -7424,7 +7496,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L33",
       "id": "stores_usehistoryhydration_remotesession",
-      "community": 57,
+      "community": 66,
       "norm_label": "remotesession"
     },
     {
@@ -7433,7 +7505,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L51",
       "id": "stores_usehistoryhydration_sessionlistresponse",
-      "community": 57,
+      "community": 66,
       "norm_label": "sessionlistresponse"
     },
     {
@@ -7442,7 +7514,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L55",
       "id": "stores_usehistoryhydration_usehistoryhydrationresult",
-      "community": 57,
+      "community": 66,
       "norm_label": "usehistoryhydrationresult"
     },
     {
@@ -7451,7 +7523,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L60",
       "id": "stores_usehistoryhydration_toclienttrack",
-      "community": 57,
+      "community": 66,
       "norm_label": "toclienttrack()"
     },
     {
@@ -7460,7 +7532,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L78",
       "id": "stores_usehistoryhydration_toswiperecord",
-      "community": 57,
+      "community": 66,
       "norm_label": "toswiperecord()"
     },
     {
@@ -7469,7 +7541,7 @@
       "source_file": "src/stores/useHistoryHydration.ts",
       "source_location": "L94",
       "id": "stores_usehistoryhydration_tosessionentry",
-      "community": 57,
+      "community": 66,
       "norm_label": "tosessionentry()"
     },
     {
@@ -7802,7 +7874,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L1",
       "id": "src_swipe_buttonbar_tsx",
-      "community": 33,
+      "community": 40,
       "norm_label": "buttonbar.tsx"
     },
     {
@@ -7811,7 +7883,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L7",
       "id": "swipe_buttonbar_buttonbarprops",
-      "community": 33,
+      "community": 40,
       "norm_label": "buttonbarprops"
     },
     {
@@ -7820,7 +7892,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L19",
       "id": "swipe_buttonbar_buttonbar",
-      "community": 33,
+      "community": 31,
       "norm_label": "buttonbar()"
     },
     {
@@ -7829,7 +7901,7 @@
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L92",
       "id": "swipe_buttonbar_createstyles",
-      "community": 33,
+      "community": 40,
       "norm_label": "createstyles()"
     },
     {
@@ -7838,7 +7910,7 @@
       "source_file": "src/swipe/SwipeCard.tsx",
       "source_location": "L1",
       "id": "src_swipe_swipecard_tsx",
-      "community": 31,
+      "community": 63,
       "norm_label": "swipecard.tsx"
     },
     {
@@ -7847,7 +7919,7 @@
       "source_file": "src/swipe/SwipeCard.tsx",
       "source_location": "L11",
       "id": "swipe_swipecard_swipecardprops",
-      "community": 31,
+      "community": 63,
       "norm_label": "swipecardprops"
     },
     {
@@ -7865,7 +7937,7 @@
       "source_file": "src/swipe/SwipeCard.tsx",
       "source_location": "L99",
       "id": "swipe_swipecard_createstyles",
-      "community": 31,
+      "community": 63,
       "norm_label": "createstyles()"
     },
     {
@@ -7919,7 +7991,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L1",
       "id": "src_swipe_swipefrontcard_tsx",
-      "community": 31,
+      "community": 20,
       "norm_label": "swipefrontcard.tsx"
     },
     {
@@ -7928,7 +8000,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L10",
       "id": "swipe_swipefrontcard_swipefrontcardprops",
-      "community": 31,
+      "community": 20,
       "norm_label": "swipefrontcardprops"
     },
     {
@@ -7937,7 +8009,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L43",
       "id": "swipe_swipefrontcard_swipefrontcard",
-      "community": 31,
+      "community": 20,
       "norm_label": "swipefrontcard()"
     },
     {
@@ -7946,7 +8018,7 @@
       "source_file": "src/swipe/SwipeFrontCard.tsx",
       "source_location": "L94",
       "id": "swipe_swipefrontcard_styles",
-      "community": 31,
+      "community": 20,
       "norm_label": "styles"
     },
     {
@@ -7955,7 +8027,7 @@
       "source_file": "src/swipe/TrackProgressDots.tsx",
       "source_location": "L1",
       "id": "src_swipe_trackprogressdots_tsx",
-      "community": 31,
+      "community": 63,
       "norm_label": "trackprogressdots.tsx"
     },
     {
@@ -7964,7 +8036,7 @@
       "source_file": "src/swipe/TrackProgressDots.tsx",
       "source_location": "L4",
       "id": "swipe_trackprogressdots_trackprogressdotsprops",
-      "community": 31,
+      "community": 63,
       "norm_label": "trackprogressdotsprops"
     },
     {
@@ -7973,7 +8045,7 @@
       "source_file": "src/swipe/TrackProgressDots.tsx",
       "source_location": "L21",
       "id": "swipe_trackprogressdots_trackprogressdots",
-      "community": 31,
+      "community": 63,
       "norm_label": "trackprogressdots()"
     },
     {
@@ -7982,7 +8054,7 @@
       "source_file": "src/swipe/TrackProgressDots.tsx",
       "source_location": "L46",
       "id": "swipe_trackprogressdots_styles",
-      "community": 31,
+      "community": 63,
       "norm_label": "styles"
     },
     {
@@ -8009,7 +8081,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L40",
       "id": "swipe_useswipegesture_swipedirection",
-      "community": 31,
+      "community": 20,
       "norm_label": "swipedirection"
     },
     {
@@ -8045,7 +8117,7 @@
       "source_file": "src/swipe/useSwipeGesture.ts",
       "source_location": "L131",
       "id": "swipe_useswipegesture_useswipegesture",
-      "community": 31,
+      "community": 20,
       "norm_label": "useswipegesture()"
     },
     {
@@ -8436,150 +8508,6 @@
       "norm_label": "graphify"
     },
     {
-      "label": "PLAN.md",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L1",
-      "id": "plan_md",
-      "community": 25,
-      "norm_label": "plan.md"
-    },
-    {
-      "label": "PLAN.md \u2014 MusicSwipe",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L1",
-      "id": "music_swipe_plan_plan_md_musicswipe",
-      "community": 25,
-      "norm_label": "plan.md \u2014 musicswipe"
-    },
-    {
-      "label": "Context",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L4",
-      "id": "music_swipe_plan_context",
-      "community": 25,
-      "norm_label": "context"
-    },
-    {
-      "label": "Decisions Made",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L9",
-      "id": "music_swipe_plan_decisions_made",
-      "community": 25,
-      "norm_label": "decisions made"
-    },
-    {
-      "label": "Stack",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L29",
-      "id": "music_swipe_plan_stack",
-      "community": 25,
-      "norm_label": "stack"
-    },
-    {
-      "label": "System Components",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L43",
-      "id": "music_swipe_plan_system_components",
-      "community": 25,
-      "norm_label": "system components"
-    },
-    {
-      "label": "Implementation Phases",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L64",
-      "id": "music_swipe_plan_implementation_phases",
-      "community": 25,
-      "norm_label": "implementation phases"
-    },
-    {
-      "label": "Phase 1 \u2014 Auth, Interface Design & Skeleton (Foundation)",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L66",
-      "id": "music_swipe_plan_phase_1_auth_interface_design_skeleton_foundation",
-      "community": 25,
-      "norm_label": "phase 1 \u2014 auth, interface design & skeleton (foundation)"
-    },
-    {
-      "label": "Phase 2 \u2014 Swipe Core",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L86",
-      "id": "music_swipe_plan_phase_2_swipe_core",
-      "community": 25,
-      "norm_label": "phase 2 \u2014 swipe core"
-    },
-    {
-      "label": "Phase 3 \u2014 Matches & Playlist Writing",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L111",
-      "id": "music_swipe_plan_phase_3_matches_playlist_writing",
-      "community": 25,
-      "norm_label": "phase 3 \u2014 matches & playlist writing"
-    },
-    {
-      "label": "Phase 4 \u2014 Adapter Validation",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L127",
-      "id": "music_swipe_plan_phase_4_adapter_validation",
-      "community": 25,
-      "norm_label": "phase 4 \u2014 adapter validation"
-    },
-    {
-      "label": "Phase 5 \u2014 Hardening & Launch",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L141",
-      "id": "music_swipe_plan_phase_5_hardening_launch",
-      "community": 25,
-      "norm_label": "phase 5 \u2014 hardening & launch"
-    },
-    {
-      "label": "Build-Time Unknowns",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L159",
-      "id": "music_swipe_plan_build_time_unknowns",
-      "community": 25,
-      "norm_label": "build-time unknowns"
-    },
-    {
-      "label": "Backend Schema (updated)",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L170",
-      "id": "music_swipe_plan_backend_schema_updated",
-      "community": 25,
-      "norm_label": "backend schema (updated)"
-    },
-    {
-      "label": "Design Exploration Artifacts",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L180",
-      "id": "music_swipe_plan_design_exploration_artifacts",
-      "community": 25,
-      "norm_label": "design exploration artifacts"
-    },
-    {
-      "label": "Out of Scope (for now)",
-      "file_type": "document",
-      "source_file": "PLAN.md",
-      "source_location": "L194",
-      "id": "music_swipe_plan_out_of_scope_for_now",
-      "community": 25,
-      "norm_label": "out of scope (for now)"
-    },
-    {
       "label": "README.md",
       "file_type": "document",
       "source_file": "README.md",
@@ -8589,118 +8517,82 @@
       "norm_label": "readme.md"
     },
     {
-      "label": "MusicSwipe",
+      "label": "\ud83c\udfa7 MusicSwipe",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
       "id": "music_swipe_readme_musicswipe",
       "community": 4,
-      "norm_label": "musicswipe"
+      "norm_label": "\ud83c\udfa7 musicswipe"
     },
     {
-      "label": "\u26a0\ufe0f Spotify Development Mode Limitation",
+      "label": "\ud83d\udcd1 Table of Contents",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L7",
-      "id": "music_swipe_readme_spotify_development_mode_limitation",
+      "source_location": "L21",
+      "id": "music_swipe_readme_table_of_contents",
       "community": 4,
-      "norm_label": "\u26a0\ufe0f spotify development mode limitation"
+      "norm_label": "\ud83d\udcd1 table of contents"
     },
     {
-      "label": "Prerequisites",
+      "label": "\ud83c\udfd7\ufe0f Architecture",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L20",
-      "id": "music_swipe_readme_prerequisites",
+      "source_location": "L33",
+      "id": "music_swipe_readme_architecture",
       "community": 4,
-      "norm_label": "prerequisites"
+      "norm_label": "\ud83c\udfd7\ufe0f architecture"
     },
     {
-      "label": "Quick Start",
+      "label": "code:mermaid (flowchart TB)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L30",
-      "id": "music_swipe_readme_quick_start",
-      "community": 4,
-      "norm_label": "quick start"
-    },
-    {
-      "label": "1. Clone and install",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L32",
-      "id": "music_swipe_readme_1_clone_and_install",
-      "community": 4,
-      "norm_label": "1. clone and install"
-    },
-    {
-      "label": "code:bash (git clone <repo>)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L34",
+      "source_location": "L35",
       "id": "music_swipe_readme_codeblock_1",
       "community": 4,
-      "norm_label": "code:bash (git clone <repo>)"
+      "norm_label": "code:mermaid (flowchart tb)"
     },
     {
-      "label": "2. Configure environment variables",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L41",
-      "id": "music_swipe_readme_2_configure_environment_variables",
-      "community": 4,
-      "norm_label": "2. configure environment variables"
-    },
-    {
-      "label": "code:bash (cp .env.example .env.local)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L45",
-      "id": "music_swipe_readme_codeblock_2",
-      "community": 4,
-      "norm_label": "code:bash (cp .env.example .env.local)"
-    },
-    {
-      "label": "code:bash (cp backend/.env.example backend/.env)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L53",
-      "id": "music_swipe_readme_codeblock_3",
-      "community": 4,
-      "norm_label": "code:bash (cp backend/.env.example backend/.env)"
-    },
-    {
-      "label": "3. Initialize the database",
+      "label": "\ud83d\udcbb Local Development",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L59",
-      "id": "music_swipe_readme_3_initialize_the_database",
+      "id": "music_swipe_readme_local_development",
       "community": 4,
-      "norm_label": "3. initialize the database"
+      "norm_label": "\ud83d\udcbb local development"
     },
     {
-      "label": "code:bash (psql \"$DATABASE_URL\" -f backend/src/db/schema.sql)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L61",
-      "id": "music_swipe_readme_codeblock_4",
-      "community": 4,
-      "norm_label": "code:bash (psql \"$database_url\" -f backend/src/db/schema.sql)"
-    },
-    {
-      "label": "4. Run",
+      "label": "code:bash (npm install)",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L65",
-      "id": "music_swipe_readme_4_run",
+      "id": "music_swipe_readme_codeblock_2",
       "community": 4,
-      "norm_label": "4. run"
+      "norm_label": "code:bash (npm install)"
+    },
+    {
+      "label": "code:block3 (EXPO_PUBLIC_SPOTIFY_CLIENT_ID=<your-spotify-client-id>)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L70",
+      "id": "music_swipe_readme_codeblock_3",
+      "community": 4,
+      "norm_label": "code:block3 (expo_public_spotify_client_id=<your-spotify-client-id>)"
+    },
+    {
+      "label": "code:block4 (SUPABASE_URL=<your-supabase-project-url>)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L75",
+      "id": "music_swipe_readme_codeblock_4",
+      "community": 4,
+      "norm_label": "code:block4 (supabase_url=<your-supabase-project-url>)"
     },
     {
       "label": "code:bash (cd backend && npm run dev)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L69",
+      "source_location": "L82",
       "id": "music_swipe_readme_codeblock_5",
       "community": 4,
       "norm_label": "code:bash (cd backend && npm run dev)"
@@ -8709,97 +8601,25 @@
       "label": "code:bash (npx expo start)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L75",
+      "source_location": "L86",
       "id": "music_swipe_readme_codeblock_6",
       "community": 4,
       "norm_label": "code:bash (npx expo start)"
     },
     {
-      "label": "Architecture",
+      "label": "\u2699\ufe0f Configuration",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L83",
-      "id": "music_swipe_readme_architecture",
+      "source_location": "L94",
+      "id": "music_swipe_readme_configuration",
       "community": 4,
-      "norm_label": "architecture"
-    },
-    {
-      "label": "Key modules",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L87",
-      "id": "music_swipe_readme_key_modules",
-      "community": 4,
-      "norm_label": "key modules"
-    },
-    {
-      "label": "Data flow",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L100",
-      "id": "music_swipe_readme_data_flow",
-      "community": 4,
-      "norm_label": "data flow"
-    },
-    {
-      "label": "Adapter capabilities",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L107",
-      "id": "music_swipe_readme_adapter_capabilities",
-      "community": 4,
-      "norm_label": "adapter capabilities"
-    },
-    {
-      "label": "Tests",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L113",
-      "id": "music_swipe_readme_tests",
-      "community": 4,
-      "norm_label": "tests"
-    },
-    {
-      "label": "code:bash (# Run all tests)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L115",
-      "id": "music_swipe_readme_codeblock_7",
-      "community": 4,
-      "norm_label": "code:bash (# run all tests)"
-    },
-    {
-      "label": "Production Builds",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L130",
-      "id": "music_swipe_readme_production_builds",
-      "community": 4,
-      "norm_label": "production builds"
-    },
-    {
-      "label": "code:bash (eas build --platform ios)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L132",
-      "id": "music_swipe_readme_codeblock_8",
-      "community": 4,
-      "norm_label": "code:bash (eas build --platform ios)"
-    },
-    {
-      "label": "Environment Variables Reference",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L141",
-      "id": "music_swipe_readme_environment_variables_reference",
-      "community": 4,
-      "norm_label": "environment variables reference"
+      "norm_label": "\u2699\ufe0f configuration"
     },
     {
       "label": "Mobile (`.env.local`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L143",
+      "source_location": "L96",
       "id": "music_swipe_readme_mobile_env_local",
       "community": 4,
       "norm_label": "mobile (`.env.local`)"
@@ -8808,235 +8628,91 @@
       "label": "Backend (`backend/.env`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L150",
+      "source_location": "L103",
       "id": "music_swipe_readme_backend_backend_env",
       "community": 4,
       "norm_label": "backend (`backend/.env`)"
     },
     {
-      "label": "TODO.md",
+      "label": "\ud83d\udd0c API",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L1",
-      "id": "todo_md",
-      "community": 8,
-      "norm_label": "todo.md"
-    },
-    {
-      "label": "Agent Registry",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L1",
-      "id": "music_swipe_todo_agent_registry",
-      "community": 8,
-      "norm_label": "agent registry"
-    },
-    {
-      "label": "Agent A \u2014 Settings / Prefs",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L14",
-      "id": "music_swipe_todo_agent_a_settings_prefs",
-      "community": 8,
-      "norm_label": "agent a \u2014 settings / prefs"
-    },
-    {
-      "label": "Agent B \u2014 Swipe Card UI & Gesture",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L16",
-      "id": "music_swipe_todo_agent_b_swipe_card_ui_gesture",
-      "community": 8,
-      "norm_label": "agent b \u2014 swipe card ui & gesture"
-    },
-    {
-      "label": "Agent C \u2014 Preview Player",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L18",
-      "id": "music_swipe_todo_agent_c_preview_player",
-      "community": 8,
-      "norm_label": "agent c \u2014 preview player"
-    },
-    {
-      "label": "C1 \u00b7 Wire auto-play previews end-to-end",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L20",
-      "id": "music_swipe_todo_c1_wire_auto_play_previews_end_to_end",
-      "community": 8,
-      "norm_label": "c1 \u00b7 wire auto-play previews end-to-end"
-    },
-    {
-      "label": "Agent D \u2014 Filter Mode",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L40",
-      "id": "music_swipe_todo_agent_d_filter_mode",
-      "community": 8,
-      "norm_label": "agent d \u2014 filter mode"
-    },
-    {
-      "label": "D1 \u00b7 Filter mode detection + destination picker guard",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L42",
-      "id": "music_swipe_todo_d1_filter_mode_detection_destination_picker_guard",
-      "community": 8,
-      "norm_label": "d1 \u00b7 filter mode detection + destination picker guard"
-    },
-    {
-      "label": "D2 \u00b7 SwipeEngine: filter mode reverse semantics + undo",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L58",
-      "id": "music_swipe_todo_d2_swipeengine_filter_mode_reverse_semantics_undo",
-      "community": 8,
-      "norm_label": "d2 \u00b7 swipeengine: filter mode reverse semantics + undo"
-    },
-    {
-      "label": "D3 \u00b7 ButtonBar filter mode labels",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L77",
-      "id": "music_swipe_todo_d3_buttonbar_filter_mode_labels",
-      "community": 8,
-      "norm_label": "d3 \u00b7 buttonbar filter mode labels"
-    },
-    {
-      "label": "D4 \u00b7 Session-end screen: filter mode summary",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L93",
-      "id": "music_swipe_todo_d4_session_end_screen_filter_mode_summary",
-      "community": 8,
-      "norm_label": "d4 \u00b7 session-end screen: filter mode summary"
-    },
-    {
-      "label": "Agent Q \u2014 Manual QA (testing only)",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L114",
-      "id": "music_swipe_todo_agent_q_manual_qa_testing_only",
-      "community": 8,
-      "norm_label": "agent q \u2014 manual qa (testing only)"
-    },
-    {
-      "label": "Q3 \u00b7 Preview Player QA",
-      "file_type": "document",
-      "source_file": "TODO.md",
+      "source_file": "README.md",
       "source_location": "L118",
-      "id": "music_swipe_todo_q3_preview_player_qa",
-      "community": 8,
-      "norm_label": "q3 \u00b7 preview player qa"
+      "id": "music_swipe_readme_api",
+      "community": 4,
+      "norm_label": "\ud83d\udd0c api"
     },
     {
-      "label": "Q4 \u00b7 Filter Mode QA",
+      "label": "\ud83d\uddc4\ufe0f Data Model",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L139",
-      "id": "music_swipe_todo_q4_filter_mode_qa",
-      "community": 8,
-      "norm_label": "q4 \u00b7 filter mode qa"
+      "source_file": "README.md",
+      "source_location": "L133",
+      "id": "music_swipe_readme_data_model",
+      "community": 4,
+      "norm_label": "\ud83d\uddc4\ufe0f data model"
     },
     {
-      "label": "Done \u2705",
+      "label": "\ud83e\uddea Testing",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L162",
-      "id": "music_swipe_todo_done",
-      "community": 8,
-      "norm_label": "done \u2705"
+      "source_file": "README.md",
+      "source_location": "L143",
+      "id": "music_swipe_readme_testing",
+      "community": 4,
+      "norm_label": "\ud83e\uddea testing"
     },
     {
-      "label": "Q1 \u00b7 Settings & Prefs QA",
+      "label": "code:bash (npx jest                                    # mobile app \u2014 a)",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L164",
-      "id": "music_swipe_todo_q1_settings_prefs_qa",
-      "community": 8,
-      "norm_label": "q1 \u00b7 settings & prefs qa"
+      "source_file": "README.md",
+      "source_location": "L145",
+      "id": "music_swipe_readme_codeblock_7",
+      "community": 4,
+      "norm_label": "code:bash (npx jest                                    # mobile app \u2014 a)"
     },
     {
-      "label": "Q2 \u00b7 Swipe Card UI QA",
+      "label": "\ud83d\udce6 Production Builds",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L171",
-      "id": "music_swipe_todo_q2_swipe_card_ui_qa",
-      "community": 8,
-      "norm_label": "q2 \u00b7 swipe card ui qa"
+      "source_file": "README.md",
+      "source_location": "L154",
+      "id": "music_swipe_readme_production_builds",
+      "community": 4,
+      "norm_label": "\ud83d\udce6 production builds"
     },
     {
-      "label": "B1 \u00b7 Wire showAlbumArt pref to SwipeCard",
+      "label": "code:bash (eas build --platform ios)",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L178",
-      "id": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard",
-      "community": 8,
-      "norm_label": "b1 \u00b7 wire showalbumart pref to swipecard"
+      "source_file": "README.md",
+      "source_location": "L156",
+      "id": "music_swipe_readme_codeblock_8",
+      "community": 4,
+      "norm_label": "code:bash (eas build --platform ios)"
     },
     {
-      "label": "B2 \u00b7 Haptic feedback on swipe + next-card scale animation",
+      "label": "\ud83d\udcc1 Repo Layout",
       "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L185",
-      "id": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation",
-      "community": 8,
-      "norm_label": "b2 \u00b7 haptic feedback on swipe + next-card scale animation"
+      "source_file": "README.md",
+      "source_location": "L165",
+      "id": "music_swipe_readme_repo_layout",
+      "community": 4,
+      "norm_label": "\ud83d\udcc1 repo layout"
     },
     {
-      "label": "B3 \u00b7 Move destination editor button to swipe header",
+      "label": "code:block9 (app/                        Expo Router routes (file-based))",
       "file_type": "document",
-      "source_file": "TODO.md",
+      "source_file": "README.md",
+      "source_location": "L167",
+      "id": "music_swipe_readme_codeblock_9",
+      "community": 4,
+      "norm_label": "code:block9 (app/                        expo router routes (file-based))"
+    },
+    {
+      "label": "\ud83d\udc64 Author",
+      "file_type": "document",
+      "source_file": "README.md",
       "source_location": "L192",
-      "id": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header",
-      "community": 8,
-      "norm_label": "b3 \u00b7 move destination editor button to swipe header"
-    },
-    {
-      "label": "A1 \u00b7 Persisted prefs store + wire settings.tsx",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L199",
-      "id": "music_swipe_todo_a1_persisted_prefs_store_wire_settings_tsx",
-      "community": 8,
-      "norm_label": "a1 \u00b7 persisted prefs store + wire settings.tsx"
-    },
-    {
-      "label": "A2 \u00b7 Remove Spotify Sync toggle",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L206",
-      "id": "music_swipe_todo_a2_remove_spotify_sync_toggle",
-      "community": 8,
-      "norm_label": "a2 \u00b7 remove spotify sync toggle"
-    },
-    {
-      "label": "A3 \u00b7 Dynamic version + GitHub releases link",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L213",
-      "id": "music_swipe_todo_a3_dynamic_version_github_releases_link",
-      "community": 8,
-      "norm_label": "a3 \u00b7 dynamic version + github releases link"
-    },
-    {
-      "label": "A4 \u00b7 Privacy Policy and Terms of Service screens",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L220",
-      "id": "music_swipe_todo_a4_privacy_policy_and_terms_of_service_screens",
-      "community": 8,
-      "norm_label": "a4 \u00b7 privacy policy and terms of service screens"
-    },
-    {
-      "label": "A5 \u00b7 Contact Me screen",
-      "file_type": "document",
-      "source_file": "TODO.md",
-      "source_location": "L227",
-      "id": "music_swipe_todo_a5_contact_me_screen",
-      "community": 8,
-      "norm_label": "a5 \u00b7 contact me screen"
+      "id": "music_swipe_readme_author",
+      "community": 4,
+      "norm_label": "\ud83d\udc64 author"
     },
     {
       "label": "ARCHITECTURE.md",
@@ -9741,6 +9417,852 @@
       "norm_label": "suggested fix order"
     },
     {
+      "label": "PLAN.md",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L1",
+      "id": "docs_plan_md",
+      "community": 58,
+      "norm_label": "plan.md"
+    },
+    {
+      "label": "PLAN.md \u2014 MusicSwipe",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L1",
+      "id": "docs_plan_plan_md_musicswipe",
+      "community": 58,
+      "norm_label": "plan.md \u2014 musicswipe"
+    },
+    {
+      "label": "Context",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L4",
+      "id": "docs_plan_context",
+      "community": 58,
+      "norm_label": "context"
+    },
+    {
+      "label": "Decisions Made",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L9",
+      "id": "docs_plan_decisions_made",
+      "community": 58,
+      "norm_label": "decisions made"
+    },
+    {
+      "label": "Stack",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L29",
+      "id": "docs_plan_stack",
+      "community": 58,
+      "norm_label": "stack"
+    },
+    {
+      "label": "System Components",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L43",
+      "id": "docs_plan_system_components",
+      "community": 58,
+      "norm_label": "system components"
+    },
+    {
+      "label": "Implementation Phases",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L64",
+      "id": "docs_plan_implementation_phases",
+      "community": 58,
+      "norm_label": "implementation phases"
+    },
+    {
+      "label": "Phase 1 \u2014 Auth, Interface Design & Skeleton (Foundation)",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L66",
+      "id": "docs_plan_phase_1_auth_interface_design_skeleton_foundation",
+      "community": 58,
+      "norm_label": "phase 1 \u2014 auth, interface design & skeleton (foundation)"
+    },
+    {
+      "label": "Phase 2 \u2014 Swipe Core",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L86",
+      "id": "docs_plan_phase_2_swipe_core",
+      "community": 58,
+      "norm_label": "phase 2 \u2014 swipe core"
+    },
+    {
+      "label": "Phase 3 \u2014 Matches & Playlist Writing",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L111",
+      "id": "docs_plan_phase_3_matches_playlist_writing",
+      "community": 58,
+      "norm_label": "phase 3 \u2014 matches & playlist writing"
+    },
+    {
+      "label": "Phase 4 \u2014 Adapter Validation",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L127",
+      "id": "docs_plan_phase_4_adapter_validation",
+      "community": 58,
+      "norm_label": "phase 4 \u2014 adapter validation"
+    },
+    {
+      "label": "Phase 5 \u2014 Hardening & Launch",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L141",
+      "id": "docs_plan_phase_5_hardening_launch",
+      "community": 58,
+      "norm_label": "phase 5 \u2014 hardening & launch"
+    },
+    {
+      "label": "Build-Time Unknowns",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L159",
+      "id": "docs_plan_build_time_unknowns",
+      "community": 58,
+      "norm_label": "build-time unknowns"
+    },
+    {
+      "label": "Backend Schema (updated)",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L170",
+      "id": "docs_plan_backend_schema_updated",
+      "community": 58,
+      "norm_label": "backend schema (updated)"
+    },
+    {
+      "label": "Design Exploration Artifacts",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L180",
+      "id": "docs_plan_design_exploration_artifacts",
+      "community": 58,
+      "norm_label": "design exploration artifacts"
+    },
+    {
+      "label": "Out of Scope (for now)",
+      "file_type": "document",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L194",
+      "id": "docs_plan_out_of_scope_for_now",
+      "community": 58,
+      "norm_label": "out of scope (for now)"
+    },
+    {
+      "label": "TODO.md",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L1",
+      "id": "docs_todo_md",
+      "community": 30,
+      "norm_label": "todo.md"
+    },
+    {
+      "label": "Agent Registry",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L1",
+      "id": "docs_todo_agent_registry",
+      "community": 30,
+      "norm_label": "agent registry"
+    },
+    {
+      "label": "Agent A \u2014 Settings / Prefs",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L14",
+      "id": "docs_todo_agent_a_settings_prefs",
+      "community": 30,
+      "norm_label": "agent a \u2014 settings / prefs"
+    },
+    {
+      "label": "Agent B \u2014 Swipe Card UI & Gesture",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L16",
+      "id": "docs_todo_agent_b_swipe_card_ui_gesture",
+      "community": 30,
+      "norm_label": "agent b \u2014 swipe card ui & gesture"
+    },
+    {
+      "label": "Agent C \u2014 Preview Player",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L18",
+      "id": "docs_todo_agent_c_preview_player",
+      "community": 30,
+      "norm_label": "agent c \u2014 preview player"
+    },
+    {
+      "label": "C1 \u00b7 Wire auto-play previews end-to-end",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L20",
+      "id": "docs_todo_c1_wire_auto_play_previews_end_to_end",
+      "community": 30,
+      "norm_label": "c1 \u00b7 wire auto-play previews end-to-end"
+    },
+    {
+      "label": "Agent D \u2014 Filter Mode",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L40",
+      "id": "docs_todo_agent_d_filter_mode",
+      "community": 30,
+      "norm_label": "agent d \u2014 filter mode"
+    },
+    {
+      "label": "D1 \u00b7 Filter mode detection + destination picker guard",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L42",
+      "id": "docs_todo_d1_filter_mode_detection_destination_picker_guard",
+      "community": 30,
+      "norm_label": "d1 \u00b7 filter mode detection + destination picker guard"
+    },
+    {
+      "label": "D2 \u00b7 SwipeEngine: filter mode reverse semantics + undo",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L58",
+      "id": "docs_todo_d2_swipeengine_filter_mode_reverse_semantics_undo",
+      "community": 30,
+      "norm_label": "d2 \u00b7 swipeengine: filter mode reverse semantics + undo"
+    },
+    {
+      "label": "D3 \u00b7 ButtonBar filter mode labels",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L77",
+      "id": "docs_todo_d3_buttonbar_filter_mode_labels",
+      "community": 30,
+      "norm_label": "d3 \u00b7 buttonbar filter mode labels"
+    },
+    {
+      "label": "D4 \u00b7 Session-end screen: filter mode summary",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L93",
+      "id": "docs_todo_d4_session_end_screen_filter_mode_summary",
+      "community": 30,
+      "norm_label": "d4 \u00b7 session-end screen: filter mode summary"
+    },
+    {
+      "label": "Agent Q \u2014 Manual QA (testing only)",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L114",
+      "id": "docs_todo_agent_q_manual_qa_testing_only",
+      "community": 30,
+      "norm_label": "agent q \u2014 manual qa (testing only)"
+    },
+    {
+      "label": "Q3 \u00b7 Preview Player QA",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L118",
+      "id": "docs_todo_q3_preview_player_qa",
+      "community": 30,
+      "norm_label": "q3 \u00b7 preview player qa"
+    },
+    {
+      "label": "Q4 \u00b7 Filter Mode QA",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L139",
+      "id": "docs_todo_q4_filter_mode_qa",
+      "community": 30,
+      "norm_label": "q4 \u00b7 filter mode qa"
+    },
+    {
+      "label": "Done \u2705",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L162",
+      "id": "docs_todo_done",
+      "community": 30,
+      "norm_label": "done \u2705"
+    },
+    {
+      "label": "Q1 \u00b7 Settings & Prefs QA",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L164",
+      "id": "docs_todo_q1_settings_prefs_qa",
+      "community": 30,
+      "norm_label": "q1 \u00b7 settings & prefs qa"
+    },
+    {
+      "label": "Q2 \u00b7 Swipe Card UI QA",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L171",
+      "id": "docs_todo_q2_swipe_card_ui_qa",
+      "community": 30,
+      "norm_label": "q2 \u00b7 swipe card ui qa"
+    },
+    {
+      "label": "B1 \u00b7 Wire showAlbumArt pref to SwipeCard",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L178",
+      "id": "docs_todo_b1_wire_showalbumart_pref_to_swipecard",
+      "community": 30,
+      "norm_label": "b1 \u00b7 wire showalbumart pref to swipecard"
+    },
+    {
+      "label": "B2 \u00b7 Haptic feedback on swipe + next-card scale animation",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L185",
+      "id": "docs_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation",
+      "community": 30,
+      "norm_label": "b2 \u00b7 haptic feedback on swipe + next-card scale animation"
+    },
+    {
+      "label": "B3 \u00b7 Move destination editor button to swipe header",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L192",
+      "id": "docs_todo_b3_move_destination_editor_button_to_swipe_header",
+      "community": 30,
+      "norm_label": "b3 \u00b7 move destination editor button to swipe header"
+    },
+    {
+      "label": "A1 \u00b7 Persisted prefs store + wire settings.tsx",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L199",
+      "id": "docs_todo_a1_persisted_prefs_store_wire_settings_tsx",
+      "community": 30,
+      "norm_label": "a1 \u00b7 persisted prefs store + wire settings.tsx"
+    },
+    {
+      "label": "A2 \u00b7 Remove Spotify Sync toggle",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L206",
+      "id": "docs_todo_a2_remove_spotify_sync_toggle",
+      "community": 30,
+      "norm_label": "a2 \u00b7 remove spotify sync toggle"
+    },
+    {
+      "label": "A3 \u00b7 Dynamic version + GitHub releases link",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L213",
+      "id": "docs_todo_a3_dynamic_version_github_releases_link",
+      "community": 30,
+      "norm_label": "a3 \u00b7 dynamic version + github releases link"
+    },
+    {
+      "label": "A4 \u00b7 Privacy Policy and Terms of Service screens",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L220",
+      "id": "docs_todo_a4_privacy_policy_and_terms_of_service_screens",
+      "community": 30,
+      "norm_label": "a4 \u00b7 privacy policy and terms of service screens"
+    },
+    {
+      "label": "A5 \u00b7 Contact Me screen",
+      "file_type": "document",
+      "source_file": "docs/TODO.md",
+      "source_location": "L227",
+      "id": "docs_todo_a5_contact_me_screen",
+      "community": 30,
+      "norm_label": "a5 \u00b7 contact me screen"
+    },
+    {
+      "label": "PLAN.md",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L1",
+      "community": 25,
+      "norm_label": "plan.md",
+      "id": "plan_md"
+    },
+    {
+      "label": "PLAN.md \u2014 MusicSwipe",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L1",
+      "community": 25,
+      "norm_label": "plan.md \u2014 musicswipe",
+      "id": "music_swipe_plan_plan_md_musicswipe"
+    },
+    {
+      "label": "Context",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L4",
+      "community": 25,
+      "norm_label": "context",
+      "id": "music_swipe_plan_context"
+    },
+    {
+      "label": "Decisions Made",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L9",
+      "community": 25,
+      "norm_label": "decisions made",
+      "id": "music_swipe_plan_decisions_made"
+    },
+    {
+      "label": "Stack",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L29",
+      "community": 25,
+      "norm_label": "stack",
+      "id": "music_swipe_plan_stack"
+    },
+    {
+      "label": "System Components",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L43",
+      "community": 25,
+      "norm_label": "system components",
+      "id": "music_swipe_plan_system_components"
+    },
+    {
+      "label": "Implementation Phases",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L64",
+      "community": 25,
+      "norm_label": "implementation phases",
+      "id": "music_swipe_plan_implementation_phases"
+    },
+    {
+      "label": "Phase 1 \u2014 Auth, Interface Design & Skeleton (Foundation)",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L66",
+      "community": 25,
+      "norm_label": "phase 1 \u2014 auth, interface design & skeleton (foundation)",
+      "id": "music_swipe_plan_phase_1_auth_interface_design_skeleton_foundation"
+    },
+    {
+      "label": "Phase 2 \u2014 Swipe Core",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L86",
+      "community": 25,
+      "norm_label": "phase 2 \u2014 swipe core",
+      "id": "music_swipe_plan_phase_2_swipe_core"
+    },
+    {
+      "label": "Phase 3 \u2014 Matches & Playlist Writing",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L111",
+      "community": 25,
+      "norm_label": "phase 3 \u2014 matches & playlist writing",
+      "id": "music_swipe_plan_phase_3_matches_playlist_writing"
+    },
+    {
+      "label": "Phase 4 \u2014 Adapter Validation",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L127",
+      "community": 25,
+      "norm_label": "phase 4 \u2014 adapter validation",
+      "id": "music_swipe_plan_phase_4_adapter_validation"
+    },
+    {
+      "label": "Phase 5 \u2014 Hardening & Launch",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L141",
+      "community": 25,
+      "norm_label": "phase 5 \u2014 hardening & launch",
+      "id": "music_swipe_plan_phase_5_hardening_launch"
+    },
+    {
+      "label": "Build-Time Unknowns",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L159",
+      "community": 25,
+      "norm_label": "build-time unknowns",
+      "id": "music_swipe_plan_build_time_unknowns"
+    },
+    {
+      "label": "Backend Schema (updated)",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L170",
+      "community": 25,
+      "norm_label": "backend schema (updated)",
+      "id": "music_swipe_plan_backend_schema_updated"
+    },
+    {
+      "label": "Design Exploration Artifacts",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L180",
+      "community": 25,
+      "norm_label": "design exploration artifacts",
+      "id": "music_swipe_plan_design_exploration_artifacts"
+    },
+    {
+      "label": "Out of Scope (for now)",
+      "file_type": "document",
+      "source_file": "PLAN.md",
+      "source_location": "L194",
+      "community": 25,
+      "norm_label": "out of scope (for now)",
+      "id": "music_swipe_plan_out_of_scope_for_now"
+    },
+    {
+      "label": "\u26a0\ufe0f Spotify Development Mode Limitation",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L7",
+      "community": 4,
+      "norm_label": "\u26a0\ufe0f spotify development mode limitation",
+      "id": "music_swipe_readme_spotify_development_mode_limitation"
+    },
+    {
+      "label": "Prerequisites",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L20",
+      "community": 4,
+      "norm_label": "prerequisites",
+      "id": "music_swipe_readme_prerequisites"
+    },
+    {
+      "label": "Quick Start",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L30",
+      "community": 4,
+      "norm_label": "quick start",
+      "id": "music_swipe_readme_quick_start"
+    },
+    {
+      "label": "1. Clone and install",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "community": 4,
+      "norm_label": "1. clone and install",
+      "id": "music_swipe_readme_1_clone_and_install"
+    },
+    {
+      "label": "2. Configure environment variables",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L41",
+      "community": 4,
+      "norm_label": "2. configure environment variables",
+      "id": "music_swipe_readme_2_configure_environment_variables"
+    },
+    {
+      "label": "3. Initialize the database",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L59",
+      "community": 4,
+      "norm_label": "3. initialize the database",
+      "id": "music_swipe_readme_3_initialize_the_database"
+    },
+    {
+      "label": "4. Run",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "community": 4,
+      "norm_label": "4. run",
+      "id": "music_swipe_readme_4_run"
+    },
+    {
+      "label": "Key modules",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L87",
+      "community": 4,
+      "norm_label": "key modules",
+      "id": "music_swipe_readme_key_modules"
+    },
+    {
+      "label": "Data flow",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L100",
+      "community": 4,
+      "norm_label": "data flow",
+      "id": "music_swipe_readme_data_flow"
+    },
+    {
+      "label": "Adapter capabilities",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L107",
+      "community": 4,
+      "norm_label": "adapter capabilities",
+      "id": "music_swipe_readme_adapter_capabilities"
+    },
+    {
+      "label": "Tests",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L113",
+      "community": 4,
+      "norm_label": "tests",
+      "id": "music_swipe_readme_tests"
+    },
+    {
+      "label": "Environment Variables Reference",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L141",
+      "community": 4,
+      "norm_label": "environment variables reference",
+      "id": "music_swipe_readme_environment_variables_reference"
+    },
+    {
+      "label": "TODO.md",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L1",
+      "community": 8,
+      "norm_label": "todo.md",
+      "id": "todo_md"
+    },
+    {
+      "label": "Agent Registry",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L1",
+      "community": 8,
+      "norm_label": "agent registry",
+      "id": "music_swipe_todo_agent_registry"
+    },
+    {
+      "label": "Agent A \u2014 Settings / Prefs",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L14",
+      "community": 8,
+      "norm_label": "agent a \u2014 settings / prefs",
+      "id": "music_swipe_todo_agent_a_settings_prefs"
+    },
+    {
+      "label": "Agent B \u2014 Swipe Card UI & Gesture",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L16",
+      "community": 8,
+      "norm_label": "agent b \u2014 swipe card ui & gesture",
+      "id": "music_swipe_todo_agent_b_swipe_card_ui_gesture"
+    },
+    {
+      "label": "Agent C \u2014 Preview Player",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L18",
+      "community": 8,
+      "norm_label": "agent c \u2014 preview player",
+      "id": "music_swipe_todo_agent_c_preview_player"
+    },
+    {
+      "label": "C1 \u00b7 Wire auto-play previews end-to-end",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L20",
+      "community": 8,
+      "norm_label": "c1 \u00b7 wire auto-play previews end-to-end",
+      "id": "music_swipe_todo_c1_wire_auto_play_previews_end_to_end"
+    },
+    {
+      "label": "Agent D \u2014 Filter Mode",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L40",
+      "community": 8,
+      "norm_label": "agent d \u2014 filter mode",
+      "id": "music_swipe_todo_agent_d_filter_mode"
+    },
+    {
+      "label": "D1 \u00b7 Filter mode detection + destination picker guard",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L42",
+      "community": 8,
+      "norm_label": "d1 \u00b7 filter mode detection + destination picker guard",
+      "id": "music_swipe_todo_d1_filter_mode_detection_destination_picker_guard"
+    },
+    {
+      "label": "D2 \u00b7 SwipeEngine: filter mode reverse semantics + undo",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L58",
+      "community": 8,
+      "norm_label": "d2 \u00b7 swipeengine: filter mode reverse semantics + undo",
+      "id": "music_swipe_todo_d2_swipeengine_filter_mode_reverse_semantics_undo"
+    },
+    {
+      "label": "D3 \u00b7 ButtonBar filter mode labels",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L77",
+      "community": 8,
+      "norm_label": "d3 \u00b7 buttonbar filter mode labels",
+      "id": "music_swipe_todo_d3_buttonbar_filter_mode_labels"
+    },
+    {
+      "label": "D4 \u00b7 Session-end screen: filter mode summary",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L93",
+      "community": 8,
+      "norm_label": "d4 \u00b7 session-end screen: filter mode summary",
+      "id": "music_swipe_todo_d4_session_end_screen_filter_mode_summary"
+    },
+    {
+      "label": "Agent Q \u2014 Manual QA (testing only)",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L114",
+      "community": 8,
+      "norm_label": "agent q \u2014 manual qa (testing only)",
+      "id": "music_swipe_todo_agent_q_manual_qa_testing_only"
+    },
+    {
+      "label": "Q3 \u00b7 Preview Player QA",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L118",
+      "community": 8,
+      "norm_label": "q3 \u00b7 preview player qa",
+      "id": "music_swipe_todo_q3_preview_player_qa"
+    },
+    {
+      "label": "Q4 \u00b7 Filter Mode QA",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L139",
+      "community": 8,
+      "norm_label": "q4 \u00b7 filter mode qa",
+      "id": "music_swipe_todo_q4_filter_mode_qa"
+    },
+    {
+      "label": "Done \u2705",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L162",
+      "community": 8,
+      "norm_label": "done \u2705",
+      "id": "music_swipe_todo_done"
+    },
+    {
+      "label": "Q1 \u00b7 Settings & Prefs QA",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L164",
+      "community": 8,
+      "norm_label": "q1 \u00b7 settings & prefs qa",
+      "id": "music_swipe_todo_q1_settings_prefs_qa"
+    },
+    {
+      "label": "Q2 \u00b7 Swipe Card UI QA",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L171",
+      "community": 8,
+      "norm_label": "q2 \u00b7 swipe card ui qa",
+      "id": "music_swipe_todo_q2_swipe_card_ui_qa"
+    },
+    {
+      "label": "B1 \u00b7 Wire showAlbumArt pref to SwipeCard",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L178",
+      "community": 8,
+      "norm_label": "b1 \u00b7 wire showalbumart pref to swipecard",
+      "id": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard"
+    },
+    {
+      "label": "B2 \u00b7 Haptic feedback on swipe + next-card scale animation",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L185",
+      "community": 8,
+      "norm_label": "b2 \u00b7 haptic feedback on swipe + next-card scale animation",
+      "id": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation"
+    },
+    {
+      "label": "B3 \u00b7 Move destination editor button to swipe header",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L192",
+      "community": 8,
+      "norm_label": "b3 \u00b7 move destination editor button to swipe header",
+      "id": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header"
+    },
+    {
+      "label": "A1 \u00b7 Persisted prefs store + wire settings.tsx",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L199",
+      "community": 8,
+      "norm_label": "a1 \u00b7 persisted prefs store + wire settings.tsx",
+      "id": "music_swipe_todo_a1_persisted_prefs_store_wire_settings_tsx"
+    },
+    {
+      "label": "A2 \u00b7 Remove Spotify Sync toggle",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L206",
+      "community": 8,
+      "norm_label": "a2 \u00b7 remove spotify sync toggle",
+      "id": "music_swipe_todo_a2_remove_spotify_sync_toggle"
+    },
+    {
+      "label": "A3 \u00b7 Dynamic version + GitHub releases link",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L213",
+      "community": 8,
+      "norm_label": "a3 \u00b7 dynamic version + github releases link",
+      "id": "music_swipe_todo_a3_dynamic_version_github_releases_link"
+    },
+    {
+      "label": "A4 \u00b7 Privacy Policy and Terms of Service screens",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L220",
+      "community": 8,
+      "norm_label": "a4 \u00b7 privacy policy and terms of service screens",
+      "id": "music_swipe_todo_a4_privacy_policy_and_terms_of_service_screens"
+    },
+    {
+      "label": "A5 \u00b7 Contact Me screen",
+      "file_type": "document",
+      "source_file": "TODO.md",
+      "source_location": "L227",
+      "community": 8,
+      "norm_label": "a5 \u00b7 contact me screen",
+      "id": "music_swipe_todo_a5_contact_me_screen"
+    },
+    {
       "label": "p1",
       "file_type": "code",
       "source_file": "src/services/__tests__/BackendSync.test.ts",
@@ -9871,7 +10393,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L1",
-      "community": 58,
+      "community": 31,
       "norm_label": "destinationeditor.tsx",
       "id": "src_swipe_destinationeditor_tsx"
     },
@@ -9880,7 +10402,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L14",
-      "community": 58,
+      "community": 31,
       "norm_label": "scope",
       "id": "swipe_destinationeditor_scope"
     },
@@ -9889,7 +10411,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L16",
-      "community": 58,
+      "community": 31,
       "norm_label": "destinationeditorprops",
       "id": "swipe_destinationeditor_destinationeditorprops"
     },
@@ -9898,7 +10420,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L26",
-      "community": 58,
+      "community": 31,
       "norm_label": "destinationeditor()",
       "id": "swipe_destinationeditor_destinationeditor"
     },
@@ -9907,7 +10429,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L221",
-      "community": 58,
+      "community": 31,
       "norm_label": "createstyles()",
       "id": "swipe_destinationeditor_createstyles"
     },
@@ -9925,7 +10447,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/destination.tsx",
       "source_location": "L262",
-      "community": 33,
+      "community": 37,
       "norm_label": "styles",
       "id": "tabs_destination_styles"
     },
@@ -9934,7 +10456,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/index.tsx",
       "source_location": "L212",
-      "community": 0,
+      "community": 37,
       "norm_label": "styles",
       "id": "tabs_index_styles"
     },
@@ -10060,7 +10582,7 @@
       "file_type": "code",
       "source_file": "app/(tabs)/settings/contact.tsx",
       "source_location": "L91",
-      "community": 33,
+      "community": 40,
       "norm_label": "styles",
       "id": "settings_contact_styles"
     },
@@ -10321,7 +10843,7 @@
       "file_type": "code",
       "source_file": "src/components/AppModal.tsx",
       "source_location": "L81",
-      "community": 33,
+      "community": 37,
       "norm_label": "styles",
       "id": "components_appmodal_styles"
     },
@@ -10339,7 +10861,7 @@
       "file_type": "code",
       "source_file": "src/components/PlaylistRow.tsx",
       "source_location": "L67",
-      "community": 33,
+      "community": 37,
       "norm_label": "styles",
       "id": "components_playlistrow_styles"
     },
@@ -10348,7 +10870,7 @@
       "file_type": "code",
       "source_file": "src/components/TabHeader.tsx",
       "source_location": "L32",
-      "community": 43,
+      "community": 40,
       "norm_label": "styles",
       "id": "components_tabheader_styles"
     },
@@ -10591,7 +11113,7 @@
       "file_type": "code",
       "source_file": "src/swipe/ButtonBar.tsx",
       "source_location": "L88",
-      "community": 33,
+      "community": 40,
       "norm_label": "styles",
       "id": "swipe_buttonbar_styles"
     },
@@ -10600,7 +11122,7 @@
       "file_type": "code",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L216",
-      "community": 58,
+      "community": 31,
       "norm_label": "styles",
       "id": "swipe_destinationeditor_styles"
     },
@@ -10609,7 +11131,7 @@
       "file_type": "code",
       "source_file": "src/swipe/SwipeCard.tsx",
       "source_location": "L66",
-      "community": 31,
+      "community": 63,
       "norm_label": "styles",
       "id": "swipe_swipecard_styles"
     },
@@ -10958,6 +11480,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app.json",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "music_swipe_app_expo",
+      "target": "music_swipe_app_expo_owner",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
       "source_location": "L11",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11028,6 +11560,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "music_swipe_app_expo_android",
+      "target": "music_swipe_app_android_permissions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
       "source_location": "L22",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11073,6 +11615,46 @@
       "confidence_score": 1.0,
       "source": "music_swipe_app_expo_extra",
       "target": "music_swipe_app_extra_backendurl"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "music_swipe_app_expo_extra",
+      "target": "music_swipe_app_extra_router",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "music_swipe_app_expo_extra",
+      "target": "music_swipe_app_extra_eas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "music_swipe_app_extra_router",
+      "target": "music_swipe_app_router_origin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.json",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "music_swipe_app_extra_eas",
+      "target": "music_swipe_app_eas_projectid",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -11153,6 +11735,26 @@
       "confidence_score": 1.0,
       "source": "music_swipe_eas_build_base",
       "target": "music_swipe_eas_base_node"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "eas.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "music_swipe_eas_build_base",
+      "target": "music_swipe_eas_base_env",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "eas.json",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "music_swipe_eas_base_env",
+      "target": "music_swipe_eas_env_expo_public_spotify_client_id",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -17953,9 +18555,9 @@
       "source_file": "backend/src/__tests__/swipes.test.ts",
       "source_location": "L851",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_overlongid",
-      "confidence_score": 1.0
+      "target": "tests_swipes_test_overlongid"
     },
     {
       "relation": "contains",
@@ -17963,9 +18565,9 @@
       "source_file": "backend/src/__tests__/swipes.test.ts",
       "source_location": "L864",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "backend_src_tests_swipes_test_ts",
-      "target": "tests_swipes_test_malformedid",
-      "confidence_score": 1.0
+      "target": "tests_swipes_test_malformedid"
     },
     {
       "relation": "contains",
@@ -21604,9 +22206,9 @@
       "source_file": "src/adapters/__tests__/adapter-contract.test.ts",
       "source_location": "L143",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_adapters_tests_adapter_contract_test_ts",
-      "target": "tests_adapter_contract_test_currenttrack",
-      "confidence_score": 1.0
+      "target": "tests_adapter_contract_test_currenttrack"
     },
     {
       "relation": "contains",
@@ -24762,9 +25364,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_enqueuefailedpostswipe",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_enqueuefailedpostswipe"
     },
     {
       "relation": "contains",
@@ -24852,9 +25454,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L390",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_resolvepostswipe",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_resolvepostswipe"
     },
     {
       "relation": "contains",
@@ -24862,9 +25464,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L391",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_postswiperesponse",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_postswiperesponse"
     },
     {
       "relation": "contains",
@@ -24872,9 +25474,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L421",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_postswipefetch",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_postswipefetch"
     },
     {
       "relation": "contains",
@@ -24882,9 +25484,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L405",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_flushfetch",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_flushfetch"
     },
     {
       "relation": "contains",
@@ -24892,9 +25494,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L420",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_rejectpostswipe",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_rejectpostswipe"
     },
     {
       "relation": "contains",
@@ -24902,9 +25504,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L430",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_skipfetch",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_skipfetch"
     },
     {
       "relation": "contains",
@@ -24912,9 +25514,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L443",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_services_tests_backendsync_test_ts",
-      "target": "tests_backendsync_test_retryfetch",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_retryfetch"
     },
     {
       "relation": "contains",
@@ -24953,9 +25555,9 @@
       "source_file": "src/services/__tests__/BackendSync.test.ts",
       "source_location": "L53",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_backendsync_test_enqueuefailedpostswipe",
-      "target": "tests_backendsync_test_mockfetch",
-      "confidence_score": 1.0
+      "target": "tests_backendsync_test_mockfetch"
     },
     {
       "relation": "contains",
@@ -27831,162 +28433,112 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "plan_md",
-      "target": "music_swipe_plan_plan_md_musicswipe"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L4",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_context"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L9",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_decisions_made"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L29",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_stack"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L43",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_system_components"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L64",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_implementation_phases"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L159",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_build_time_unknowns"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L170",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_backend_schema_updated"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L180",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_design_exploration_artifacts"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L194",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_plan_md_musicswipe",
-      "target": "music_swipe_plan_out_of_scope_for_now"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L66",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_implementation_phases",
-      "target": "music_swipe_plan_phase_1_auth_interface_design_skeleton_foundation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L86",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_implementation_phases",
-      "target": "music_swipe_plan_phase_2_swipe_core"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L111",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_implementation_phases",
-      "target": "music_swipe_plan_phase_3_matches_playlist_writing"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L127",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_implementation_phases",
-      "target": "music_swipe_plan_phase_4_adapter_validation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PLAN.md",
-      "source_location": "L141",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_plan_implementation_phases",
-      "target": "music_swipe_plan_phase_5_hardening_launch"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "README.md",
       "source_location": "L1",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "readme_md",
       "target": "music_swipe_readme_musicswipe"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_table_of_contents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L83",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_architecture"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_local_development",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_configuration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_api",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_data_model",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_testing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L130",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_production_builds"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L165",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_repo_layout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L192",
+      "weight": 1.0,
+      "source": "music_swipe_readme_musicswipe",
+      "target": "music_swipe_readme_author",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -28022,31 +28574,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L83",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_musicswipe",
-      "target": "music_swipe_readme_architecture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
       "source_location": "L113",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "music_swipe_readme_musicswipe",
       "target": "music_swipe_readme_tests"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L130",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_musicswipe",
-      "target": "music_swipe_readme_production_builds"
     },
     {
       "relation": "contains",
@@ -28062,41 +28594,41 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L32",
+      "source_location": "L35",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_quick_start",
-      "target": "music_swipe_readme_1_clone_and_install"
+      "source": "music_swipe_readme_architecture",
+      "target": "music_swipe_readme_codeblock_1",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L41",
+      "source_location": "L87",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "music_swipe_readme_quick_start",
-      "target": "music_swipe_readme_2_configure_environment_variables"
+      "source": "music_swipe_readme_architecture",
+      "target": "music_swipe_readme_key_modules"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L59",
+      "source_location": "L100",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "music_swipe_readme_quick_start",
-      "target": "music_swipe_readme_3_initialize_the_database"
+      "source": "music_swipe_readme_architecture",
+      "target": "music_swipe_readme_data_flow"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L65",
+      "source_location": "L107",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "music_swipe_readme_quick_start",
-      "target": "music_swipe_readme_4_run"
+      "source": "music_swipe_readme_architecture",
+      "target": "music_swipe_readme_adapter_capabilities"
     },
     {
       "relation": "contains",
@@ -28107,6 +28639,56 @@
       "confidence_score": 1.0,
       "source": "music_swipe_readme_1_clone_and_install",
       "target": "music_swipe_readme_codeblock_1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "music_swipe_readme_local_development",
+      "target": "music_swipe_readme_codeblock_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "music_swipe_readme_local_development",
+      "target": "music_swipe_readme_codeblock_3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "music_swipe_readme_local_development",
+      "target": "music_swipe_readme_codeblock_4",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "music_swipe_readme_local_development",
+      "target": "music_swipe_readme_codeblock_5",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "music_swipe_readme_local_development",
+      "target": "music_swipe_readme_codeblock_6",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -28162,31 +28744,51 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L87",
+      "source_location": "L96",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_architecture",
-      "target": "music_swipe_readme_key_modules"
+      "source": "music_swipe_readme_configuration",
+      "target": "music_swipe_readme_mobile_env_local",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L100",
+      "source_location": "L103",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_architecture",
-      "target": "music_swipe_readme_data_flow"
+      "source": "music_swipe_readme_configuration",
+      "target": "music_swipe_readme_backend_backend_env",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L107",
+      "source_location": "L143",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "music_swipe_readme_architecture",
-      "target": "music_swipe_readme_adapter_capabilities"
+      "source": "music_swipe_readme_environment_variables_reference",
+      "target": "music_swipe_readme_mobile_env_local"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L150",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_environment_variables_reference",
+      "target": "music_swipe_readme_backend_backend_env"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "music_swipe_readme_testing",
+      "target": "music_swipe_readme_codeblock_7",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -28212,311 +28814,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L143",
+      "source_location": "L167",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_environment_variables_reference",
-      "target": "music_swipe_readme_mobile_env_local"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L150",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_readme_environment_variables_reference",
-      "target": "music_swipe_readme_backend_backend_env"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_registry"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L14",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_a_settings_prefs"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L16",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_b_swipe_card_ui_gesture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L51",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_c_preview_player"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L53",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_c1_wire_auto_play_previews_end_to_end"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L90",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_d_filter_mode"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_d1_filter_mode_detection_destination_picker_guard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L108",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_d2_swipeengine_filter_mode_reverse_semantics_undo"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L127",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_d3_buttonbar_filter_mode_labels"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L143",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_d4_session_end_screen_filter_mode_summary"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L164",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_agent_q_manual_qa_testing_only"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L211",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_q3_preview_player_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L228",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_q4_filter_mode_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L249",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_done"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L18",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L34",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L73",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L168",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_q1_settings_prefs_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L191",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "todo_md",
-      "target": "music_swipe_todo_q2_swipe_card_ui_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L212",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_q1_settings_prefs_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L220",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_q2_swipe_card_ui_qa"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L178",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L185",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L192",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L280",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_a1_persisted_prefs_store_wire_settings_tsx"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L266",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_a2_remove_spotify_sync_toggle"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L251",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_a3_dynamic_version_github_releases_link"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L295",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_a4_privacy_policy_and_terms_of_service_screens"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "TODO.md",
-      "source_location": "L310",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "music_swipe_todo_done",
-      "target": "music_swipe_todo_a5_contact_me_screen"
+      "source": "music_swipe_readme_repo_layout",
+      "target": "music_swipe_readme_codeblock_9",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -29271,6 +29573,876 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_plan_md",
+      "target": "docs_plan_plan_md_musicswipe",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_decisions_made",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_system_components",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_implementation_phases",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L159",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_build_time_unknowns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_backend_schema_updated",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L180",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_design_exploration_artifacts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L194",
+      "weight": 1.0,
+      "source": "docs_plan_plan_md_musicswipe",
+      "target": "docs_plan_out_of_scope_for_now",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "docs_plan_implementation_phases",
+      "target": "docs_plan_phase_1_auth_interface_design_skeleton_foundation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "docs_plan_implementation_phases",
+      "target": "docs_plan_phase_2_swipe_core",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "docs_plan_implementation_phases",
+      "target": "docs_plan_phase_3_matches_playlist_writing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "docs_plan_implementation_phases",
+      "target": "docs_plan_phase_4_adapter_validation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/PLAN.md",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "docs_plan_implementation_phases",
+      "target": "docs_plan_phase_5_hardening_launch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_registry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_a_settings_prefs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_b_swipe_card_ui_gesture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_c_preview_player",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_c1_wire_auto_play_previews_end_to_end",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_d_filter_mode",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_d1_filter_mode_detection_destination_picker_guard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_d2_swipeengine_filter_mode_reverse_semantics_undo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_d3_buttonbar_filter_mode_labels",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_d4_session_end_screen_filter_mode_summary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_agent_q_manual_qa_testing_only",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_q3_preview_player_qa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L139",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_q4_filter_mode_qa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L162",
+      "weight": 1.0,
+      "source": "docs_todo_md",
+      "target": "docs_todo_done",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L164",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_q1_settings_prefs_qa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L171",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_q2_swipe_card_ui_qa",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L178",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_b1_wire_showalbumart_pref_to_swipecard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L192",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_b3_move_destination_editor_button_to_swipe_header",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L199",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_a1_persisted_prefs_store_wire_settings_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L206",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_a2_remove_spotify_sync_toggle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L213",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_a3_dynamic_version_github_releases_link",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L220",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_a4_privacy_policy_and_terms_of_service_screens",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/TODO.md",
+      "source_location": "L227",
+      "weight": 1.0,
+      "source": "docs_todo_done",
+      "target": "docs_todo_a5_contact_me_screen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "plan_md",
+      "target": "music_swipe_plan_plan_md_musicswipe"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_context"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_decisions_made"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_stack"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_system_components"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_implementation_phases"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L159",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_build_time_unknowns"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L170",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_backend_schema_updated"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L180",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_design_exploration_artifacts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L194",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_plan_md_musicswipe",
+      "target": "music_swipe_plan_out_of_scope_for_now"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L66",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_implementation_phases",
+      "target": "music_swipe_plan_phase_1_auth_interface_design_skeleton_foundation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_implementation_phases",
+      "target": "music_swipe_plan_phase_2_swipe_core"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L111",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_implementation_phases",
+      "target": "music_swipe_plan_phase_3_matches_playlist_writing"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L127",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_implementation_phases",
+      "target": "music_swipe_plan_phase_4_adapter_validation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAN.md",
+      "source_location": "L141",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_plan_implementation_phases",
+      "target": "music_swipe_plan_phase_5_hardening_launch"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_quick_start",
+      "target": "music_swipe_readme_1_clone_and_install"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L41",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_quick_start",
+      "target": "music_swipe_readme_2_configure_environment_variables"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_quick_start",
+      "target": "music_swipe_readme_3_initialize_the_database"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_readme_quick_start",
+      "target": "music_swipe_readme_4_run"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_registry"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_a_settings_prefs"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_b_swipe_card_ui_gesture"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L51",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_c_preview_player"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_c1_wire_auto_play_previews_end_to_end"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_d_filter_mode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_d1_filter_mode_detection_destination_picker_guard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L108",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_d2_swipeengine_filter_mode_reverse_semantics_undo"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L127",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_d3_buttonbar_filter_mode_labels"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L143",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_d4_session_end_screen_filter_mode_summary"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L164",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_agent_q_manual_qa_testing_only"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L211",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_q3_preview_player_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L228",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_q4_filter_mode_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L249",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_done"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L168",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_q1_settings_prefs_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L191",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "todo_md",
+      "target": "music_swipe_todo_q2_swipe_card_ui_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L212",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_q1_settings_prefs_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L220",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_q2_swipe_card_ui_qa"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L178",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_b1_wire_showalbumart_pref_to_swipecard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L185",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_b2_haptic_feedback_on_swipe_next_card_scale_animation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L192",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_b3_move_destination_editor_button_to_swipe_header"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L280",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_a1_persisted_prefs_store_wire_settings_tsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L266",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_a2_remove_spotify_sync_toggle"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L251",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_a3_dynamic_version_github_releases_link"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L295",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_a4_privacy_policy_and_terms_of_service_screens"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TODO.md",
+      "source_location": "L310",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "music_swipe_todo_done",
+      "target": "music_swipe_todo_a5_contact_me_screen"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/swipe/DestinationEditor.tsx",
       "source_location": "L12",
       "weight": 1.0,
@@ -29624,5 +30796,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1bb0e4b96ace33d32015cdb88a51846febd190ae"
+  "built_at_commit": "36ceaf04d2c77381c26f5506d6ba7f09193a89a2"
 }
