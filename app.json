@@ -13,7 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.yarin_lab.musicswipe",
+      "bundleIdentifier": "com.yarin-lab.musicswipe",
       "supportsTablet": false
     },
     "android": {
