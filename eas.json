@@ -40,5 +40,13 @@
         "EXPO_PUBLIC_BACKEND_URL": "https://api.musicswipe.app"
       }
     }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

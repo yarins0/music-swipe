@@ -8,8 +8,10 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      # @supabase/realtime-js requires a global WebSocket, which Node gained
+      # in 22. On 20 the server throws at import before it can listen.
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       # sync:false = the value is set in the Render dashboard, never committed.
       - key: SUPABASE_URL
         sync: false
