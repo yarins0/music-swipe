@@ -6,9 +6,13 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
-      # One PR per ecosystem keeps the CI minutes down and the review short.
-      all-dependencies:
+      # Minor and patch updates share one pull request, because they rarely
+      # need individual review. A major update is excluded from the group and
+      # arrives as its own pull request, so a breaking change is never hidden
+      # inside a bulk bump.
+      minor-and-patch:
         patterns: ['*']
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /backend
@@ -16,8 +20,9 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
-      all-dependencies:
+      minor-and-patch:
         patterns: ['*']
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
