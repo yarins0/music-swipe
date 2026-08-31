@@ -27,6 +27,11 @@ app.use('/users', usersRouter);
 app.use('/sessions', sessionsRouter);
 app.use('/swipes', swipesRouter);
 
+// Render polls this path to decide whether the instance is live.
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
 });

@@ -1,0 +1,33 @@
+name: EAS Build
+
+# Never runs on a pull request. It needs the EXPO_TOKEN secret and burns EAS
+# build credits, so a person triggers it deliberately.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Build profile from eas.json
+        type: choice
+        options: [preview, production]
+        default: preview
+      platform:
+        description: Target platform
+        type: choice
+        options: [all, ios, android]
+        default: all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait
